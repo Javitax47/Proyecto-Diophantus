@@ -1,0 +1,10 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_power_mod(base, exp, mod, RET) = If(==(exp, 0), 1, If(==(exp, 1), %(base, mod), If(==(%(exp, 2), 0), %(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), %(*(%(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), base), mod))))
+P_mult_signs(s1, s2, RET) = If(==(s1, 0), 0, If(==(s2, 0), 0, If(==(s1, 1), If(==(s2, 1), 1, 2), If(==(s2, 1), 2, 1))))
+P_jacobi_logic(a, n, RET) = If(==(a, 0), 0, If(==(a, 1), 1, If(==(%(a, 2), 0), call(mult_signs, call(jacobi_logic, /(a, 2), n), If(==(%(n, 8), 1), 1, If(==(%(n, 8), 7), 1, 2))), call(mult_signs, call(jacobi_logic, %(n, a), a), If(==(%(a, 4), 3), If(==(%(n, 4), 3), 2, 1), 1)))))
+P_check_base(n, base, RET) = If(<=(n, base), 0, If(==(call(jacobi_logic, base, n), 0), 1, If(==(call(power_mod, base, /(-(n, 1), 2), n), If(==(call(jacobi_logic, base, n), 1), 1, -(n, 1))), 0, 1)))
+P_solovay_64_bit(n, RET) = If(<(n, 2), 1, If(==(n, 2), 0, If(==(n, 3), 0, If(==(%(n, 2), 0), 1, +(+(+(+(+(+(+(+(+(+(+(call(check_base, n, 2), call(check_base, n, 3)), call(check_base, n, 5)), call(check_base, n, 7)), call(check_base, n, 11)), call(check_base, n, 13)), call(check_base, n, 17)), call(check_base, n, 19)), call(check_base, n, 23)), call(check_base, n, 29)), call(check_base, n, 31)), call(check_base, n, 37))))))
+--- [FIN DEFINICIONES] ---
+
+target[t+1] := target
+result[t+1] := 0

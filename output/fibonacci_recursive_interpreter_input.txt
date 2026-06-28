@@ -1,0 +1,6 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_fib(x, RET) = If(<=(x, 1), x, +(call(fib, -(x, 1)), call(fib, -(x, 2))))
+--- [FIN DEFINICIONES] ---
+
+result[t+1] := 0
+n[t+1] := n

@@ -1,0 +1,68 @@
+
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.8in} 
+\usepackage{amssymb}
+\usepackage{breqn} 
+\usepackage{booktabs}
+\usepackage{url}
+
+% Ajustes para permitir ecuaciones gigantes
+\allowdisplaybreaks
+\setlength{\jot}{8pt}
+
+\title{Análisis Matemático de Algoritmo \\ \large Generado por Project Diophantus}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{Resumen Ejecutivo}
+Este documento presenta la traducción completa de un algoritmo computacional a tres formas matemáticas distintas.
+Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo original (Miller-Rabin), son extensas pero polinomialmente acotadas.
+\part{Función de Transición}
+\begin{align*}
+x[t+1] &= x \\
+y[t+1] &= 0 \\
+\end{align*}\part{Conversión a Polinomio}
+\subsection*{Ecuación Unificada P=0}
+\begin{align*}
+& (e_{0}  \cdot  (1 - e_{0}))^{2} + (e_{0}  \cdot  ((1) - (n) - (e_{1}^{2} \\
+& + e_{2}^{2} + e_{3}^{2} + e_{4}^{2})))^{2} \\
+& + ((1 - e_{0})  \cdot  ((n) - (1) - 1 - (e_{5}^{2} + e_{6}^{2} + e_{7}^{2} \\
+& + e_{8}^{2})))^{2} + (e_{11} - (n - 1))^{2} \\
+& + (P_factorial(factorial, factorial, e_{11}, e_{10}))^{2} \\
+& + (e_{9} - (n  \cdot  e_{10}))^{2} + (RET - ((e_{0})  \cdot  (1) \\
+& + (1 - e_{0})  \cdot  (e_{9})))^{2} + (x[t+1] - (x))^{2} + (y[t+1] - (0))^{2} = 0
+\end{align*}\part{Fórmulas Generadoras}
+\begin{small}
+\begin{align*}
+G &= 1 - ((e_{0}  \cdot  (1 - e_{0}))^{2} + (e_{0}  \cdot  ((1) - (n) - (e_{1}^{2} \\
+& + e_{2}^{2} + e_{3}^{2} + e_{4}^{2})))^{2} \\
+& + ((1 - e_{0})  \cdot  ((n) - (1) - 1 - (e_{5}^{2} + e_{6}^{2} + e_{7}^{2} \\
+& + e_{8}^{2})))^{2} + (e_{11} - (n - 1))^{2} \\
+& + (P_factorial(factorial, factorial, e_{11}, e_{10}))^{2} \\
+& + (e_{9} - (n  \cdot  e_{10}))^{2} + (RET - ((e_{0})  \cdot  (1) \\
+& + (1 - e_{0})  \cdot  (e_{9})))^{2} + (x[t+1] - (x))^{2} + (y[t+1] - (0))^{2}) \\
+\end{align*}
+\end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
+\section{Representación Simbólica}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
+\mathcal{D}_{sym} &= (\epsilon_{0}  \\mathit{cdot}  (1 - \epsilon_{0}))^2 + (\epsilon_{0}  \\mathit{cdot}  ((1) - (\mathit{n}) - (\epsilon_{1}^2 + \epsilon_{2}^2 + \epsilon_{3}^2 + \epsilon_{4}^2)))^2 + \\
+&  ((1 - \epsilon_{0})  \\mathit{cdot}  ((\mathit{n}) - (1) - 1 - (\epsilon_{5}^2 + \epsilon_{6}^2 + \epsilon_{7}^2 + \epsilon_{8}^2)))^2 + \\
+&  (\epsilon_{11} - (\mathit{n} - 1))^2 + (\Phi_{\text{\mathit{factorial}}}(\mathit{factorial}, \mathit{factorial}, \epsilon_{11}, \epsilon_{10}))^2 + \\
+&  (\epsilon_{9} - (\mathit{n}  \\mathit{cdot}  \epsilon_{10}))^2 + (\mathit{RET} - ((\epsilon_{0})  \\mathit{cdot}  (1) + (1 - \epsilon_{0})  \\mathit{cdot}  (\epsilon_{9})))^2 + \\
+&  (\mathit{x} - (\mathit{x}))^2 + (\mathit{y} - (0))^2
+\end{dmath*}\newpage
+\section{Representación Operacional}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{19}} \left( (x_{14}  \x_{4}  (1 - x_{14}))^2 + (x_{14}  \x_{4}  ((1) - (x_{18}) - (x_{8}^2 + x_{9}^2 + x_{13}^2 + x_{15}^2)))^2 + ((1 - x_{14})  \x_{4}  ((x_{18}) - (1) - 1 - (x_{16}^2 + x_{11}^2 + x_{7}^2 + x_{6}^2)))^2 + (x_{5} - (x_{18} - 1))^2 + (x_{1}(x_{2}, x_{2}, x_{5}, x_{3}))^2 + (x_{12} - (x_{18}  \x_{4}  x_{3}))^2 + (x_{10} - ((x_{14})  \x_{4}  (1) + (1 - x_{14})  \x_{4}  (x_{12})))^2 + (x_{17} - (x_{17}))^2 + (x_{19} - (0))^2 \right)
+\end{dmath*}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{19}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+\begin{align*}
+\text{Sistema de recurrencia generado (Placeholder)} \\
+\end{align*}\end{document}

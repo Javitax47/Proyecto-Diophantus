@@ -1,0 +1,20 @@
+--- DEFINICIONES ---
+e_0 - (If(n == 1, 1, 0)) = 0
+e_2 - (If(acc > 200, 1, 0)) = 0
+e_3 - ((-1)) = 0
+e_6 - ((n % 2)) = 0
+e_5 - (If(e_6 == 0, 1, 0)) = 0
+e_8 - ((n / 2)) = 0
+e_9 - ((acc + 1)) = 0
+P_collatz_trajectory(collatz_trajectory, collatz_trajectory, e_8, e_9, e_7) = 0
+e_13 - ((3 * n)) = 0
+e_12 - ((e_13 + 1)) = 0
+e_11 - ((e_12 / 2)) = 0
+e_14 - ((acc + 2)) = 0
+P_collatz_trajectory(collatz_trajectory, collatz_trajectory, e_11, e_14, e_10) = 0
+e_4 - (If(e_5 != 0, e_7, e_10)) = 0
+e_1 - (If(e_2 != 0, e_3, e_4)) = 0
+RET - (If(e_0 != 0, acc, e_1)) = 0
+--- SISTEMA ---
+start_n[t+1] - (start_n) = 0
+total_steps[t+1] - (0) = 0

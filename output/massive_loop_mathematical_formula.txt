@@ -1,0 +1,9 @@
+=== FÓRMULA SIMBÓLICA (Estructural) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor
+\mathcal{D}_{sym} = (\epsilon_{0} - (\mathit{x}  \\mathit{cdot}  5))^2 + (\mathit{RET} - (\epsilon_{0} + 3))^2 + (\mathit{dummy\_out} - (\mathit{dummy\_out}))^2 + (\mathit{val} - (0))^2
+
+=== FÓRMULA OPERACIONAL (Vectorial) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor
+\mathcal{D}(N, R, \mathbf{x}) = \sum_{\mathbf{x} \in \mathbb{N}^{6}} \left( (x_{5} - (x_{6}  \x_{2}  5))^2 + (x_{4} - (x_{5} + 3))^2 + (x_{1} - (x_{1}))^2 + (x_{3} - (0))^2 \right)
+
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{6}$ (variables internas anonimizadas).

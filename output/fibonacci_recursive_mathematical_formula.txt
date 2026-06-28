@@ -1,0 +1,11 @@
+=== FÓRMULA SIMBÓLICA (Estructural) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor
+\mathcal{D}_{sym} = (\epsilon_{0}  \\mathit{cdot}  (1 - \epsilon_{0}))^2 + (\epsilon_{0}  \\mathit{cdot}  ((1) - (\mathit{x}) - (\epsilon_{1}^2 + \epsilon_{2}^2 + \epsilon_{3}^2 + \epsilon_{4}^2)))^2 + ((1 - \epsilon_{0})  \\mathit{cdot}  ((\mathit{x}) - (1) - 1 - (\epsilon_{5}^2 + \epsilon_{6}^2 + \epsilon_{7}^2 + \epsilon_{8}^2)))^2 + (\epsilon_{11} - (\mathit{x} - 1))^2 + (\Phi_{\text{\mathit{fib}}}(\mathit{fib}, \mathit{fib}, \epsilon_{11}, \epsilon_{10}))^2 + (\epsilon_{13} - (\mathit{x} - 2))^2 + (\Phi_{\text{\mathit{fib}}}(\mathit{fib}, \mathit{fib}, \epsilon_{13}, \epsilon_{12}))^2 + (\epsilon_{9} - (\epsilon_{10} + \epsilon_{12}))^2 + (\mathit{RET} - ((\epsilon_{0})  \\mathit{cdot}  (\mathit{x}) + (1 - \epsilon_{0})  \\mathit{cdot}  (\epsilon_{9})))^2 + (\mathit{n} - (\mathit{n}))^2 + (R - (0))^2
+
+------------------------------------------------------------
+
+=== FÓRMULA OPERACIONAL (Vectorial) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor
+\mathcal{D}(N, R, \mathbf{x}) = \sum_{\mathbf{x} \in \mathbb{N}^{20}} \left( (x_{13}  \x_{3}  (1 - x_{13}))^2 + (x_{13}  \x_{3}  ((1) - (x_{19}) - (x_{7}^2 + x_{10}^2 + x_{15}^2 + x_{18}^2)))^2 + ((1 - x_{13})  \x_{3}  ((x_{19}) - (1) - 1 - (x_{11}^2 + x_{12}^2 + x_{14}^2 + x_{9}^2)))^2 + (x_{6} - (x_{19} - 1))^2 + (x_{1}(x_{8}, x_{8}, x_{6}, x_{5}))^2 + (x_{2} - (x_{19} - 2))^2 + (x_{1}(x_{8}, x_{8}, x_{2}, x_{4}))^2 + (x_{17} - (x_{5} + x_{4}))^2 + (x_{16} - ((x_{13})  \x_{3}  (x_{19}) + (1 - x_{13})  \x_{3}  (x_{17})))^2 + (x_{20} - (x_{20}))^2 + (R - (0))^2 \right)
+
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{20}$ (variables internas anonimizadas).

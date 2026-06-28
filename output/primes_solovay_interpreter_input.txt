@@ -1,0 +1,9 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_power_mod(base, exp, mod, RET) = If(==(%(exp, 2), 0), %(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), %(*(%(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), base), mod))
+P_jacobi_recursive(a, n, RET) = If(==(%(a, 2), 0), If(||(==(%(n, 8), 1), ==(%(n, 8), 7)), call(jacobi_recursive, /(a, 2), n), neg(call(jacobi_recursive, /(a, 2), n))), If(&&(==(%(a, 4), 3), ==(%(n, 4), 3)), neg(call(jacobi_recursive, %(n, a), a)), call(jacobi_recursive, %(n, a), a)))
+P_check_base(n, base, RET) = If(==(call(power_mod, base, /(-(n, 1), 2), n), If(<(call(jacobi_recursive, base, n), 0), +(n, call(jacobi_recursive, base, n)), call(jacobi_recursive, base, n))), 0, 1)
+P_solovay_64_bit(n, RET) = +(+(+(+(+(+(+(+(+(+(+(+(0, call(check_base, n, 2)), call(check_base, n, 3)), call(check_base, n, 5)), call(check_base, n, 7)), call(check_base, n, 11)), call(check_base, n, 13)), call(check_base, n, 17)), call(check_base, n, 19)), call(check_base, n, 23)), call(check_base, n, 29)), call(check_base, n, 31)), call(check_base, n, 37))
+--- [FIN DEFINICIONES] ---
+
+target[t+1] := target
+result[t+1] := 0

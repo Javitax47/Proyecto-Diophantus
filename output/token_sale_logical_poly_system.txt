@@ -1,0 +1,2 @@
+cost[t+1] - ((num_tokens * 1000000000000000000)) = 0
+num_tokens[t+1] - (num_tokens) = 0

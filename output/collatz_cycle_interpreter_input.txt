@@ -1,0 +1,7 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_detect_cycle_recursive(n, original, steps, RET) = If(==(n, original), If(>(steps, 0), 1, If(==(%(n, 2), 0), call(detect_cycle_recursive, /(n, 2), original, +(steps, 1)), call(detect_cycle_recursive, /(+(*(3, n), 1), 2), original, +(steps, 2)))), If(==(n, 1), 0, If(>(steps, 150), 0, If(==(%(n, 2), 0), call(detect_cycle_recursive, /(n, 2), original, +(steps, 1)), call(detect_cycle_recursive, /(+(*(3, n), 1), 2), original, +(steps, 2))))))
+P_logic_wrapper(n, RET) = If(>(n, 4), call(detect_cycle_recursive, n, n, 0), 0)
+--- [FIN DEFINICIONES] ---
+
+is_cycle[t+1] := 0
+start_n[t+1] := start_n

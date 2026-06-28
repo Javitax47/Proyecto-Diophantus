@@ -1,0 +1,7 @@
+{
+  "kind": "nonneg",
+  "vars": ["x", "y"],
+  "polynomial": "x**2 - x*y + y**2",
+  "claim": "La energia x^2-xy+y^2 es siempre no negativa",
+  "max_deg": 2
+}

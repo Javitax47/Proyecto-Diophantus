@@ -1,0 +1,26 @@
+C_0 - ((c1_execute_path_get_amount_out * 997)) = 0
+amount_in[t+1] - (amount_in) = 0
+e_1 - (If(amount_in > 0, 1, 0)) = 0
+e_2 - (If(amount_in < 100000, 1, 0)) = 0
+e_0 - (If(And(e_1 != 0, e_2 != 0), 1, 0)) = 0
+e_5 - ((C_0 * rIn_2)) = 0
+e_9 - ((C_0 * rIn_1)) = 0
+e_13 - ((C_0 * rIn_0)) = 0
+e_15 - ((execute_path * 1000)) = 0
+e_14 - ((e_15 + C_0)) = 0
+e_12 - ((e_13 / e_14)) = 0
+e_11 - ((e_12 * 1000)) = 0
+e_10 - ((e_11 + C_0)) = 0
+e_8 - ((e_9 / e_10)) = 0
+e_7 - ((e_8 * 1000)) = 0
+e_6 - ((e_7 + C_0)) = 0
+e_4 - ((e_5 / e_6)) = 0
+e_3 - ((e_4 - execute_path)) = 0
+e_16 - ((-1)) = 0
+profit[t+1] - (If(e_0 != 0, e_3, e_16)) = 0
+rIn_0[t+1] - (rIn_0) = 0
+rIn_1[t+1] - (rIn_1) = 0
+rIn_2[t+1] - (rIn_2) = 0
+rOut_0[t+1] - (rOut_0) = 0
+rOut_1[t+1] - (rOut_1) = 0
+rOut_2[t+1] - (rOut_2) = 0

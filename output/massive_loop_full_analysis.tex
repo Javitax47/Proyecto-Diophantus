@@ -1,0 +1,55 @@
+
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.8in} 
+\usepackage{amssymb}
+\usepackage{breqn} 
+\usepackage{booktabs}
+\usepackage{url}
+
+% Ajustes para permitir ecuaciones gigantes
+\allowdisplaybreaks
+\setlength{\jot}{8pt}
+
+\title{Análisis Matemático de Algoritmo \\ \large Generado por Project Diophantus}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{Resumen Ejecutivo}
+Este documento presenta la traducción completa de un algoritmo computacional a tres formas matemáticas distintas.
+Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo original (Miller-Rabin), son extensas pero polinomialmente acotadas.
+\part{Función de Transición}
+\begin{align*}
+dummy\_out[t+1] &= dummy_out \\
+val[t+1] &= 0 \\
+\end{align*}\part{Conversión a Polinomio}
+\subsection*{Ecuación Unificada P=0}
+\begin{align*}
+& (e_{0} - (x  \cdot  5))^{2} + (RET - (e_{0} + 3))^{2} \\
+& + (dummy_out[t+1] - (dummy_out))^{2} + (val[t+1] - (0))^{2} = 0
+\end{align*}\part{Fórmulas Generadoras}
+\begin{small}
+\begin{align*}
+G &= 1 - ((e_{0} - (x  \cdot  5))^{2} + (RET - (e_{0} + 3))^{2} \\
+& + (dummy_out[t+1] - (dummy_out))^{2} + (val[t+1] - (0))^{2}) \\
+\end{align*}
+\end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
+\section{Representación Simbólica}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
+\mathcal{D}_{sym} &= (\epsilon_{0} - (\mathit{x}  \\mathit{cdot}  5))^2 + (\mathit{RET} - (\epsilon_{0} + 3))^2 + \\
+&  (\mathit{dummy\_out} - (\mathit{dummy\_out}))^2 + (\mathit{val} - (0))^2
+\end{dmath*}\newpage
+\section{Representación Operacional}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{6}} \left( (x_{5} - (x_{6}  \x_{2}  5))^2 + (x_{4} - (x_{5} + 3))^2 + (x_{1} - (x_{1}))^2 + (x_{3} - (0))^2 \right)
+\end{dmath*}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{6}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+\begin{align*}
+\text{Sistema de recurrencia generado (Placeholder)} \\
+\end{align*}\end{document}

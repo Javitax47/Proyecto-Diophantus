@@ -1,0 +1,9 @@
+=== FÓRMULA SIMBÓLICA (Estructural) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor
+\mathcal{D}_{sym} = (\mathit{attacker\_donation} - (\mathit{attacker\_donation}))^2 + (\mathit{total\_assets} - (\mathit{total\_assets}))^2 + (\mathit{total\_supply} - (\mathit{total\_supply}))^2 + (\mathit{victim\_deposit} - (\mathit{victim\_deposit}))^2 + (\epsilon_{0} - (\mathit{convertToShares} + \mathit{total\_assets}))^2 + (\mathit{victim\_shares} - (\epsilon_{0} + \mathit{victim\_deposit}))^2
+
+=== FÓRMULA OPERACIONAL (Vectorial) ===
+f(N) = \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor
+\mathcal{D}(N, R, \mathbf{x}) = \sum_{\mathbf{x} \in \mathbb{N}^{7}} \left( (x_{1} - (x_{1}))^2 + (x_{6} - (x_{6}))^2 + (x_{5} - (x_{5}))^2 + (x_{3} - (x_{3}))^2 + (x_{7} - (x_{2} + x_{6}))^2 + (x_{4} - (x_{7} + x_{3}))^2 \right)
+
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{7}$ (variables internas anonimizadas).

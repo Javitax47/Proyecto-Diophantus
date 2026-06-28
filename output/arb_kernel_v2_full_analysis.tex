@@ -1,0 +1,66 @@
+
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.8in} 
+\usepackage{amssymb}
+\usepackage{breqn} 
+\usepackage{booktabs}
+\usepackage{url}
+
+% Ajustes para permitir ecuaciones gigantes
+\allowdisplaybreaks
+\setlength{\jot}{8pt}
+
+\title{Análisis Matemático de Algoritmo \\ \large Generado por Project Diophantus}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{Resumen Ejecutivo}
+Este documento presenta la traducción completa de un algoritmo computacional a tres formas matemáticas distintas.
+Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo original (Miller-Rabin), son extensas pero polinomialmente acotadas.
+\part{Función de Transición}
+\begin{align*}
+amount\_in[t+1] &= amount_in \\
+amount\_out[t+1] &= ('/', 0, 0) \\
+rIn\_0[t+1] &= rIn_0 \\
+rIn\_1[t+1] &= rIn_1 \\
+rIn\_2[t+1] &= rIn_2 \\
+rOut\_0[t+1] &= rOut_0 \\
+rOut\_1[t+1] &= rOut_1 \\
+rOut\_2[t+1] &= rOut_2 \\
+\end{align*}\part{Conversión a Polinomio}
+\subsection*{Ecuación Unificada P=0}
+\begin{align*}
+& (amount_in[t+1] - (amount_in))^{2} + ((0) - ((0)  \cdot  (amount_out[t+1]) \\
+& + e_{0}))^{2} + (rIn_0[t+1] - (rIn_0))^{2} + (rIn_1[t+1] - (rIn_1))^{2} \\
+& + (rIn_2[t+1] - (rIn_2))^{2} + (rOut_0[t+1] - (rOut_0))^{2} \\
+& + (rOut_1[t+1] - (rOut_1))^{2} + (rOut_2[t+1] - (rOut_2))^{2} = 0
+\end{align*}\part{Fórmulas Generadoras}
+\begin{small}
+\begin{align*}
+G &= 1 - ((amount_in[t+1] - (amount_in))^{2} + ((0) - ((0)  \cdot  (amount_out[t+1]) \\
+& + e_{0}))^{2} + (rIn_0[t+1] - (rIn_0))^{2} + (rIn_1[t+1] - (rIn_1))^{2} \\
+& + (rIn_2[t+1] - (rIn_2))^{2} + (rOut_0[t+1] - (rOut_0))^{2} \\
+& + (rOut_1[t+1] - (rOut_1))^{2} + (rOut_2[t+1] - (rOut_2))^{2}) \\
+\end{align*}
+\end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
+\section{Representación Simbólica}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
+\mathcal{D}_{sym} &= (\mathit{amount\_in} - (\mathit{amount\_in}))^2 + ((0) - ((0)  \\mathit{cdot}  (\mathit{amount\_out}) + \epsilon_{0}))^2 + \\
+&  (\mathit{rIn\_0} - (\mathit{rIn\_0}))^2 + (\mathit{rIn\_1} - (\mathit{rIn\_1}))^2 + (\mathit{rIn\_2} - (\mathit{rIn\_2}))^2 + \\
+&  (\mathit{rOut\_0} - (\mathit{rOut\_0}))^2 + (\mathit{rOut\_1} - (\mathit{rOut\_1}))^2 + (\mathit{rOut\_2} - (\mathit{rOut\_2}))^2
+\end{dmath*}\newpage
+\section{Representación Operacional}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{10}} \left( (x_{2} - (x_{2}))^2 + ((0) - ((0)  \x_{9}  (x_{1}) + x_{10}))^2 + (x_{7} - (x_{7}))^2 + (x_{8} - (x_{8}))^2 + (x_{6} - (x_{6}))^2 + (x_{4} - (x_{4}))^2 + (x_{5} - (x_{5}))^2 + (x_{3} - (x_{3}))^2 \right)
+\end{dmath*}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{10}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+\begin{align*}
+\text{Sistema de recurrencia generado (Placeholder)} \\
+\end{align*}\end{document}

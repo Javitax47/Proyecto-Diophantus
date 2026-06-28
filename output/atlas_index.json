@@ -1,0 +1,45 @@
+{
+  "schema": "diophantus-atlas/v1",
+  "entries": [
+    {
+      "program": "pell.c",
+      "family": "Pell / unidad fundamental",
+      "kind": "invariante-conservado",
+      "identity": "-x**2 + 2*y**2",
+      "note": "x²-2y² conservado (norma de Z[√2])",
+      "certified": true
+    },
+    {
+      "program": "fib.c",
+      "family": "Fibonacci / recurrencia lineal",
+      "kind": "invariante-conservado",
+      "identity": "-x**2 + x*y + y**2",
+      "note": "forma cuadrática de la recurrencia",
+      "certified": true
+    },
+    {
+      "program": "linrec.c",
+      "family": "Recurrencia lineal 2º orden",
+      "kind": "invariante-conservado",
+      "identity": "-x**2 + x*y + y**2",
+      "note": "invariante de la companion matrix",
+      "certified": true
+    },
+    {
+      "program": "collatz.c",
+      "family": "Collatz (3n+1)",
+      "kind": "sin-invariante",
+      "identity": "sin invariante polinómico de bajo grado (régimen no integrable)",
+      "note": "sin invariante polinómico de bajo grado (régimen no integrable)",
+      "certified": false
+    },
+    {
+      "program": "collatz_cycle.c",
+      "family": "Collatz - ciclos",
+      "kind": "sin-invariante",
+      "identity": "no-existencia de ciclos cortos certificada por Z3 (UNSAT)",
+      "note": "no-existencia de ciclos cortos certificada por Z3 (UNSAT)",
+      "certified": false
+    }
+  ]
+}

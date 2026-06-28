@@ -1,0 +1,8 @@
+{
+  "kind": "unreachable",
+  "vars": ["a", "b", "out"],
+  "system": ["a-2", "b-3", "a+b-out", "out-6"],
+  "claim": "El programa out=a+b con a=2,b=3 no puede devolver 6",
+  "max_deg": 1,
+  "required": true
+}

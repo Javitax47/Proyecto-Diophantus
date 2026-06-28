@@ -1,0 +1,39 @@
+--- DEFINICIONES ---
+e_0 - (If(exp == 0, 1, 0)) = 0
+e_2 - (If(exp == 1, 1, 0)) = 0
+e_3 - ((base % mod)) = 0
+e_6 - ((exp % 2)) = 0
+e_5 - (If(e_6 == 0, 1, 0)) = 0
+e_10 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_10, mod, e_9) = 0
+e_12 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_12, mod, e_11) = 0
+e_8 - ((e_9 * e_11)) = 0
+e_7 - ((e_8 % mod)) = 0
+e_18 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_18, mod, e_17) = 0
+e_20 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_20, mod, e_19) = 0
+e_16 - ((e_17 * e_19)) = 0
+e_15 - ((e_16 % mod)) = 0
+e_14 - ((e_15 * base)) = 0
+e_13 - ((e_14 % mod)) = 0
+e_4 - (If(e_5 != 0, e_7, e_13)) = 0
+e_1 - (If(e_2 != 0, e_3, e_4)) = 0
+RET - (If(e_0 != 0, 1, e_1)) = 0
+e_21 - (If(candidate < 2, 1, 0)) = 0
+e_23 - (If(candidate == 2, 1, 0)) = 0
+e_25 - (If(candidate == 3, 1, 0)) = 0
+e_28 - ((candidate % 2)) = 0
+e_27 - (If(e_28 == 0, 1, 0)) = 0
+e_32 - ((candidate - 1)) = 0
+P_power_mod(power_mod, power_mod, 2, e_32, candidate, e_31) = 0
+e_30 - (If(e_31 != 1, 1, 0)) = 0
+e_29 - (If(e_30 != 0, 0, 1)) = 0
+e_26 - (If(e_27 != 0, 0, e_29)) = 0
+e_24 - (If(e_25 != 0, 1, e_26)) = 0
+e_22 - (If(e_23 != 0, 1, e_24)) = 0
+RET - (If(e_21 != 0, 0, e_22)) = 0
+--- SISTEMA ---
+is_prime[t+1] - (0) = 0
+n[t+1] - (n) = 0

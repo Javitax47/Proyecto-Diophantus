@@ -1,0 +1,6 @@
+attacker_donation[t+1] - (attacker_donation) = 0
+total_assets[t+1] - (total_assets) = 0
+total_supply[t+1] - (total_supply) = 0
+victim_deposit[t+1] - (victim_deposit) = 0
+e_0 - (convertToShares + total_assets) = 0
+victim_shares[t+1] - (e_0 + victim_deposit) = 0

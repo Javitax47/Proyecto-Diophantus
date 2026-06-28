@@ -1,0 +1,6 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_factorial(n, RET) = If(<=(n, 1), 1, *(n, call(factorial, -(n, 1))))
+--- [FIN DEFINICIONES] ---
+
+x[t+1] := x
+y[t+1] := 0

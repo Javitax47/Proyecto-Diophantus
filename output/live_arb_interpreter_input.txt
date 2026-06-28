@@ -1,0 +1,9 @@
+C_0 := *(c1_execute_path_get_amount_out, 997)
+rIn_1[t+1] := rIn_1
+amount_in[t+1] := amount_in
+rOut_1[t+1] := rOut_1
+rIn_2[t+1] := rIn_2
+rOut_2[t+1] := rOut_2
+rIn_0[t+1] := rIn_0
+rOut_0[t+1] := rOut_0
+profit[t+1] := If(&&(>(amount_in, 0), <(amount_in, 100000)), -(/(*(C_0, rIn_2), +(*(/(*(C_0, rIn_1), +(*(/(*(C_0, rIn_0), +(*(execute_path, 1000), C_0)), 1000), C_0)), 1000), C_0)), execute_path), neg(1))

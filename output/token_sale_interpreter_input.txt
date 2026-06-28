@@ -1,0 +1,2 @@
+num_tokens[t+1] := num_tokens
+cost[t+1] := *(num_tokens, 1000000000000000000)

@@ -1,0 +1,468 @@
+
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.8in} 
+\usepackage{amssymb}
+\usepackage{breqn} 
+\usepackage{booktabs}
+\usepackage{url}
+
+% Ajustes para permitir ecuaciones gigantes
+\allowdisplaybreaks
+\setlength{\jot}{8pt}
+
+\title{Análisis Matemático de Algoritmo \\ \large Generado por Project Diophantus}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{Resumen Ejecutivo}
+Este documento presenta la traducción completa de un algoritmo computacional a tres formas matemáticas distintas.
+Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo original (Miller-Rabin), son extensas pero polinomialmente acotadas.
+\part{Función de Transición}
+\begin{align*}
+is\_prime[t+1] &= 0 \\
+n[t+1] &= n \\
+\end{align*}\part{Conversión a Polinomio}
+\subsection*{Ecuación Unificada P=0}
+\begin{align*}
+& (e_{1}  \cdot  (1 - e_{1}))^{2} + (e_{1}  \cdot  ((0) - (exp) - (e_{3}^{2} \\
+& + e_{4}^{2} + e_{5}^{2} + e_{6}^{2})))^{2} \\
+& + ((1 - e_{1})  \cdot  ((exp) - (0) - 1 - (e_{7}^{2} + e_{8}^{2} + e_{9}^{2} \\
+& + e_{10}^{2})))^{2} + (e_{2}  \cdot  (1 - e_{2}))^{2} \\
+& + (e_{2}  \cdot  ((exp) - (0) - (e_{11}^{2} + e_{12}^{2} + e_{13}^{2} \\
+& + e_{14}^{2})))^{2} + ((1 - e_{2})  \cdot  ((0) - (exp) - 1 - (e_{15}^{2} \\
+& + e_{16}^{2} + e_{17}^{2} + e_{18}^{2})))^{2} \\
+& + (e_{0} - (e_{1}  \cdot  e_{2}))^{2} + (e_{21}  \cdot  (1 - e_{21}))^{2} \\
+& + (e_{21}  \cdot  ((1) - (exp) - (e_{23}^{2} + e_{24}^{2} + e_{25}^{2} \\
+& + e_{26}^{2})))^{2} + ((1 - e_{21})  \cdot  ((exp) - (1) - 1 - (e_{27}^{2} \\
+& + e_{28}^{2} + e_{29}^{2} + e_{30}^{2})))^{2} \\
+& + (e_{22}  \cdot  (1 - e_{22}))^{2} + (e_{22}  \cdot  ((exp) - (1) - (e_{31}^{2} \\
+& + e_{32}^{2} + e_{33}^{2} + e_{34}^{2})))^{2} \\
+& + ((1 - e_{22})  \cdot  ((1) - (exp) - 1 - (e_{35}^{2} + e_{36}^{2} + e_{37}^{2} \\
+& + e_{38}^{2})))^{2} + (e_{20} - (e_{21}  \cdot  e_{22}))^{2} \\
+& + ((base) - ((mod)  \cdot  (e_{40}) + e_{39}))^{2} + (e_{42} - (mod - 1))^{2} \\
+& + (e_{41}  \cdot  (1 - e_{41}))^{2} \\
+& + (e_{41}  \cdot  ((e_{42}) - (e_{39}) - (e_{43}^{2} + e_{44}^{2} + e_{45}^{2} \\
+& + e_{46}^{2})))^{2} \\
+& + ((1 - e_{41})  \cdot  ((e_{39}) - (e_{42}) - 1 - (e_{47}^{2} + e_{48}^{2} \\
+& + e_{49}^{2} + e_{50}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{54}) + e_{53}))^{2} \\
+& + (e_{56} - (2 - 1))^{2} + (e_{55}  \cdot  (1 - e_{55}))^{2} \\
+& + (e_{55}  \cdot  ((e_{56}) - (e_{53}) - (e_{57}^{2} + e_{58}^{2} + e_{59}^{2} \\
+& + e_{60}^{2})))^{2} \\
+& + ((1 - e_{55})  \cdot  ((e_{53}) - (e_{56}) - 1 - (e_{61}^{2} + e_{62}^{2} \\
+& + e_{63}^{2} + e_{64}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{68}) + e_{67}))^{2} \\
+& + (e_{70} - (2 - 1))^{2} + (e_{69}  \cdot  (1 - e_{69}))^{2} \\
+& + (e_{69}  \cdot  ((e_{70}) - (e_{67}) - (e_{71}^{2} + e_{72}^{2} + e_{73}^{2} \\
+& + e_{74}^{2})))^{2} \\
+& + ((1 - e_{69})  \cdot  ((e_{67}) - (e_{70}) - 1 - (e_{75}^{2} + e_{76}^{2} \\
+& + e_{77}^{2} + e_{78}^{2})))^{2} + (e_{65}  \cdot  (1 - e_{65}))^{2} \\
+& + (e_{65}  \cdot  ((0) - (e_{67}) - (e_{79}^{2} + e_{80}^{2} + e_{81}^{2} \\
+& + e_{82}^{2})))^{2} + ((1 - e_{65})  \cdot  ((e_{67}) - (0) - 1 - (e_{83}^{2} \\
+& + e_{84}^{2} + e_{85}^{2} + e_{86}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{88}) \\
+& + e_{87}))^{2} + (e_{90} - (2 - 1))^{2} + (e_{89}  \cdot  (1 - e_{89}))^{2} \\
+& + (e_{89}  \cdot  ((e_{90}) - (e_{87}) - (e_{91}^{2} + e_{92}^{2} + e_{93}^{2} \\
+& + e_{94}^{2})))^{2} \\
+& + ((1 - e_{89})  \cdot  ((e_{87}) - (e_{90}) - 1 - (e_{95}^{2} + e_{96}^{2} \\
+& + e_{97}^{2} + e_{98}^{2})))^{2} + (e_{66}  \cdot  (1 - e_{66}))^{2} \\
+& + (e_{66}  \cdot  ((e_{87}) - (0) - (e_{99}^{2} + e_{100}^{2} + e_{101}^{2} \\
+& + e_{102}^{2})))^{2} + ((1 - e_{66})  \cdot  ((0) - (e_{87}) - 1 - (e_{103}^{2} \\
+& + e_{104}^{2} + e_{105}^{2} + e_{106}^{2})))^{2} \\
+& + (e_{52} - (e_{65}  \cdot  e_{66}))^{2} + ((exp) - ((2)  \cdot  (e_{110}) \\
+& + e_{111}))^{2} + (e_{113} - (2 - 1))^{2} + (e_{112}  \cdot  (1 - e_{112}))^{2} \\
+& + (e_{112}  \cdot  ((e_{113}) - (e_{111}) - (e_{114}^{2} + e_{115}^{2} \\
+& + e_{116}^{2} + e_{117}^{2})))^{2} \\
+& + ((1 - e_{112})  \cdot  ((e_{111}) - (e_{113}) - 1 - (e_{118}^{2} + e_{119}^{2} \\
+& + e_{120}^{2} + e_{121}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{110}, mod, e_{109}))^{2} \\
+& + ((exp) - ((2)  \cdot  (e_{123}) + e_{124}))^{2} + (e_{126} - (2 - 1))^{2} \\
+& + (e_{125}  \cdot  (1 - e_{125}))^{2} \\
+& + (e_{125}  \cdot  ((e_{126}) - (e_{124}) - (e_{127}^{2} + e_{128}^{2} \\
+& + e_{129}^{2} + e_{130}^{2})))^{2} \\
+& + ((1 - e_{125})  \cdot  ((e_{124}) - (e_{126}) - 1 - (e_{131}^{2} + e_{132}^{2} \\
+& + e_{133}^{2} + e_{134}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{123}, mod, e_{122}))^{2} \\
+& + (e_{108} - (e_{109}  \cdot  e_{122}))^{2} \\
+& + ((e_{108}) - ((mod)  \cdot  (e_{135}) + e_{107}))^{2} \\
+& + (e_{137} - (mod - 1))^{2} + (e_{136}  \cdot  (1 - e_{136}))^{2} \\
+& + (e_{136}  \cdot  ((e_{137}) - (e_{107}) - (e_{138}^{2} + e_{139}^{2} \\
+& + e_{140}^{2} + e_{141}^{2})))^{2} \\
+& + ((1 - e_{136})  \cdot  ((e_{107}) - (e_{137}) - 1 - (e_{142}^{2} + e_{143}^{2} \\
+& + e_{144}^{2} + e_{145}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{151}) \\
+& + e_{152}))^{2} + (e_{154} - (2 - 1))^{2} + (e_{153}  \cdot  (1 - e_{153}))^{2} \\
+& + (e_{153}  \cdot  ((e_{154}) - (e_{152}) - (e_{155}^{2} + e_{156}^{2} \\
+& + e_{157}^{2} + e_{158}^{2})))^{2} \\
+& + ((1 - e_{153})  \cdot  ((e_{152}) - (e_{154}) - 1 - (e_{159}^{2} + e_{160}^{2} \\
+& + e_{161}^{2} + e_{162}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{151}, mod, e_{150}))^{2} \\
+& + ((exp) - ((2)  \cdot  (e_{164}) + e_{165}))^{2} + (e_{167} - (2 - 1))^{2} \\
+& + (e_{166}  \cdot  (1 - e_{166}))^{2} \\
+& + (e_{166}  \cdot  ((e_{167}) - (e_{165}) - (e_{168}^{2} + e_{169}^{2} \\
+& + e_{170}^{2} + e_{171}^{2})))^{2} \\
+& + ((1 - e_{166})  \cdot  ((e_{165}) - (e_{167}) - 1 - (e_{172}^{2} + e_{173}^{2} \\
+& + e_{174}^{2} + e_{175}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{164}, mod, e_{163}))^{2} \\
+& + (e_{149} - (e_{150}  \cdot  e_{163}))^{2} \\
+& + ((e_{149}) - ((mod)  \cdot  (e_{176}) + e_{148}))^{2} \\
+& + (e_{178} - (mod - 1))^{2} + (e_{177}  \cdot  (1 - e_{177}))^{2} \\
+& + (e_{177}  \cdot  ((e_{178}) - (e_{148}) - (e_{179}^{2} + e_{180}^{2} \\
+& + e_{181}^{2} + e_{182}^{2})))^{2} \\
+& + ((1 - e_{177})  \cdot  ((e_{148}) - (e_{178}) - 1 - (e_{183}^{2} + e_{184}^{2} \\
+& + e_{185}^{2} + e_{186}^{2})))^{2} + (e_{147} - (e_{148}  \cdot  base))^{2} \\
+& + ((e_{147}) - ((mod)  \cdot  (e_{187}) + e_{146}))^{2} \\
+& + (e_{189} - (mod - 1))^{2} + (e_{188}  \cdot  (1 - e_{188}))^{2} \\
+& + (e_{188}  \cdot  ((e_{189}) - (e_{146}) - (e_{190}^{2} + e_{191}^{2} \\
+& + e_{192}^{2} + e_{193}^{2})))^{2} \\
+& + ((1 - e_{188})  \cdot  ((e_{146}) - (e_{189}) - 1 - (e_{194}^{2} + e_{195}^{2} \\
+& + e_{196}^{2} + e_{197}^{2})))^{2} + (e_{51} - ((e_{52})  \cdot  (e_{107}) \\
+& + (1 - e_{52})  \cdot  (e_{146})))^{2} + (e_{19} - ((e_{20})  \cdot  (e_{39}) \\
+& + (1 - e_{20})  \cdot  (e_{51})))^{2} + (RET - ((e_{0})  \cdot  (1) \\
+& + (1 - e_{0})  \cdot  (e_{19})))^{2} + (e_{199} - (2 - 1))^{2} \\
+& + (e_{198}  \cdot  (1 - e_{198}))^{2} \\
+& + (e_{198}  \cdot  ((e_{199}) - (candidate) - (e_{200}^{2} + e_{201}^{2} \\
+& + e_{202}^{2} + e_{203}^{2})))^{2} \\
+& + ((1 - e_{198})  \cdot  ((candidate) - (e_{199}) - 1 - (e_{204}^{2} \\
+& + e_{205}^{2} + e_{206}^{2} + e_{207}^{2})))^{2} \\
+& + (e_{210}  \cdot  (1 - e_{210}))^{2} \\
+& + (e_{210}  \cdot  ((2) - (candidate) - (e_{212}^{2} + e_{213}^{2} + e_{214}^{2} \\
+& + e_{215}^{2})))^{2} \\
+& + ((1 - e_{210})  \cdot  ((candidate) - (2) - 1 - (e_{216}^{2} + e_{217}^{2} \\
+& + e_{218}^{2} + e_{219}^{2})))^{2} + (e_{211}  \cdot  (1 - e_{211}))^{2} \\
+& + (e_{211}  \cdot  ((candidate) - (2) - (e_{220}^{2} + e_{221}^{2} + e_{222}^{2} \\
+& + e_{223}^{2})))^{2} \\
+& + ((1 - e_{211})  \cdot  ((2) - (candidate) - 1 - (e_{224}^{2} + e_{225}^{2} \\
+& + e_{226}^{2} + e_{227}^{2})))^{2} + (e_{209} - (e_{210}  \cdot  e_{211}))^{2} \\
+& + (e_{230}  \cdot  (1 - e_{230}))^{2} \\
+& + (e_{230}  \cdot  ((3) - (candidate) - (e_{232}^{2} + e_{233}^{2} + e_{234}^{2} \\
+& + e_{235}^{2})))^{2} \\
+& + ((1 - e_{230})  \cdot  ((candidate) - (3) - 1 - (e_{236}^{2} + e_{237}^{2} \\
+& + e_{238}^{2} + e_{239}^{2})))^{2} + (e_{231}  \cdot  (1 - e_{231}))^{2} \\
+& + (e_{231}  \cdot  ((candidate) - (3) - (e_{240}^{2} + e_{241}^{2} + e_{242}^{2} \\
+& + e_{243}^{2})))^{2} \\
+& + ((1 - e_{231})  \cdot  ((3) - (candidate) - 1 - (e_{244}^{2} + e_{245}^{2} \\
+& + e_{246}^{2} + e_{247}^{2})))^{2} + (e_{229} - (e_{230}  \cdot  e_{231}))^{2} \\
+& + ((candidate) - ((2)  \cdot  (e_{251}) + e_{250}))^{2} \\
+& + (e_{253} - (2 - 1))^{2} + (e_{252}  \cdot  (1 - e_{252}))^{2} \\
+& + (e_{252}  \cdot  ((e_{253}) - (e_{250}) - (e_{254}^{2} + e_{255}^{2} \\
+& + e_{256}^{2} + e_{257}^{2})))^{2} \\
+& + ((1 - e_{252})  \cdot  ((e_{250}) - (e_{253}) - 1 - (e_{258}^{2} + e_{259}^{2} \\
+& + e_{260}^{2} + e_{261}^{2})))^{2} + ((candidate) - ((2)  \cdot  (e_{265}) \\
+& + e_{264}))^{2} + (e_{267} - (2 - 1))^{2} + (e_{266}  \cdot  (1 - e_{266}))^{2} \\
+& + (e_{266}  \cdot  ((e_{267}) - (e_{264}) - (e_{268}^{2} + e_{269}^{2} \\
+& + e_{270}^{2} + e_{271}^{2})))^{2} \\
+& + ((1 - e_{266})  \cdot  ((e_{264}) - (e_{267}) - 1 - (e_{272}^{2} + e_{273}^{2} \\
+& + e_{274}^{2} + e_{275}^{2})))^{2} + (e_{262}  \cdot  (1 - e_{262}))^{2} \\
+& + (e_{262}  \cdot  ((0) - (e_{264}) - (e_{276}^{2} + e_{277}^{2} + e_{278}^{2} \\
+& + e_{279}^{2})))^{2} \\
+& + ((1 - e_{262})  \cdot  ((e_{264}) - (0) - 1 - (e_{280}^{2} + e_{281}^{2} \\
+& + e_{282}^{2} + e_{283}^{2})))^{2} + ((candidate) - ((2)  \cdot  (e_{285}) \\
+& + e_{284}))^{2} + (e_{287} - (2 - 1))^{2} + (e_{286}  \cdot  (1 - e_{286}))^{2} \\
+& + (e_{286}  \cdot  ((e_{287}) - (e_{284}) - (e_{288}^{2} + e_{289}^{2} \\
+& + e_{290}^{2} + e_{291}^{2})))^{2} \\
+& + ((1 - e_{286})  \cdot  ((e_{284}) - (e_{287}) - 1 - (e_{292}^{2} + e_{293}^{2} \\
+& + e_{294}^{2} + e_{295}^{2})))^{2} + (e_{263}  \cdot  (1 - e_{263}))^{2} \\
+& + (e_{263}  \cdot  ((e_{284}) - (0) - (e_{296}^{2} + e_{297}^{2} + e_{298}^{2} \\
+& + e_{299}^{2})))^{2} \\
+& + ((1 - e_{263})  \cdot  ((0) - (e_{284}) - 1 - (e_{300}^{2} + e_{301}^{2} \\
+& + e_{302}^{2} + e_{303}^{2})))^{2} + (e_{249} - (e_{262}  \cdot  e_{263}))^{2} \\
+& + (e_{307} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{307}, candidate, e_{306}))^{2} \\
+& + (e_{310} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{310}, candidate, e_{309}))^{2} \\
+& + (e_{314} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{314}, candidate, e_{313}))^{2} \\
+& + (e_{311}  \cdot  (1 - e_{311}))^{2} \\
+& + (e_{311}  \cdot  ((1) - (e_{313}) - (e_{315}^{2} + e_{316}^{2} + e_{317}^{2} \\
+& + e_{318}^{2})))^{2} \\
+& + ((1 - e_{311})  \cdot  ((e_{313}) - (1) - 1 - (e_{319}^{2} + e_{320}^{2} \\
+& + e_{321}^{2} + e_{322}^{2})))^{2} + (e_{324} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{324}, candidate, e_{323}))^{2} \\
+& + (e_{312}  \cdot  (1 - e_{312}))^{2} \\
+& + (e_{312}  \cdot  ((e_{323}) - (1) - (e_{325}^{2} + e_{326}^{2} + e_{327}^{2} \\
+& + e_{328}^{2})))^{2} \\
+& + ((1 - e_{312})  \cdot  ((1) - (e_{323}) - 1 - (e_{329}^{2} + e_{330}^{2} \\
+& + e_{331}^{2} + e_{332}^{2})))^{2} + (e_{308} - (e_{311}  \cdot  e_{312}))^{2} \\
+& + (e_{305} - (1 - e_{308}))^{2} + (e_{304} - ((e_{305})  \cdot  (0) \\
+& + (1 - e_{305})  \cdot  (1)))^{2} + (e_{248} - ((e_{249})  \cdot  (0) \\
+& + (1 - e_{249})  \cdot  (e_{304})))^{2} + (e_{228} - ((e_{229})  \cdot  (1) \\
+& + (1 - e_{229})  \cdot  (e_{248})))^{2} + (e_{208} - ((e_{209})  \cdot  (1) \\
+& + (1 - e_{209})  \cdot  (e_{228})))^{2} + (RET - ((e_{198})  \cdot  (0) \\
+& + (1 - e_{198})  \cdot  (e_{208})))^{2} + (is_prime[t+1] - (0))^{2} \\
+& + (n[t+1] - (n))^{2} = 0
+\end{align*}\part{Fórmulas Generadoras}
+\begin{small}
+\begin{align*}
+G &= 1 - ((e_{1}  \cdot  (1 - e_{1}))^{2} + (e_{1}  \cdot  ((0) - (exp) - (e_{3}^{2} \\
+& + e_{4}^{2} + e_{5}^{2} + e_{6}^{2})))^{2} \\
+& + ((1 - e_{1})  \cdot  ((exp) - (0) - 1 - (e_{7}^{2} + e_{8}^{2} + e_{9}^{2} \\
+& + e_{10}^{2})))^{2} + (e_{2}  \cdot  (1 - e_{2}))^{2} \\
+& + (e_{2}  \cdot  ((exp) - (0) - (e_{11}^{2} + e_{12}^{2} + e_{13}^{2} \\
+& + e_{14}^{2})))^{2} + ((1 - e_{2})  \cdot  ((0) - (exp) - 1 - (e_{15}^{2} \\
+& + e_{16}^{2} + e_{17}^{2} + e_{18}^{2})))^{2} \\
+& + (e_{0} - (e_{1}  \cdot  e_{2}))^{2} + (e_{21}  \cdot  (1 - e_{21}))^{2} \\
+& + (e_{21}  \cdot  ((1) - (exp) - (e_{23}^{2} + e_{24}^{2} + e_{25}^{2} \\
+& + e_{26}^{2})))^{2} + ((1 - e_{21})  \cdot  ((exp) - (1) - 1 - (e_{27}^{2} \\
+& + e_{28}^{2} + e_{29}^{2} + e_{30}^{2})))^{2} \\
+& + (e_{22}  \cdot  (1 - e_{22}))^{2} + (e_{22}  \cdot  ((exp) - (1) - (e_{31}^{2} \\
+& + e_{32}^{2} + e_{33}^{2} + e_{34}^{2})))^{2} \\
+& + ((1 - e_{22})  \cdot  ((1) - (exp) - 1 - (e_{35}^{2} + e_{36}^{2} + e_{37}^{2} \\
+& + e_{38}^{2})))^{2} + (e_{20} - (e_{21}  \cdot  e_{22}))^{2} \\
+& + ((base) - ((mod)  \cdot  (e_{40}) + e_{39}))^{2} + (e_{42} - (mod - 1))^{2} \\
+& + (e_{41}  \cdot  (1 - e_{41}))^{2} \\
+& + (e_{41}  \cdot  ((e_{42}) - (e_{39}) - (e_{43}^{2} + e_{44}^{2} + e_{45}^{2} \\
+& + e_{46}^{2})))^{2} \\
+& + ((1 - e_{41})  \cdot  ((e_{39}) - (e_{42}) - 1 - (e_{47}^{2} + e_{48}^{2} \\
+& + e_{49}^{2} + e_{50}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{54}) + e_{53}))^{2} \\
+& + (e_{56} - (2 - 1))^{2} + (e_{55}  \cdot  (1 - e_{55}))^{2} \\
+& + (e_{55}  \cdot  ((e_{56}) - (e_{53}) - (e_{57}^{2} + e_{58}^{2} + e_{59}^{2} \\
+& + e_{60}^{2})))^{2} \\
+& + ((1 - e_{55})  \cdot  ((e_{53}) - (e_{56}) - 1 - (e_{61}^{2} + e_{62}^{2} \\
+& + e_{63}^{2} + e_{64}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{68}) + e_{67}))^{2} \\
+& + (e_{70} - (2 - 1))^{2} + (e_{69}  \cdot  (1 - e_{69}))^{2} \\
+& + (e_{69}  \cdot  ((e_{70}) - (e_{67}) - (e_{71}^{2} + e_{72}^{2} + e_{73}^{2} \\
+& + e_{74}^{2})))^{2} \\
+& + ((1 - e_{69})  \cdot  ((e_{67}) - (e_{70}) - 1 - (e_{75}^{2} + e_{76}^{2} \\
+& + e_{77}^{2} + e_{78}^{2})))^{2} + (e_{65}  \cdot  (1 - e_{65}))^{2} \\
+& + (e_{65}  \cdot  ((0) - (e_{67}) - (e_{79}^{2} + e_{80}^{2} + e_{81}^{2} \\
+& + e_{82}^{2})))^{2} + ((1 - e_{65})  \cdot  ((e_{67}) - (0) - 1 - (e_{83}^{2} \\
+& + e_{84}^{2} + e_{85}^{2} + e_{86}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{88}) \\
+& + e_{87}))^{2} + (e_{90} - (2 - 1))^{2} + (e_{89}  \cdot  (1 - e_{89}))^{2} \\
+& + (e_{89}  \cdot  ((e_{90}) - (e_{87}) - (e_{91}^{2} + e_{92}^{2} + e_{93}^{2} \\
+& + e_{94}^{2})))^{2} \\
+& + ((1 - e_{89})  \cdot  ((e_{87}) - (e_{90}) - 1 - (e_{95}^{2} + e_{96}^{2} \\
+& + e_{97}^{2} + e_{98}^{2})))^{2} + (e_{66}  \cdot  (1 - e_{66}))^{2} \\
+& + (e_{66}  \cdot  ((e_{87}) - (0) - (e_{99}^{2} + e_{100}^{2} + e_{101}^{2} \\
+& + e_{102}^{2})))^{2} + ((1 - e_{66})  \cdot  ((0) - (e_{87}) - 1 - (e_{103}^{2} \\
+& + e_{104}^{2} + e_{105}^{2} + e_{106}^{2})))^{2} \\
+& + (e_{52} - (e_{65}  \cdot  e_{66}))^{2} + ((exp) - ((2)  \cdot  (e_{110}) \\
+& + e_{111}))^{2} + (e_{113} - (2 - 1))^{2} + (e_{112}  \cdot  (1 - e_{112}))^{2} \\
+& + (e_{112}  \cdot  ((e_{113}) - (e_{111}) - (e_{114}^{2} + e_{115}^{2} \\
+& + e_{116}^{2} + e_{117}^{2})))^{2} \\
+& + ((1 - e_{112})  \cdot  ((e_{111}) - (e_{113}) - 1 - (e_{118}^{2} + e_{119}^{2} \\
+& + e_{120}^{2} + e_{121}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{110}, mod, e_{109}))^{2} \\
+& + ((exp) - ((2)  \cdot  (e_{123}) + e_{124}))^{2} + (e_{126} - (2 - 1))^{2} \\
+& + (e_{125}  \cdot  (1 - e_{125}))^{2} \\
+& + (e_{125}  \cdot  ((e_{126}) - (e_{124}) - (e_{127}^{2} + e_{128}^{2} \\
+& + e_{129}^{2} + e_{130}^{2})))^{2} \\
+& + ((1 - e_{125})  \cdot  ((e_{124}) - (e_{126}) - 1 - (e_{131}^{2} + e_{132}^{2} \\
+& + e_{133}^{2} + e_{134}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{123}, mod, e_{122}))^{2} \\
+& + (e_{108} - (e_{109}  \cdot  e_{122}))^{2} \\
+& + ((e_{108}) - ((mod)  \cdot  (e_{135}) + e_{107}))^{2} \\
+& + (e_{137} - (mod - 1))^{2} + (e_{136}  \cdot  (1 - e_{136}))^{2} \\
+& + (e_{136}  \cdot  ((e_{137}) - (e_{107}) - (e_{138}^{2} + e_{139}^{2} \\
+& + e_{140}^{2} + e_{141}^{2})))^{2} \\
+& + ((1 - e_{136})  \cdot  ((e_{107}) - (e_{137}) - 1 - (e_{142}^{2} + e_{143}^{2} \\
+& + e_{144}^{2} + e_{145}^{2})))^{2} + ((exp) - ((2)  \cdot  (e_{151}) \\
+& + e_{152}))^{2} + (e_{154} - (2 - 1))^{2} + (e_{153}  \cdot  (1 - e_{153}))^{2} \\
+& + (e_{153}  \cdot  ((e_{154}) - (e_{152}) - (e_{155}^{2} + e_{156}^{2} \\
+& + e_{157}^{2} + e_{158}^{2})))^{2} \\
+& + ((1 - e_{153})  \cdot  ((e_{152}) - (e_{154}) - 1 - (e_{159}^{2} + e_{160}^{2} \\
+& + e_{161}^{2} + e_{162}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{151}, mod, e_{150}))^{2} \\
+& + ((exp) - ((2)  \cdot  (e_{164}) + e_{165}))^{2} + (e_{167} - (2 - 1))^{2} \\
+& + (e_{166}  \cdot  (1 - e_{166}))^{2} \\
+& + (e_{166}  \cdot  ((e_{167}) - (e_{165}) - (e_{168}^{2} + e_{169}^{2} \\
+& + e_{170}^{2} + e_{171}^{2})))^{2} \\
+& + ((1 - e_{166})  \cdot  ((e_{165}) - (e_{167}) - 1 - (e_{172}^{2} + e_{173}^{2} \\
+& + e_{174}^{2} + e_{175}^{2})))^{2} \\
+& + (P_power_mod(power_mod, power_mod, base, e_{164}, mod, e_{163}))^{2} \\
+& + (e_{149} - (e_{150}  \cdot  e_{163}))^{2} \\
+& + ((e_{149}) - ((mod)  \cdot  (e_{176}) + e_{148}))^{2} \\
+& + (e_{178} - (mod - 1))^{2} + (e_{177}  \cdot  (1 - e_{177}))^{2} \\
+& + (e_{177}  \cdot  ((e_{178}) - (e_{148}) - (e_{179}^{2} + e_{180}^{2} \\
+& + e_{181}^{2} + e_{182}^{2})))^{2} \\
+& + ((1 - e_{177})  \cdot  ((e_{148}) - (e_{178}) - 1 - (e_{183}^{2} + e_{184}^{2} \\
+& + e_{185}^{2} + e_{186}^{2})))^{2} + (e_{147} - (e_{148}  \cdot  base))^{2} \\
+& + ((e_{147}) - ((mod)  \cdot  (e_{187}) + e_{146}))^{2} \\
+& + (e_{189} - (mod - 1))^{2} + (e_{188}  \cdot  (1 - e_{188}))^{2} \\
+& + (e_{188}  \cdot  ((e_{189}) - (e_{146}) - (e_{190}^{2} + e_{191}^{2} \\
+& + e_{192}^{2} + e_{193}^{2})))^{2} \\
+& + ((1 - e_{188})  \cdot  ((e_{146}) - (e_{189}) - 1 - (e_{194}^{2} + e_{195}^{2} \\
+& + e_{196}^{2} + e_{197}^{2})))^{2} + (e_{51} - ((e_{52})  \cdot  (e_{107}) \\
+& + (1 - e_{52})  \cdot  (e_{146})))^{2} + (e_{19} - ((e_{20})  \cdot  (e_{39}) \\
+& + (1 - e_{20})  \cdot  (e_{51})))^{2} + (RET - ((e_{0})  \cdot  (1) \\
+& + (1 - e_{0})  \cdot  (e_{19})))^{2} + (e_{199} - (2 - 1))^{2} \\
+& + (e_{198}  \cdot  (1 - e_{198}))^{2} \\
+& + (e_{198}  \cdot  ((e_{199}) - (candidate) - (e_{200}^{2} + e_{201}^{2} \\
+& + e_{202}^{2} + e_{203}^{2})))^{2} \\
+& + ((1 - e_{198})  \cdot  ((candidate) - (e_{199}) - 1 - (e_{204}^{2} \\
+& + e_{205}^{2} + e_{206}^{2} + e_{207}^{2})))^{2} \\
+& + (e_{210}  \cdot  (1 - e_{210}))^{2} \\
+& + (e_{210}  \cdot  ((2) - (candidate) - (e_{212}^{2} + e_{213}^{2} + e_{214}^{2} \\
+& + e_{215}^{2})))^{2} \\
+& + ((1 - e_{210})  \cdot  ((candidate) - (2) - 1 - (e_{216}^{2} + e_{217}^{2} \\
+& + e_{218}^{2} + e_{219}^{2})))^{2} + (e_{211}  \cdot  (1 - e_{211}))^{2} \\
+& + (e_{211}  \cdot  ((candidate) - (2) - (e_{220}^{2} + e_{221}^{2} + e_{222}^{2} \\
+& + e_{223}^{2})))^{2} \\
+& + ((1 - e_{211})  \cdot  ((2) - (candidate) - 1 - (e_{224}^{2} + e_{225}^{2} \\
+& + e_{226}^{2} + e_{227}^{2})))^{2} + (e_{209} - (e_{210}  \cdot  e_{211}))^{2} \\
+& + (e_{230}  \cdot  (1 - e_{230}))^{2} \\
+& + (e_{230}  \cdot  ((3) - (candidate) - (e_{232}^{2} + e_{233}^{2} + e_{234}^{2} \\
+& + e_{235}^{2})))^{2} \\
+& + ((1 - e_{230})  \cdot  ((candidate) - (3) - 1 - (e_{236}^{2} + e_{237}^{2} \\
+& + e_{238}^{2} + e_{239}^{2})))^{2} + (e_{231}  \cdot  (1 - e_{231}))^{2} \\
+& + (e_{231}  \cdot  ((candidate) - (3) - (e_{240}^{2} + e_{241}^{2} + e_{242}^{2} \\
+& + e_{243}^{2})))^{2} \\
+& + ((1 - e_{231})  \cdot  ((3) - (candidate) - 1 - (e_{244}^{2} + e_{245}^{2} \\
+& + e_{246}^{2} + e_{247}^{2})))^{2} + (e_{229} - (e_{230}  \cdot  e_{231}))^{2} \\
+& + ((candidate) - ((2)  \cdot  (e_{251}) + e_{250}))^{2} \\
+& + (e_{253} - (2 - 1))^{2} + (e_{252}  \cdot  (1 - e_{252}))^{2} \\
+& + (e_{252}  \cdot  ((e_{253}) - (e_{250}) - (e_{254}^{2} + e_{255}^{2} \\
+& + e_{256}^{2} + e_{257}^{2})))^{2} \\
+& + ((1 - e_{252})  \cdot  ((e_{250}) - (e_{253}) - 1 - (e_{258}^{2} + e_{259}^{2} \\
+& + e_{260}^{2} + e_{261}^{2})))^{2} + ((candidate) - ((2)  \cdot  (e_{265}) \\
+& + e_{264}))^{2} + (e_{267} - (2 - 1))^{2} + (e_{266}  \cdot  (1 - e_{266}))^{2} \\
+& + (e_{266}  \cdot  ((e_{267}) - (e_{264}) - (e_{268}^{2} + e_{269}^{2} \\
+& + e_{270}^{2} + e_{271}^{2})))^{2} \\
+& + ((1 - e_{266})  \cdot  ((e_{264}) - (e_{267}) - 1 - (e_{272}^{2} + e_{273}^{2} \\
+& + e_{274}^{2} + e_{275}^{2})))^{2} + (e_{262}  \cdot  (1 - e_{262}))^{2} \\
+& + (e_{262}  \cdot  ((0) - (e_{264}) - (e_{276}^{2} + e_{277}^{2} + e_{278}^{2} \\
+& + e_{279}^{2})))^{2} \\
+& + ((1 - e_{262})  \cdot  ((e_{264}) - (0) - 1 - (e_{280}^{2} + e_{281}^{2} \\
+& + e_{282}^{2} + e_{283}^{2})))^{2} + ((candidate) - ((2)  \cdot  (e_{285}) \\
+& + e_{284}))^{2} + (e_{287} - (2 - 1))^{2} + (e_{286}  \cdot  (1 - e_{286}))^{2} \\
+& + (e_{286}  \cdot  ((e_{287}) - (e_{284}) - (e_{288}^{2} + e_{289}^{2} \\
+& + e_{290}^{2} + e_{291}^{2})))^{2} \\
+& + ((1 - e_{286})  \cdot  ((e_{284}) - (e_{287}) - 1 - (e_{292}^{2} + e_{293}^{2} \\
+& + e_{294}^{2} + e_{295}^{2})))^{2} + (e_{263}  \cdot  (1 - e_{263}))^{2} \\
+& + (e_{263}  \cdot  ((e_{284}) - (0) - (e_{296}^{2} + e_{297}^{2} + e_{298}^{2} \\
+& + e_{299}^{2})))^{2} \\
+& + ((1 - e_{263})  \cdot  ((0) - (e_{284}) - 1 - (e_{300}^{2} + e_{301}^{2} \\
+& + e_{302}^{2} + e_{303}^{2})))^{2} + (e_{249} - (e_{262}  \cdot  e_{263}))^{2} \\
+& + (e_{307} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{307}, candidate, e_{306}))^{2} \\
+& + (e_{310} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{310}, candidate, e_{309}))^{2} \\
+& + (e_{314} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{314}, candidate, e_{313}))^{2} \\
+& + (e_{311}  \cdot  (1 - e_{311}))^{2} \\
+& + (e_{311}  \cdot  ((1) - (e_{313}) - (e_{315}^{2} + e_{316}^{2} + e_{317}^{2} \\
+& + e_{318}^{2})))^{2} \\
+& + ((1 - e_{311})  \cdot  ((e_{313}) - (1) - 1 - (e_{319}^{2} + e_{320}^{2} \\
+& + e_{321}^{2} + e_{322}^{2})))^{2} + (e_{324} - (candidate - 1))^{2} \\
+& + (P_power_mod(power_mod, power_mod, 2, e_{324}, candidate, e_{323}))^{2} \\
+& + (e_{312}  \cdot  (1 - e_{312}))^{2} \\
+& + (e_{312}  \cdot  ((e_{323}) - (1) - (e_{325}^{2} + e_{326}^{2} + e_{327}^{2} \\
+& + e_{328}^{2})))^{2} \\
+& + ((1 - e_{312})  \cdot  ((1) - (e_{323}) - 1 - (e_{329}^{2} + e_{330}^{2} \\
+& + e_{331}^{2} + e_{332}^{2})))^{2} + (e_{308} - (e_{311}  \cdot  e_{312}))^{2} \\
+& + (e_{305} - (1 - e_{308}))^{2} + (e_{304} - ((e_{305})  \cdot  (0) \\
+& + (1 - e_{305})  \cdot  (1)))^{2} + (e_{248} - ((e_{249})  \cdot  (0) \\
+& + (1 - e_{249})  \cdot  (e_{304})))^{2} + (e_{228} - ((e_{229})  \cdot  (1) \\
+& + (1 - e_{229})  \cdot  (e_{248})))^{2} + (e_{208} - ((e_{209})  \cdot  (1) \\
+& + (1 - e_{209})  \cdot  (e_{228})))^{2} + (RET - ((e_{198})  \cdot  (0) \\
+& + (1 - e_{198})  \cdot  (e_{208})))^{2} + (is_prime[t+1] - (0))^{2} \\
+& + (n[t+1] - (n))^{2}) \\
+\end{align*}
+\end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
+\section{Representación Simbólica}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
+\mathcal{D}_{sym} &= (\epsilon_{1}  \\mathit{cdot}  (1 - \epsilon_{1}))^2 + (\epsilon_{1}  \\mathit{cdot}  ((0) - (\mathit{exp}) - (\epsilon_{3}^2 + \epsilon_{4}^2 + \epsilon_{5}^2 + \epsilon_{6}^2)))^2 + \\
+&  ((1 - \epsilon_{1})  \\mathit{cdot}  ((\mathit{exp}) - (0) - 1 - (\epsilon_{7}^2 + \epsilon_{8}^2 + \epsilon_{9}^2 + \epsilon_{10}^2)))^2 + \\
+&  (\epsilon_{2}  \\mathit{cdot}  (1 - \epsilon_{2}))^2 + (\epsilon_{2}  \\mathit{cdot}  ((\mathit{exp}) - (0) - (\epsilon_{11}^2 + \epsilon_{12}^2 + \epsilon_{13}^2 + \epsilon_{14}^2)))^2 + \\
+&  ((1 - \epsilon_{2})  \\mathit{cdot}  ((0) - (\mathit{exp}) - 1 - (\epsilon_{15}^2 + \epsilon_{16}^2 + \epsilon_{17}^2 + \epsilon_{18}^2)))^2 + \\
+&  (\epsilon_{0} - (\epsilon_{1}  \\mathit{cdot}  \epsilon_{2}))^2 + (\epsilon_{21}  \\mathit{cdot}  (1 - \epsilon_{21}))^2 + \\
+&  (\epsilon_{21}  \\mathit{cdot}  ((1) - (\mathit{exp}) - (\epsilon_{23}^2 + \epsilon_{24}^2 + \epsilon_{25}^2 + \epsilon_{26}^2)))^2 + \\
+&  ((1 - \epsilon_{21})  \\mathit{cdot}  ((\mathit{exp}) - (1) - 1 - (\epsilon_{27}^2 + \epsilon_{28}^2 + \epsilon_{29}^2 + \epsilon_{30}^2)))^2 + \\
+&  (\epsilon_{22}  \\mathit{cdot}  (1 - \epsilon_{22}))^2 + (\epsilon_{22}  \\mathit{cdot}  ((\mathit{exp}) - (1) - (\epsilon_{31}^2 + \epsilon_{32}^2 + \epsilon_{33}^2 + \epsilon_{34}^2)))^2 + \\
+&  ((1 - \epsilon_{22})  \\mathit{cdot}  ((1) - (\mathit{exp}) - 1 - (\epsilon_{35}^2 + \epsilon_{36}^2 + \epsilon_{37}^2 + \epsilon_{38}^2)))^2 + \\
+&  (\epsilon_{20} - (\epsilon_{21}  \\mathit{cdot}  \epsilon_{22}))^2 + ((\mathit{base}) - ((mod)  \\mathit{cdot}  (\epsilon_{40}) + \epsilon_{39}))^2 + \\
+&  (\epsilon_{42} - (mod - 1))^2 + (\epsilon_{41}  \\mathit{cdot}  (1 - \epsilon_{41}))^2 + (\epsilon_{41}  \\mathit{cdot}  ((\epsilon_{42}) - (\epsilon_{39}) - (\epsilon_{43}^2 + \epsilon_{44}^2 + \epsilon_{45}^2 + \epsilon_{46}^2)))^2 + \\
+&  ((1 - \epsilon_{41})  \\mathit{cdot}  ((\epsilon_{39}) - (\epsilon_{42}) - 1 - (\epsilon_{47}^2 + \epsilon_{48}^2 + \epsilon_{49}^2 + \epsilon_{50}^2)))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{54}) + \epsilon_{53}))^2 + (\epsilon_{56} - (2 - 1))^2 + \\
+&  (\epsilon_{55}  \\mathit{cdot}  (1 - \epsilon_{55}))^2 + (\epsilon_{55}  \\mathit{cdot}  ((\epsilon_{56}) - (\epsilon_{53}) - (\epsilon_{57}^2 + \epsilon_{58}^2 + \epsilon_{59}^2 + \epsilon_{60}^2)))^2 + \\
+&  ((1 - \epsilon_{55})  \\mathit{cdot}  ((\epsilon_{53}) - (\epsilon_{56}) - 1 - (\epsilon_{61}^2 + \epsilon_{62}^2 + \epsilon_{63}^2 + \epsilon_{64}^2)))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{68}) + \epsilon_{67}))^2 + (\epsilon_{70} - (2 - 1))^2 + \\
+&  (\epsilon_{69}  \\mathit{cdot}  (1 - \epsilon_{69}))^2 + (\epsilon_{69}  \\mathit{cdot}  ((\epsilon_{70}) - (\epsilon_{67}) - (\epsilon_{71}^2 + \epsilon_{72}^2 + \epsilon_{73}^2 + \epsilon_{74}^2)))^2 + \\
+&  ((1 - \epsilon_{69})  \\mathit{cdot}  ((\epsilon_{67}) - (\epsilon_{70}) - 1 - (\epsilon_{75}^2 + \epsilon_{76}^2 + \epsilon_{77}^2 + \epsilon_{78}^2)))^2 + \\
+&  (\epsilon_{65}  \\mathit{cdot}  (1 - \epsilon_{65}))^2 + (\epsilon_{65}  \\mathit{cdot}  ((0) - (\epsilon_{67}) - (\epsilon_{79}^2 + \epsilon_{80}^2 + \epsilon_{81}^2 + \epsilon_{82}^2)))^2 + \\
+&  ((1 - \epsilon_{65})  \\mathit{cdot}  ((\epsilon_{67}) - (0) - 1 - (\epsilon_{83}^2 + \epsilon_{84}^2 + \epsilon_{85}^2 + \epsilon_{86}^2)))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{88}) + \epsilon_{87}))^2 + (\epsilon_{90} - (2 - 1))^2 + \\
+&  (\epsilon_{89}  \\mathit{cdot}  (1 - \epsilon_{89}))^2 + (\epsilon_{89}  \\mathit{cdot}  ((\epsilon_{90}) - (\epsilon_{87}) - (\epsilon_{91}^2 + \epsilon_{92}^2 + \epsilon_{93}^2 + \epsilon_{94}^2)))^2 + \\
+&  ((1 - \epsilon_{89})  \\mathit{cdot}  ((\epsilon_{87}) - (\epsilon_{90}) - 1 - (\epsilon_{95}^2 + \epsilon_{96}^2 + \epsilon_{97}^2 + \epsilon_{98}^2)))^2 + \\
+&  (\epsilon_{66}  \\mathit{cdot}  (1 - \epsilon_{66}))^2 + (\epsilon_{66}  \\mathit{cdot}  ((\epsilon_{87}) - (0) - (\epsilon_{99}^2 + \epsilon_{100}^2 + \epsilon_{101}^2 + \epsilon_{102}^2)))^2 + \\
+&  ((1 - \epsilon_{66})  \\mathit{cdot}  ((0) - (\epsilon_{87}) - 1 - (\epsilon_{103}^2 + \epsilon_{104}^2 + \epsilon_{105}^2 + \epsilon_{106}^2)))^2 + \\
+&  (\epsilon_{52} - (\epsilon_{65}  \\mathit{cdot}  \epsilon_{66}))^2 + ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{110}) + \epsilon_{111}))^2 + \\
+&  (\epsilon_{113} - (2 - 1))^2 + (\epsilon_{112}  \\mathit{cdot}  (1 - \epsilon_{112}))^2 + (\epsilon_{112}  \\mathit{cdot}  ((\epsilon_{113}) - (\epsilon_{111}) - (\epsilon_{114}^2 + \epsilon_{115}^2 + \epsilon_{116}^2 + \epsilon_{117}^2)))^2 + \\
+&  ((1 - \epsilon_{112})  \\mathit{cdot}  ((\epsilon_{111}) - (\epsilon_{113}) - 1 - (\epsilon_{118}^2 + \epsilon_{119}^2 + \epsilon_{120}^2 + \epsilon_{121}^2)))^2 + \\
+&  (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, \mathit{base}, \epsilon_{110}, mod, \epsilon_{109}))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{123}) + \epsilon_{124}))^2 + (\epsilon_{126} - (2 - 1))^2 + \\
+&  (\epsilon_{125}  \\mathit{cdot}  (1 - \epsilon_{125}))^2 + (\epsilon_{125}  \\mathit{cdot}  ((\epsilon_{126}) - (\epsilon_{124}) - (\epsilon_{127}^2 + \epsilon_{128}^2 + \epsilon_{129}^2 + \epsilon_{130}^2)))^2 + \\
+&  ((1 - \epsilon_{125})  \\mathit{cdot}  ((\epsilon_{124}) - (\epsilon_{126}) - 1 - (\epsilon_{131}^2 + \epsilon_{132}^2 + \epsilon_{133}^2 + \epsilon_{134}^2)))^2 + \\
+&  (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, \mathit{base}, \epsilon_{123}, mod, \epsilon_{122}))^2 + \\
+&  (\epsilon_{108} - (\epsilon_{109}  \\mathit{cdot}  \epsilon_{122}))^2 + ((\epsilon_{108}) - ((mod)  \\mathit{cdot}  (\epsilon_{135}) + \epsilon_{107}))^2 + \\
+&  (\epsilon_{137} - (mod - 1))^2 + (\epsilon_{136}  \\mathit{cdot}  (1 - \epsilon_{136}))^2 + (\epsilon_{136}  \\mathit{cdot}  ((\epsilon_{137}) - (\epsilon_{107}) - (\epsilon_{138}^2 + \epsilon_{139}^2 + \epsilon_{140}^2 + \epsilon_{141}^2)))^2 + \\
+&  ((1 - \epsilon_{136})  \\mathit{cdot}  ((\epsilon_{107}) - (\epsilon_{137}) - 1 - (\epsilon_{142}^2 + \epsilon_{143}^2 + \epsilon_{144}^2 + \epsilon_{145}^2)))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{151}) + \epsilon_{152}))^2 + (\epsilon_{154} - (2 - 1))^2 + \\
+&  (\epsilon_{153}  \\mathit{cdot}  (1 - \epsilon_{153}))^2 + (\epsilon_{153}  \\mathit{cdot}  ((\epsilon_{154}) - (\epsilon_{152}) - (\epsilon_{155}^2 + \epsilon_{156}^2 + \epsilon_{157}^2 + \epsilon_{158}^2)))^2 + \\
+&  ((1 - \epsilon_{153})  \\mathit{cdot}  ((\epsilon_{152}) - (\epsilon_{154}) - 1 - (\epsilon_{159}^2 + \epsilon_{160}^2 + \epsilon_{161}^2 + \epsilon_{162}^2)))^2 + \\
+&  (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, \mathit{base}, \epsilon_{151}, mod, \epsilon_{150}))^2 + \\
+&  ((\mathit{exp}) - ((2)  \\mathit{cdot}  (\epsilon_{164}) + \epsilon_{165}))^2 + (\epsilon_{167} - (2 - 1))^2 + \\
+&  (\epsilon_{166}  \\mathit{cdot}  (1 - \epsilon_{166}))^2 + (\epsilon_{166}  \\mathit{cdot}  ((\epsilon_{167}) - (\epsilon_{165}) - (\epsilon_{168}^2 + \epsilon_{169}^2 + \epsilon_{170}^2 + \epsilon_{171}^2)))^2 + \\
+&  ((1 - \epsilon_{166})  \\mathit{cdot}  ((\epsilon_{165}) - (\epsilon_{167}) - 1 - (\epsilon_{172}^2 + \epsilon_{173}^2 + \epsilon_{174}^2 + \epsilon_{175}^2)))^2 + \\
+&  (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, \mathit{base}, \epsilon_{164}, mod, \epsilon_{163}))^2 + \\
+&  (\epsilon_{149} - (\epsilon_{150}  \\mathit{cdot}  \epsilon_{163}))^2 + ((\epsilon_{149}) - ((mod)  \\mathit{cdot}  (\epsilon_{176}) + \epsilon_{148}))^2 + \\
+&  (\epsilon_{178} - (mod - 1))^2 + (\epsilon_{177}  \\mathit{cdot}  (1 - \epsilon_{177}))^2 + (\epsilon_{177}  \\mathit{cdot}  ((\epsilon_{178}) - (\epsilon_{148}) - (\epsilon_{179}^2 + \epsilon_{180}^2 + \epsilon_{181}^2 + \epsilon_{182}^2)))^2 + \\
+&  ((1 - \epsilon_{177})  \\mathit{cdot}  ((\epsilon_{148}) - (\epsilon_{178}) - 1 - (\epsilon_{183}^2 + \epsilon_{184}^2 + \epsilon_{185}^2 + \epsilon_{186}^2)))^2 + \\
+&  (\epsilon_{147} - (\epsilon_{148}  \\mathit{cdot}  \mathit{base}))^2 + ((\epsilon_{147}) - ((mod)  \\mathit{cdot}  (\epsilon_{187}) + \epsilon_{146}))^2 + \\
+&  (\epsilon_{189} - (mod - 1))^2 + (\epsilon_{188}  \\mathit{cdot}  (1 - \epsilon_{188}))^2 + (\epsilon_{188}  \\mathit{cdot}  ((\epsilon_{189}) - (\epsilon_{146}) - (\epsilon_{190}^2 + \epsilon_{191}^2 + \epsilon_{192}^2 + \epsilon_{193}^2)))^2 + \\
+&  ((1 - \epsilon_{188})  \\mathit{cdot}  ((\epsilon_{146}) - (\epsilon_{189}) - 1 - (\epsilon_{194}^2 + \epsilon_{195}^2 + \epsilon_{196}^2 + \epsilon_{197}^2)))^2 + \\
+&  (\epsilon_{51} - ((\epsilon_{52})  \\mathit{cdot}  (\epsilon_{107}) + (1 - \epsilon_{52})  \\mathit{cdot}  (\epsilon_{146})))^2 + \\
+&  (\epsilon_{19} - ((\epsilon_{20})  \\mathit{cdot}  (\epsilon_{39}) + (1 - \epsilon_{20})  \\mathit{cdot}  (\epsilon_{51})))^2 + \\
+&  (\mathit{RET} - ((\epsilon_{0})  \\mathit{cdot}  (1) + (1 - \epsilon_{0})  \\mathit{cdot}  (\epsilon_{19})))^2 + \\
+&  (\epsilon_{199} - (2 - 1))^2 + (\epsilon_{198}  \\mathit{cdot}  (1 - \epsilon_{198}))^2 + (\epsilon_{198}  \\mathit{cdot}  ((\epsilon_{199}) - (\mathit{candidate}) - (\epsilon_{200}^2 + \epsilon_{201}^2 + \epsilon_{202}^2 + \epsilon_{203}^2)))^2 + \\
+&  ((1 - \epsilon_{198})  \\mathit{cdot}  ((\mathit{candidate}) - (\epsilon_{199}) - 1 - (\epsilon_{204}^2 + \epsilon_{205}^2 + \epsilon_{206}^2 + \epsilon_{207}^2)))^2 + \\
+&  (\epsilon_{210}  \\mathit{cdot}  (1 - \epsilon_{210}))^2 + (\epsilon_{210}  \\mathit{cdot}  ((2) - (\mathit{candidate}) - (\epsilon_{212}^2 + \epsilon_{213}^2 + \epsilon_{214}^2 + \epsilon_{215}^2)))^2 + \\
+&  ((1 - \epsilon_{210})  \\mathit{cdot}  ((\mathit{candidate}) - (2) - 1 - (\epsilon_{216}^2 + \epsilon_{217}^2 + \epsilon_{218}^2 + \epsilon_{219}^2)))^2 + \\
+&  (\epsilon_{211}  \\mathit{cdot}  (1 - \epsilon_{211}))^2 + (\epsilon_{211}  \\mathit{cdot}  ((\mathit{candidate}) - (2) - (\epsilon_{220}^2 + \epsilon_{221}^2 + \epsilon_{222}^2 + \epsilon_{223}^2)))^2 + \\
+&  ((1 - \epsilon_{211})  \\mathit{cdot}  ((2) - (\mathit{candidate}) - 1 - (\epsilon_{224}^2 + \epsilon_{225}^2 + \epsilon_{226}^2 + \epsilon_{227}^2)))^2 + \\
+&  (\epsilon_{209} - (\epsilon_{210}  \\mathit{cdot}  \epsilon_{211}))^2 + (\epsilon_{230}  \\mathit{cdot}  (1 - \epsilon_{230}))^2 + \\
+&  (\epsilon_{230}  \\mathit{cdot}  ((3) - (\mathit{candidate}) - (\epsilon_{232}^2 + \epsilon_{233}^2 + \epsilon_{234}^2 + \epsilon_{235}^2)))^2 + \\
+&  ((1 - \epsilon_{230})  \\mathit{cdot}  ((\mathit{candidate}) - (3) - 1 - (\epsilon_{236}^2 + \epsilon_{237}^2 + \epsilon_{238}^2 + \epsilon_{239}^2)))^2 + \\
+&  (\epsilon_{231}  \\mathit{cdot}  (1 - \epsilon_{231}))^2 + (\epsilon_{231}  \\mathit{cdot}  ((\mathit{candidate}) - (3) - (\epsilon_{240}^2 + \epsilon_{241}^2 + \epsilon_{242}^2 + \epsilon_{243}^2)))^2 + \\
+&  ((1 - \epsilon_{231})  \\mathit{cdot}  ((3) - (\mathit{candidate}) - 1 - (\epsilon_{244}^2 + \epsilon_{245}^2 + \epsilon_{246}^2 + \epsilon_{247}^2)))^2 + \\
+&  (\epsilon_{229} - (\epsilon_{230}  \\mathit{cdot}  \epsilon_{231}))^2 + ((\mathit{candidate}) - ((2)  \\mathit{cdot}  (\epsilon_{251}) + \epsilon_{250}))^2 + \\
+&  (\epsilon_{253} - (2 - 1))^2 + (\epsilon_{252}  \\mathit{cdot}  (1 - \epsilon_{252}))^2 + (\epsilon_{252}  \\mathit{cdot}  ((\epsilon_{253}) - (\epsilon_{250}) - (\epsilon_{254}^2 + \epsilon_{255}^2 + \epsilon_{256}^2 + \epsilon_{257}^2)))^2 + \\
+&  ((1 - \epsilon_{252})  \\mathit{cdot}  ((\epsilon_{250}) - (\epsilon_{253}) - 1 - (\epsilon_{258}^2 + \epsilon_{259}^2 + \epsilon_{260}^2 + \epsilon_{261}^2)))^2 + \\
+&  ((\mathit{candidate}) - ((2)  \\mathit{cdot}  (\epsilon_{265}) + \epsilon_{264}))^2 + (\epsilon_{267} - (2 - 1))^2 + \\
+&  (\epsilon_{266}  \\mathit{cdot}  (1 - \epsilon_{266}))^2 + (\epsilon_{266}  \\mathit{cdot}  ((\epsilon_{267}) - (\epsilon_{264}) - (\epsilon_{268}^2 + \epsilon_{269}^2 + \epsilon_{270}^2 + \epsilon_{271}^2)))^2 + \\
+&  ((1 - \epsilon_{266})  \\mathit{cdot}  ((\epsilon_{264}) - (\epsilon_{267}) - 1 - (\epsilon_{272}^2 + \epsilon_{273}^2 + \epsilon_{274}^2 + \epsilon_{275}^2)))^2 + \\
+&  (\epsilon_{262}  \\mathit{cdot}  (1 - \epsilon_{262}))^2 + (\epsilon_{262}  \\mathit{cdot}  ((0) - (\epsilon_{264}) - (\epsilon_{276}^2 + \epsilon_{277}^2 + \epsilon_{278}^2 + \epsilon_{279}^2)))^2 + \\
+&  ((1 - \epsilon_{262})  \\mathit{cdot}  ((\epsilon_{264}) - (0) - 1 - (\epsilon_{280}^2 + \epsilon_{281}^2 + \epsilon_{282}^2 + \epsilon_{283}^2)))^2 + \\
+&  ((\mathit{candidate}) - ((2)  \\mathit{cdot}  (\epsilon_{285}) + \epsilon_{284}))^2 + (\epsilon_{287} - (2 - 1))^2 + \\
+&  (\epsilon_{286}  \\mathit{cdot}  (1 - \epsilon_{286}))^2 + (\epsilon_{286}  \\mathit{cdot}  ((\epsilon_{287}) - (\epsilon_{284}) - (\epsilon_{288}^2 + \epsilon_{289}^2 + \epsilon_{290}^2 + \epsilon_{291}^2)))^2 + \\
+&  ((1 - \epsilon_{286})  \\mathit{cdot}  ((\epsilon_{284}) - (\epsilon_{287}) - 1 - (\epsilon_{292}^2 + \epsilon_{293}^2 + \epsilon_{294}^2 + \epsilon_{295}^2)))^2 + \\
+&  (\epsilon_{263}  \\mathit{cdot}  (1 - \epsilon_{263}))^2 + (\epsilon_{263}  \\mathit{cdot}  ((\epsilon_{284}) - (0) - (\epsilon_{296}^2 + \epsilon_{297}^2 + \epsilon_{298}^2 + \epsilon_{299}^2)))^2 + \\
+&  ((1 - \epsilon_{263})  \\mathit{cdot}  ((0) - (\epsilon_{284}) - 1 - (\epsilon_{300}^2 + \epsilon_{301}^2 + \epsilon_{302}^2 + \epsilon_{303}^2)))^2 + \\
+&  (\epsilon_{249} - (\epsilon_{262}  \\mathit{cdot}  \epsilon_{263}))^2 + (\epsilon_{307} - (\mathit{candidate} - 1))^2 + \\
+&  (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, 2, \epsilon_{307}, \mathit{candidate}, \epsilon_{306}))^2 + \\
+&  (\epsilon_{310} - (\mathit{candidate} - 1))^2 + (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, 2, \epsilon_{310}, \mathit{candidate}, \epsilon_{309}))^2 + \\
+&  (\epsilon_{314} - (\mathit{candidate} - 1))^2 + (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, 2, \epsilon_{314}, \mathit{candidate}, \epsilon_{313}))^2 + \\
+&  (\epsilon_{311}  \\mathit{cdot}  (1 - \epsilon_{311}))^2 + (\epsilon_{311}  \\mathit{cdot}  ((1) - (\epsilon_{313}) - (\epsilon_{315}^2 + \epsilon_{316}^2 + \epsilon_{317}^2 + \epsilon_{318}^2)))^2 + \\
+&  ((1 - \epsilon_{311})  \\mathit{cdot}  ((\epsilon_{313}) - (1) - 1 - (\epsilon_{319}^2 + \epsilon_{320}^2 + \epsilon_{321}^2 + \epsilon_{322}^2)))^2 + \\
+&  (\epsilon_{324} - (\mathit{candidate} - 1))^2 + (\Phi_{\text{power\_mod}}(\mathit{power\_mod}, \mathit{power\_mod}, 2, \epsilon_{324}, \mathit{candidate}, \epsilon_{323}))^2 + \\
+&  (\epsilon_{312}  \\mathit{cdot}  (1 - \epsilon_{312}))^2 + (\epsilon_{312}  \\mathit{cdot}  ((\epsilon_{323}) - (1) - (\epsilon_{325}^2 + \epsilon_{326}^2 + \epsilon_{327}^2 + \epsilon_{328}^2)))^2 + \\
+&  ((1 - \epsilon_{312})  \\mathit{cdot}  ((1) - (\epsilon_{323}) - 1 - (\epsilon_{329}^2 + \epsilon_{330}^2 + \epsilon_{331}^2 + \epsilon_{332}^2)))^2 + \\
+&  (\epsilon_{308} - (\epsilon_{311}  \\mathit{cdot}  \epsilon_{312}))^2 + (\epsilon_{305} - (1 - \epsilon_{308}))^2 + \\
+&  (\epsilon_{304} - ((\epsilon_{305})  \\mathit{cdot}  (0) + (1 - \epsilon_{305})  \\mathit{cdot}  (1)))^2 + \\
+&  (\epsilon_{248} - ((\epsilon_{249})  \\mathit{cdot}  (0) + (1 - \epsilon_{249})  \\mathit{cdot}  (\epsilon_{304})))^2 + \\
+&  (\epsilon_{228} - ((\epsilon_{229})  \\mathit{cdot}  (1) + (1 - \epsilon_{229})  \\mathit{cdot}  (\epsilon_{248})))^2 + \\
+&  (\epsilon_{208} - ((\epsilon_{209})  \\mathit{cdot}  (1) + (1 - \epsilon_{209})  \\mathit{cdot}  (\epsilon_{228})))^2 + \\
+&  (\mathit{RET} - ((\epsilon_{198})  \\mathit{cdot}  (0) + (1 - \epsilon_{198})  \\mathit{cdot}  (\epsilon_{208})))^2 + \\
+&  (\mathit{is\_prime} - (0))^2 + (\mathit{n} - (\mathit{n}))^2
+\end{dmath*}\newpage
+\section{Representación Operacional}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{342}} \left( (x_{339}  \x_{246}  (1 - x_{339}))^2 + (x_{339}  \x_{246}  ((0) - (x_{334}) - (x_{332}^2 + x_{338}^2 + x_{341}^2 + x_{340}^2)))^2 + ((1 - x_{339})  \x_{246}  ((x_{334}) - (0) - 1 - (x_{336}^2 + x_{331}^2 + x_{330}^2 + x_{304}^2)))^2 + (x_{333}  \x_{246}  (1 - x_{333}))^2 + (x_{333}  \x_{246}  ((x_{334}) - (0) - (x_{318}^2 + x_{316}^2 + x_{242}^2 + x_{255}^2)))^2 + ((1 - x_{333})  \x_{246}  ((0) - (x_{334}) - 1 - (x_{250}^2 + x_{278}^2 + x_{289}^2 + x_{301}^2)))^2 + (x_{337} - (x_{339}  \x_{246}  x_{333}))^2 + (x_{260}  \x_{246}  (1 - x_{260}))^2 + (x_{260}  \x_{246}  ((1) - (x_{334}) - (x_{238}^2 + x_{272}^2 + x_{305}^2 + x_{321}^2)))^2 + ((1 - x_{260})  \x_{246}  ((x_{334}) - (1) - 1 - (x_{317}^2 + x_{266}^2 + x_{281}^2 + x_{245}^2)))^2 + (x_{310}  \x_{246}  (1 - x_{310}))^2 + (x_{310}  \x_{246}  ((x_{334}) - (1) - (x_{274}^2 + x_{309}^2 + x_{241}^2 + x_{302}^2)))^2 + ((1 - x_{310})  \x_{246}  ((1) - (x_{334}) - 1 - (x_{293}^2 + x_{263}^2 + x_{324}^2 + x_{287}^2)))^2 + (x_{259} - (x_{260}  \x_{246}  x_{310}))^2 + ((x_{249}) - ((mod)  \x_{246}  (x_{319}) + x_{299}))^2 + (x_{297} - (mod - 1))^2 + (x_{248}  \x_{246}  (1 - x_{248}))^2 + (x_{248}  \x_{246}  ((x_{297}) - (x_{299}) - (x_{243}^2 + x_{323}^2 + x_{269}^2 + x_{252}^2)))^2 + ((1 - x_{248})  \x_{246}  ((x_{299}) - (x_{297}) - 1 - (x_{271}^2 + x_{307}^2 + x_{264}^2 + x_{273}^2)))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{277}) + x_{328}))^2 + (x_{280} - (2 - 1))^2 + (x_{308}  \x_{246}  (1 - x_{308}))^2 + (x_{308}  \x_{246}  ((x_{280}) - (x_{328}) - (x_{315}^2 + x_{303}^2 + x_{313}^2 + x_{320}^2)))^2 + ((1 - x_{308})  \x_{246}  ((x_{328}) - (x_{280}) - 1 - (x_{295}^2 + x_{244}^2 + x_{298}^2 + x_{254}^2)))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{286}) + x_{239}))^2 + (x_{291} - (2 - 1))^2 + (x_{300}  \x_{246}  (1 - x_{300}))^2 + (x_{300}  \x_{246}  ((x_{291}) - (x_{239}) - (x_{270}^2 + x_{267}^2 + x_{283}^2 + x_{285}^2)))^2 + ((1 - x_{300})  \x_{246}  ((x_{239}) - (x_{291}) - 1 - (x_{282}^2 + x_{288}^2 + x_{258}^2 + x_{268}^2)))^2 + (x_{306}  \x_{246}  (1 - x_{306}))^2 + (x_{306}  \x_{246}  ((0) - (x_{239}) - (x_{326}^2 + x_{253}^2 + x_{247}^2 + x_{262}^2)))^2 + ((1 - x_{306})  \x_{246}  ((x_{239}) - (0) - 1 - (x_{276}^2 + x_{261}^2 + x_{251}^2 + x_{294}^2)))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{327}) + x_{279}))^2 + (x_{296} - (2 - 1))^2 + (x_{265}  \x_{246}  (1 - x_{265}))^2 + (x_{265}  \x_{246}  ((x_{296}) - (x_{279}) - (x_{311}^2 + x_{322}^2 + x_{284}^2 + x_{292}^2)))^2 + ((1 - x_{265})  \x_{246}  ((x_{279}) - (x_{296}) - 1 - (x_{314}^2 + x_{275}^2 + x_{290}^2 + x_{257}^2)))^2 + (x_{240}  \x_{246}  (1 - x_{240}))^2 + (x_{240}  \x_{246}  ((x_{279}) - (0) - (x_{312}^2 + x_{40}^2 + x_{76}^2 + x_{137}^2)))^2 + ((1 - x_{240})  \x_{246}  ((0) - (x_{279}) - 1 - (x_{230}^2 + x_{207}^2 + x_{116}^2 + x_{115}^2)))^2 + (x_{325} - (x_{306}  \x_{246}  x_{240}))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{228}) + x_{81}))^2 + (x_{43} - (2 - 1))^2 + (x_{61}  \x_{246}  (1 - x_{61}))^2 + (x_{61}  \x_{246}  ((x_{43}) - (x_{81}) - (x_{161}^2 + x_{193}^2 + x_{94}^2 + x_{9}^2)))^2 + ((1 - x_{61})  \x_{246}  ((x_{81}) - (x_{43}) - 1 - (x_{172}^2 + x_{91}^2 + x_{136}^2 + x_{15}^2)))^2 + (x_{1}(x_{3}, x_{3}, x_{249}, x_{228}, mod, x_{73}))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{126}) + x_{219}))^2 + (x_{227} - (2 - 1))^2 + (x_{231}  \x_{246}  (1 - x_{231}))^2 + (x_{231}  \x_{246}  ((x_{227}) - (x_{219}) - (x_{188}^2 + x_{39}^2 + x_{79}^2 + x_{223}^2)))^2 + ((1 - x_{231})  \x_{246}  ((x_{219}) - (x_{227}) - 1 - (x_{127}^2 + x_{118}^2 + x_{153}^2 + x_{19}^2)))^2 + (x_{1}(x_{3}, x_{3}, x_{249}, x_{126}, mod, x_{213}))^2 + (x_{98} - (x_{73}  \x_{246}  x_{213}))^2 + ((x_{98}) - ((mod)  \x_{246}  (x_{84}) + x_{6}))^2 + (x_{83} - (mod - 1))^2 + (x_{205}  \x_{246}  (1 - x_{205}))^2 + (x_{205}  \x_{246}  ((x_{83}) - (x_{6}) - (x_{85}^2 + x_{18}^2 + x_{203}^2 + x_{131}^2)))^2 + ((1 - x_{205})  \x_{246}  ((x_{6}) - (x_{83}) - 1 - (x_{189}^2 + x_{226}^2 + x_{212}^2 + x_{150}^2)))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{108}) + x_{134}))^2 + (x_{169} - (2 - 1))^2 + (x_{49}  \x_{246}  (1 - x_{49}))^2 + (x_{49}  \x_{246}  ((x_{169}) - (x_{134}) - (x_{177}^2 + x_{197}^2 + x_{139}^2 + x_{200}^2)))^2 + ((1 - x_{49})  \x_{246}  ((x_{134}) - (x_{169}) - 1 - (x_{89}^2 + x_{42}^2 + x_{178}^2 + x_{148}^2)))^2 + (x_{1}(x_{3}, x_{3}, x_{249}, x_{108}, mod, x_{45}))^2 + ((x_{334}) - ((2)  \x_{246}  (x_{38}) + x_{211}))^2 + (x_{27} - (2 - 1))^2 + (x_{29}  \x_{246}  (1 - x_{29}))^2 + (x_{29}  \x_{246}  ((x_{27}) - (x_{211}) - (x_{25}^2 + x_{147}^2 + x_{138}^2 + x_{140}^2)))^2 + ((1 - x_{29})  \x_{246}  ((x_{211}) - (x_{27}) - 1 - (x_{35}^2 + x_{48}^2 + x_{186}^2 + x_{101}^2)))^2 + (x_{1}(x_{3}, x_{3}, x_{249}, x_{38}, mod, x_{60}))^2 + (x_{158} - (x_{45}  \x_{246}  x_{60}))^2 + ((x_{158}) - ((mod)  \x_{246}  (x_{184}) + x_{75}))^2 + (x_{53} - (mod - 1))^2 + (x_{96}  \x_{246}  (1 - x_{96}))^2 + (x_{96}  \x_{246}  ((x_{53}) - (x_{75}) - (x_{23}^2 + x_{12}^2 + x_{36}^2 + x_{16}^2)))^2 + ((1 - x_{96})  \x_{246}  ((x_{75}) - (x_{53}) - 1 - (x_{107}^2 + x_{105}^2 + x_{70}^2 + x_{125}^2)))^2 + (x_{69} - (x_{75}  \x_{246}  x_{249}))^2 + ((x_{69}) - ((mod)  \x_{246}  (x_{46}) + x_{151}))^2 + (x_{202} - (mod - 1))^2 + (x_{103}  \x_{246}  (1 - x_{103}))^2 + (x_{103}  \x_{246}  ((x_{202}) - (x_{151}) - (x_{100}^2 + x_{11}^2 + x_{155}^2 + x_{233}^2)))^2 + ((1 - x_{103})  \x_{246}  ((x_{151}) - (x_{202}) - 1 - (x_{215}^2 + x_{142}^2 + x_{72}^2 + x_{175}^2)))^2 + (x_{329} - ((x_{325})  \x_{246}  (x_{6}) + (1 - x_{325})  \x_{246}  (x_{151})))^2 + (x_{256} - ((x_{259})  \x_{246}  (x_{299}) + (1 - x_{259})  \x_{246}  (x_{329})))^2 + (x_{335} - ((x_{337})  \x_{246}  (1) + (1 - x_{337})  \x_{246}  (x_{256})))^2 + (x_{51} - (2 - 1))^2 + (x_{117}  \x_{246}  (1 - x_{117}))^2 + (x_{117}  \x_{246}  ((x_{51}) - (x_{2}) - (x_{111}^2 + x_{123}^2 + x_{174}^2 + x_{192}^2)))^2 + ((1 - x_{117})  \x_{246}  ((x_{2}) - (x_{51}) - 1 - (x_{92}^2 + x_{217}^2 + x_{224}^2 + x_{159}^2)))^2 + (x_{152}  \x_{246}  (1 - x_{152}))^2 + (x_{152}  \x_{246}  ((2) - (x_{2}) - (x_{41}^2 + x_{162}^2 + x_{154}^2 + x_{113}^2)))^2 + ((1 - x_{152})  \x_{246}  ((x_{2}) - (2) - 1 - (x_{220}^2 + x_{179}^2 + x_{77}^2 + x_{157}^2)))^2 + (x_{66}  \x_{246}  (1 - x_{66}))^2 + (x_{66}  \x_{246}  ((x_{2}) - (2) - (x_{198}^2 + x_{196}^2 + x_{171}^2 + x_{30}^2)))^2 + ((1 - x_{66})  \x_{246}  ((2) - (x_{2}) - 1 - (x_{86}^2 + x_{209}^2 + x_{187}^2 + x_{166}^2)))^2 + (x_{57} - (x_{152}  \x_{246}  x_{66}))^2 + (x_{183}  \x_{246}  (1 - x_{183}))^2 + (x_{183}  \x_{246}  ((3) - (x_{2}) - (x_{144}^2 + x_{232}^2 + x_{121}^2 + x_{201}^2)))^2 + ((1 - x_{183})  \x_{246}  ((x_{2}) - (3) - 1 - (x_{216}^2 + x_{143}^2 + x_{167}^2 + x_{44}^2)))^2 + (x_{124}  \x_{246}  (1 - x_{124}))^2 + (x_{124}  \x_{246}  ((x_{2}) - (3) - (x_{80}^2 + x_{129}^2 + x_{122}^2 + x_{26}^2)))^2 + ((1 - x_{124})  \x_{246}  ((3) - (x_{2}) - 1 - (x_{74}^2 + x_{59}^2 + x_{182}^2 + x_{160}^2)))^2 + (x_{191} - (x_{183}  \x_{246}  x_{124}))^2 + ((x_{2}) - ((2)  \x_{246}  (x_{145}) + x_{47}))^2 + (x_{55} - (2 - 1))^2 + (x_{120}  \x_{246}  (1 - x_{120}))^2 + (x_{120}  \x_{246}  ((x_{55}) - (x_{47}) - (x_{210}^2 + x_{21}^2 + x_{24}^2 + x_{110}^2)))^2 + ((1 - x_{120})  \x_{246}  ((x_{47}) - (x_{55}) - 1 - (x_{52}^2 + x_{114}^2 + x_{71}^2 + x_{34}^2)))^2 + ((x_{2}) - ((2)  \x_{246}  (x_{208}) + x_{63}))^2 + (x_{218} - (2 - 1))^2 + (x_{5}  \x_{246}  (1 - x_{5}))^2 + (x_{5}  \x_{246}  ((x_{218}) - (x_{63}) - (x_{82}^2 + x_{7}^2 + x_{132}^2 + x_{236}^2)))^2 + ((1 - x_{5})  \x_{246}  ((x_{63}) - (x_{218}) - 1 - (x_{141}^2 + x_{65}^2 + x_{176}^2 + x_{14}^2)))^2 + (x_{204}  \x_{246}  (1 - x_{204}))^2 + (x_{204}  \x_{246}  ((0) - (x_{63}) - (x_{62}^2 + x_{229}^2 + x_{149}^2 + x_{78}^2)))^2 + ((1 - x_{204})  \x_{246}  ((x_{63}) - (0) - 1 - (x_{68}^2 + x_{93}^2 + x_{102}^2 + x_{50}^2)))^2 + ((x_{2}) - ((2)  \x_{246}  (x_{88}) + x_{10}))^2 + (x_{135} - (2 - 1))^2 + (x_{222}  \x_{246}  (1 - x_{222}))^2 + (x_{222}  \x_{246}  ((x_{135}) - (x_{10}) - (x_{128}^2 + x_{173}^2 + x_{54}^2 + x_{164}^2)))^2 + ((1 - x_{222})  \x_{246}  ((x_{10}) - (x_{135}) - 1 - (x_{56}^2 + x_{195}^2 + x_{146}^2 + x_{190}^2)))^2 + (x_{199}  \x_{246}  (1 - x_{199}))^2 + (x_{199}  \x_{246}  ((x_{10}) - (0) - (x_{181}^2 + x_{225}^2 + x_{8}^2 + x_{206}^2)))^2 + ((1 - x_{199})  \x_{246}  ((0) - (x_{10}) - 1 - (x_{221}^2 + x_{185}^2 + x_{95}^2 + x_{31}^2)))^2 + (x_{156} - (x_{204}  \x_{246}  x_{199}))^2 + (x_{97} - (x_{2} - 1))^2 + (x_{1}(x_{3}, x_{3}, 2, x_{97}, x_{2}, x_{180}))^2 + (x_{58} - (x_{2} - 1))^2 + (x_{1}(x_{3}, x_{3}, 2, x_{58}, x_{2}, x_{33}))^2 + (x_{194} - (x_{2} - 1))^2 + (x_{1}(x_{3}, x_{3}, 2, x_{194}, x_{2}, x_{235}))^2 + (x_{163}  \x_{246}  (1 - x_{163}))^2 + (x_{163}  \x_{246}  ((1) - (x_{235}) - (x_{37}^2 + x_{20}^2 + x_{234}^2 + x_{99}^2)))^2 + ((1 - x_{163})  \x_{246}  ((x_{235}) - (1) - 1 - (x_{112}^2 + x_{130}^2 + x_{168}^2 + x_{214}^2)))^2 + (x_{170} - (x_{2} - 1))^2 + (x_{1}(x_{3}, x_{3}, 2, x_{170}, x_{2}, x_{17}))^2 + (x_{237}  \x_{246}  (1 - x_{237}))^2 + (x_{237}  \x_{246}  ((x_{17}) - (1) - (x_{104}^2 + x_{28}^2 + x_{67}^2 + x_{32}^2)))^2 + ((1 - x_{237})  \x_{246}  ((1) - (x_{17}) - 1 - (x_{22}^2 + x_{133}^2 + x_{87}^2 + x_{13}^2)))^2 + (x_{64} - (x_{163}  \x_{246}  x_{237}))^2 + (x_{90} - (1 - x_{64}))^2 + (x_{106} - ((x_{90})  \x_{246}  (0) + (1 - x_{90})  \x_{246}  (1)))^2 + (x_{165} - ((x_{156})  \x_{246}  (0) + (1 - x_{156})  \x_{246}  (x_{106})))^2 + (x_{119} - ((x_{191})  \x_{246}  (1) + (1 - x_{191})  \x_{246}  (x_{165})))^2 + (x_{109} - ((x_{57})  \x_{246}  (1) + (1 - x_{57})  \x_{246}  (x_{119})))^2 + (x_{335} - ((x_{117})  \x_{246}  (0) + (1 - x_{117})  \x_{246}  (x_{109})))^2 + (x_{4} - (0))^2 + (x_{342} - (x_{342}))^2 \right)
+\end{dmath*}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{342}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+\begin{align*}
+\text{Sistema de recurrencia generado (Placeholder)} \\
+\end{align*}\end{document}

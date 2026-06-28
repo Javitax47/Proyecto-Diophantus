@@ -1,0 +1,2 @@
+dummy_out[t+1] - (dummy_out) = 0
+val[t+1] - (0) = 0

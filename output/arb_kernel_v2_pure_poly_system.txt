@@ -1,0 +1,8 @@
+amount_in[t+1] - (amount_in) = 0
+(0) - ((0) * (amount_out[t+1]) + e_0) = 0
+rIn_0[t+1] - (rIn_0) = 0
+rIn_1[t+1] - (rIn_1) = 0
+rIn_2[t+1] - (rIn_2) = 0
+rOut_0[t+1] - (rOut_0) = 0
+rOut_1[t+1] - (rOut_1) = 0
+rOut_2[t+1] - (rOut_2) = 0

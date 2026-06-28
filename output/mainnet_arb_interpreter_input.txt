@@ -1,0 +1,3 @@
+C_0 := *(c1_execute_path_get_amount_out, 997)
+amount_in[t+1] := amount_in
+profit[t+1] := If(&&(>=(amount_in, 1000), <=(amount_in, 50000)), -(/(*(C_0, 400000000000), +(*(/(*(C_0, 300000000000), +(*(/(*(C_0, 100000000), +(*(execute_path, 1000), C_0)), 1000), C_0)), 1000), C_0)), execute_path), 0)

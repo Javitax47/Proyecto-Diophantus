@@ -1,0 +1,8 @@
+rOut_2[t+1] := rOut_2
+rOut_0[t+1] := rOut_0
+amount_out[t+1] := /(0, 0)
+rIn_2[t+1] := rIn_2
+amount_in[t+1] := amount_in
+rIn_0[t+1] := rIn_0
+rOut_1[t+1] := rOut_1
+rIn_1[t+1] := rIn_1

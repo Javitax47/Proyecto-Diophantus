@@ -1,0 +1,6 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_avalanche_cycle(state, noise, step, RET) = If(>=(step, 500000), state, If(==(%(+(state, %(+(*(noise, 17), 1013), 32768)), 2), 0), call(avalanche_cycle, +(*(+(state, %(+(*(noise, 17), 1013), 32768)), 3), 1), %(+(*(noise, 17), 1013), 32768), +(step, 1)), call(avalanche_cycle, /(+(state, %(+(*(noise, 17), 1013), 32768)), 2), %(+(*(noise, 17), 1013), 32768), +(step, 1))))
+--- [FIN DEFINICIONES] ---
+
+seed[t+1] := seed
+hash_result[t+1] := 0

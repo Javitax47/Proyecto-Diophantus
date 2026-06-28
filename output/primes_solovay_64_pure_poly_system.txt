@@ -1,0 +1,2 @@
+result[t+1] - (0) = 0
+target[t+1] - (target) = 0

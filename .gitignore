@@ -1,0 +1,43 @@
+# Archivos de cache de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Entornos virtuales
+venv/
+.venv/
+.env
+env/
+
+# Metadatos del IDE
+.vscode/
+.idea/
+
+# Z3 debug
+*.smt2
+
+# Criptos / experimento MEV (no forma parte del proyecto documentado)
+src/MEV*
+node_modules/
+package.json
+package-lock.json
+shadow_analysis.csv
+
+# Salidas generadas por las cazas de conjeturas (reproducibles; no versionar)
+*.ckpt
+*.ckpt.tmp
+hits*.json
+caza*.json
+accel*.json
+*_linforms.json
+
+VALUE.md
+PRODUCT.md
+REGLAS_DE_EJECUCION.md
+MONETIZACION.md
+EXAMPLLES.md
+OVERVIEW.md
+OEIS_CANDIDATES.md
+INFORME_ESTADO_Y_ROADMAP.md
+HALLAZGOS_Y_MEJORAS.md

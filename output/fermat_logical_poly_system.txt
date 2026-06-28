@@ -1,0 +1,25 @@
+--- DEFINICIONES ---
+e_1 - ((exp % 2)) = 0
+e_0 - (If(e_1 == 0, 1, 0)) = 0
+e_5 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_5, mod, e_4) = 0
+e_7 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_7, mod, e_6) = 0
+e_3 - ((e_4 * e_6)) = 0
+e_2 - ((e_3 % mod)) = 0
+e_13 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_13, mod, e_12) = 0
+e_15 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_15, mod, e_14) = 0
+e_11 - ((e_12 * e_14)) = 0
+e_10 - ((e_11 % mod)) = 0
+e_9 - ((e_10 * base)) = 0
+e_8 - ((e_9 % mod)) = 0
+RET - (If(e_0 != 0, e_2, e_8)) = 0
+e_18 - ((candidate - 1)) = 0
+P_power_mod(power_mod, power_mod, 2, e_18, candidate, e_17) = 0
+e_16 - (If(e_17 == 1, 1, 0)) = 0
+RET - (If(e_16 != 0, 1, 0)) = 0
+--- SISTEMA ---
+is_prime[t+1] - (0) = 0
+n[t+1] - (n) = 0

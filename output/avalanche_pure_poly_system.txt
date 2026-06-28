@@ -1,0 +1,2 @@
+hash_result[t+1] - (0) = 0
+seed[t+1] - (seed) = 0

@@ -1,0 +1,6 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_step_function(x, dummy, RET) = +(*(x, 5), 3)
+--- [FIN DEFINICIONES] ---
+
+val[t+1] := 0
+dummy_out[t+1] := dummy_out

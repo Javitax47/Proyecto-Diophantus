@@ -1,0 +1,16 @@
+# --- Núcleo del proyecto (arithmetización + certificados + descubrimiento) ---
+
+# Análisis del AST de C (compilador de arithmetización)
+libclang
+
+# Motor de álgebra simbólica: certificados, sistemas polinómicos, re-verificación
+sympy>=1.12
+
+# Verificación formal (SMT): prueba solución <=> traza
+z3-solver
+
+# Precisión arbitraria + PSLQ: conjeturador / acelerador / medida de irracionalidad δ
+mpmath>=1.3.0
+
+# Utilidades HTTP (descarga de artefactos auxiliares en algunos scripts)
+requests

@@ -1,0 +1,10 @@
+C_0 - (If(C_1 != 0, C_4, level)) = 0
+C_1 - (If(And(C_2 != 0, C_3 != 0), 1, 0)) = 0
+C_2 - (If(throttle_input > 0, 1, 0)) = 0
+C_3 - (If(rate > 5, 1, 0)) = 0
+C_4 - ((level - rate)) = 0
+level[t+1] - (C_{0}) = 0
+e_0 - (If(C_0 < 10, 1, 0)) = 0
+e_1 - ((rate + 1)) = 0
+rate[t+1] - (If(e_0 != 0, e_1, 6)) = 0
+throttle_input[t+1] - (throttle_input) = 0

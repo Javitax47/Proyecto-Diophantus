@@ -1,0 +1,14 @@
+=== SISTEMA DINÁMICO (Ecuaciones en Diferencias) ===
+Propósito: Definir la evolución temporal exacta del algoritmo.
+
+--- Vector de Estado S_t ---
+S_t = [ Gx, Gy, a, b, m, n, result ]
+
+--- Leyes de Evolución (S_{t+1}) ---
+Gx_{t+1} = Gx_t
+Gy_{t+1} = Gy_t
+a_{t+1} = a_t
+b_{t+1} = b_t
+m_{t+1} = m_t
+n_{t+1} = n_t
+result_{t+1} = 0

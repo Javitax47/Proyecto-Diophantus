@@ -1,0 +1,5 @@
+--- DEFINICIONES ---
+RET - (0) = 0
+--- SISTEMA ---
+n[t+1] - (n) = 0
+result[t+1] - (0) = 0

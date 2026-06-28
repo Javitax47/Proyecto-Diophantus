@@ -1,0 +1,107 @@
+--- DEFINICIONES ---
+e_0 - (If(exp == 0, 1, 0)) = 0
+e_2 - (If(exp == 1, 1, 0)) = 0
+e_3 - ((base % mod)) = 0
+e_6 - ((exp % 2)) = 0
+e_5 - (If(e_6 == 0, 1, 0)) = 0
+e_10 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_10, mod, e_9) = 0
+e_12 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_12, mod, e_11) = 0
+e_8 - ((e_9 * e_11)) = 0
+e_7 - ((e_8 % mod)) = 0
+e_18 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_18, mod, e_17) = 0
+e_20 - ((exp / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_20, mod, e_19) = 0
+e_16 - ((e_17 * e_19)) = 0
+e_15 - ((e_16 % mod)) = 0
+e_14 - ((e_15 * base)) = 0
+e_13 - ((e_14 % mod)) = 0
+e_4 - (If(e_5 != 0, e_7, e_13)) = 0
+e_1 - (If(e_2 != 0, e_3, e_4)) = 0
+RET - (If(e_0 != 0, 1, e_1)) = 0
+e_21 - (If(s1 == 0, 1, 0)) = 0
+e_23 - (If(s2 == 0, 1, 0)) = 0
+e_25 - (If(s1 == 1, 1, 0)) = 0
+e_27 - (If(s2 == 1, 1, 0)) = 0
+e_26 - (If(e_27 != 0, 1, 2)) = 0
+e_29 - (If(s2 == 1, 1, 0)) = 0
+e_28 - (If(e_29 != 0, 2, 1)) = 0
+e_24 - (If(e_25 != 0, e_26, e_28)) = 0
+e_22 - (If(e_23 != 0, 0, e_24)) = 0
+RET - (If(e_21 != 0, 0, e_22)) = 0
+e_30 - (If(a == 0, 1, 0)) = 0
+e_32 - (If(a == 1, 1, 0)) = 0
+e_35 - ((a % 2)) = 0
+e_34 - (If(e_35 == 0, 1, 0)) = 0
+e_38 - ((a / 2)) = 0
+P_jacobi_logic(jacobi_logic, jacobi_logic, e_38, n, e_37) = 0
+e_41 - ((n % 8)) = 0
+e_40 - (If(e_41 == 1, 1, 0)) = 0
+e_44 - ((n % 8)) = 0
+e_43 - (If(e_44 == 7, 1, 0)) = 0
+e_42 - (If(e_43 != 0, 1, 2)) = 0
+e_39 - (If(e_40 != 0, 1, e_42)) = 0
+P_mult_signs(mult_signs, mult_signs, e_37, e_39, e_36) = 0
+e_47 - ((n % a)) = 0
+P_jacobi_logic(jacobi_logic, jacobi_logic, e_47, a, e_46) = 0
+e_50 - ((a % 4)) = 0
+e_49 - (If(e_50 == 3, 1, 0)) = 0
+e_53 - ((n % 4)) = 0
+e_52 - (If(e_53 == 3, 1, 0)) = 0
+e_51 - (If(e_52 != 0, 2, 1)) = 0
+e_48 - (If(e_49 != 0, e_51, 1)) = 0
+P_mult_signs(mult_signs, mult_signs, e_46, e_48, e_45) = 0
+e_33 - (If(e_34 != 0, e_36, e_45)) = 0
+e_31 - (If(e_32 != 0, 1, e_33)) = 0
+RET - (If(e_30 != 0, 0, e_31)) = 0
+e_54 - (If(n <= base, 1, 0)) = 0
+P_jacobi_logic(jacobi_logic, jacobi_logic, base, n, e_57) = 0
+e_56 - (If(e_57 == 0, 1, 0)) = 0
+e_62 - ((n - 1)) = 0
+e_61 - ((e_62 / 2)) = 0
+P_power_mod(power_mod, power_mod, base, e_61, n, e_60) = 0
+P_jacobi_logic(jacobi_logic, jacobi_logic, base, n, e_65) = 0
+e_64 - (If(e_65 == 1, 1, 0)) = 0
+e_66 - ((n - 1)) = 0
+e_63 - (If(e_64 != 0, 1, e_66)) = 0
+e_59 - (If(e_60 == e_63, 1, 0)) = 0
+e_58 - (If(e_59 != 0, 0, 1)) = 0
+e_55 - (If(e_56 != 0, 1, e_58)) = 0
+RET - (If(e_54 != 0, 0, e_55)) = 0
+e_67 - (If(n < 2, 1, 0)) = 0
+e_69 - (If(n == 2, 1, 0)) = 0
+e_71 - (If(n == 3, 1, 0)) = 0
+e_74 - ((n % 2)) = 0
+e_73 - (If(e_74 == 0, 1, 0)) = 0
+P_check_base(check_base, check_base, n, 2, e_86) = 0
+P_check_base(check_base, check_base, n, 3, e_87) = 0
+e_85 - ((e_86 + e_87)) = 0
+P_check_base(check_base, check_base, n, 5, e_88) = 0
+e_84 - ((e_85 + e_88)) = 0
+P_check_base(check_base, check_base, n, 7, e_89) = 0
+e_83 - ((e_84 + e_89)) = 0
+P_check_base(check_base, check_base, n, 11, e_90) = 0
+e_82 - ((e_83 + e_90)) = 0
+P_check_base(check_base, check_base, n, 13, e_91) = 0
+e_81 - ((e_82 + e_91)) = 0
+P_check_base(check_base, check_base, n, 17, e_92) = 0
+e_80 - ((e_81 + e_92)) = 0
+P_check_base(check_base, check_base, n, 19, e_93) = 0
+e_79 - ((e_80 + e_93)) = 0
+P_check_base(check_base, check_base, n, 23, e_94) = 0
+e_78 - ((e_79 + e_94)) = 0
+P_check_base(check_base, check_base, n, 29, e_95) = 0
+e_77 - ((e_78 + e_95)) = 0
+P_check_base(check_base, check_base, n, 31, e_96) = 0
+e_76 - ((e_77 + e_96)) = 0
+P_check_base(check_base, check_base, n, 37, e_97) = 0
+e_75 - ((e_76 + e_97)) = 0
+e_72 - (If(e_73 != 0, 1, e_75)) = 0
+e_70 - (If(e_71 != 0, 0, e_72)) = 0
+e_68 - (If(e_69 != 0, 0, e_70)) = 0
+RET - (If(e_67 != 0, 1, e_68)) = 0
+--- SISTEMA ---
+result[t+1] - (0) = 0
+target[t+1] - (target) = 0

@@ -1,0 +1,7 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_power_mod(base, exp, mod, RET) = If(==(exp, 0), 1, If(==(exp, 1), %(base, mod), If(==(%(exp, 2), 0), %(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), %(*(%(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), base), mod))))
+P_miller_rabin_check(candidate, RET) = If(<(candidate, 2), 0, If(==(candidate, 2), 1, If(==(candidate, 3), 1, If(==(%(candidate, 2), 0), 0, If(!=(call(power_mod, 2, -(candidate, 1), candidate), 1), 0, 1)))))
+--- [FIN DEFINICIONES] ---
+
+n[t+1] := n
+is_prime[t+1] := 0

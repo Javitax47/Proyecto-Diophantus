@@ -1,0 +1,2 @@
+is_cycle[t+1] - (0) = 0
+start_n[t+1] - (start_n) = 0

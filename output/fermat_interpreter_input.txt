@@ -1,0 +1,7 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_power_mod(base, exp, mod, RET) = If(==(%(exp, 2), 0), %(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), %(*(%(*(call(power_mod, base, /(exp, 2), mod), call(power_mod, base, /(exp, 2), mod)), mod), base), mod))
+P_fermat_test(candidate, RET) = If(==(call(power_mod, 2, -(candidate, 1), candidate), 1), 1, 0)
+--- [FIN DEFINICIONES] ---
+
+is_prime[t+1] := 0
+n[t+1] := n

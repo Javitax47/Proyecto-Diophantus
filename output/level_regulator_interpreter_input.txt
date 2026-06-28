@@ -1,0 +1,8 @@
+C_0 := If(C_1, C_4, level)
+C_1 := &&(C_2, C_3)
+C_2 := >(throttle_input, 0)
+C_3 := >(rate, 5)
+C_4 := -(level, rate)
+level[t+1] := C_0
+throttle_input[t+1] := throttle_input
+rate[t+1] := If(<(C_0, 10), +(rate, 1), 6)

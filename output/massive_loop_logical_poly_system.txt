@@ -1,0 +1,6 @@
+--- DEFINICIONES ---
+e_0 - ((x * 5)) = 0
+RET - ((e_0 + 3)) = 0
+--- SISTEMA ---
+dummy_out[t+1] - (dummy_out) = 0
+val[t+1] - (0) = 0

@@ -1,0 +1,6 @@
+--- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
+P_lucas_test(n, RET) = 0
+--- [FIN DEFINICIONES] ---
+
+result[t+1] := 0
+n[t+1] := n

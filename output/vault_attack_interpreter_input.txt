@@ -1,0 +1,5 @@
+total_supply[t+1] := total_supply
+victim_shares[t+1] := +(+(convertToShares, total_assets), victim_deposit)
+attacker_donation[t+1] := attacker_donation
+total_assets[t+1] := total_assets
+victim_deposit[t+1] := victim_deposit

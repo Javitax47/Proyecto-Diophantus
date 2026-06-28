@@ -1,0 +1,34 @@
+--- DEFINICIONES ---
+e_0 - (If(step >= 500000, 1, 0)) = 0
+e_7 - ((noise * 17)) = 0
+e_6 - ((e_7 + 1013)) = 0
+e_5 - ((e_6 % 32768)) = 0
+e_4 - ((state + e_5)) = 0
+e_3 - ((e_4 % 2)) = 0
+e_2 - (If(e_3 == 0, 1, 0)) = 0
+e_14 - ((noise * 17)) = 0
+e_13 - ((e_14 + 1013)) = 0
+e_12 - ((e_13 % 32768)) = 0
+e_11 - ((state + e_12)) = 0
+e_10 - ((e_11 * 3)) = 0
+e_9 - ((e_10 + 1)) = 0
+e_17 - ((noise * 17)) = 0
+e_16 - ((e_17 + 1013)) = 0
+e_15 - ((e_16 % 32768)) = 0
+e_18 - ((step + 1)) = 0
+P_avalanche_cycle(avalanche_cycle, avalanche_cycle, e_9, e_15, e_18, e_8) = 0
+e_24 - ((noise * 17)) = 0
+e_23 - ((e_24 + 1013)) = 0
+e_22 - ((e_23 % 32768)) = 0
+e_21 - ((state + e_22)) = 0
+e_20 - ((e_21 / 2)) = 0
+e_27 - ((noise * 17)) = 0
+e_26 - ((e_27 + 1013)) = 0
+e_25 - ((e_26 % 32768)) = 0
+e_28 - ((step + 1)) = 0
+P_avalanche_cycle(avalanche_cycle, avalanche_cycle, e_20, e_25, e_28, e_19) = 0
+e_1 - (If(e_2 != 0, e_8, e_19)) = 0
+RET - (If(e_0 != 0, state, e_1)) = 0
+--- SISTEMA ---
+hash_result[t+1] - (0) = 0
+seed[t+1] - (seed) = 0

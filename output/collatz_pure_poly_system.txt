@@ -1,0 +1,2 @@
+start_n[t+1] - (start_n) = 0
+total_steps[t+1] - (0) = 0
