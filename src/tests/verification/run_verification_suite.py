@@ -32,6 +32,7 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 TESTS = [
     ("test_pure_soundness.py",        "Soundness PURE por operador (Z3: solución<=>traza)"),
     ("test_overflow_soundness.py",    "Soundness del truncamiento por presupuesto (overflow=0)"),
+    ("test_arg_binding.py",           "Ligado de argumentos de la recursión al input (traza fiel a la entrada)"),
     ("test_property_based.py",        "Property-based: expresiones compuestas aleatorias"),
     ("test_sympy_system.py",          "Representación SymPy (polinomicidad + equivalencia)"),
     ("test_deep_optimizer_codegen.py","Generador de energía del deep_optimizer (sustitución SymPy)"),

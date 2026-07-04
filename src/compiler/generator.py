@@ -393,7 +393,20 @@ class AstFlattener:
         func_def = self.functions[name]
         old_state = self.current_state.copy()
 
-        for p, val in zip(func_def['params'], args):
+        # El parser incluye la referencia al callee (un Var con el nombre de la
+        # función) como primer "argumento". Se descarta al ligar parámetros para
+        # que cada uno reciba su valor real; sin esto el primer parámetro se
+        # ligaba al nombre de la función y el argumento real se perdía. El retorno
+        # de symbolic_mode conserva la forma completa (beta_backend salta el
+        # callee por su cuenta).
+        raw_args = node.get('args', [])
+        bind_args = args
+        if (raw_args and isinstance(raw_args[0], dict)
+                and raw_args[0].get('type') == 'Var'
+                and raw_args[0].get('name') == name):
+            bind_args = args[1:]
+
+        for p, val in zip(func_def['params'], bind_args):
             # Usar SSA para los parámetros en esta instancia
             target = self._new_ssa_var(p)
             self.aux_vars[target] = val
