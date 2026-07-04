@@ -191,7 +191,50 @@ class EquationExporter:
 
         return "\n".join(output)
 
-    # --- NUEVO: Sistema de Recurrencia ---
+    # --- Sistema de Recurrencia ---
     def export_recurrence_system(self):
-        # (Implementación básica del sistema de recurrencia para completar el archivo)
-        return "Sistema de recurrencia generado (Placeholder)"
+        """Sistema de recurrencia legible: la transición de estado
+        `x(t+1) = F(x(t))` por cada variable de estado, precedida de las
+        subexpresiones comunes (C_n) reutilizadas y de las funciones recursivas
+        (P_f) que aparezcan. Reutiliza el render infijo del intérprete."""
+        lines = [
+            "=== SISTEMA DE RECURRENCIA ===",
+            "Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones",
+            "comunes reutilizadas; las P_f, relaciones de funciones recursivas.",
+            "",
+        ]
+
+        if self.function_relations:
+            lines.append("# Funciones recursivas")
+            for func_name, func_data in self.function_relations.items():
+                params = ", ".join(func_data['params'])
+                body = self._expr_to_readable_string(func_data['body'])
+                lines.append(f"P_{func_name}({params}) = {body}")
+            lines.append("")
+
+        sorted_defs = sorted(self.sub_defs.items(), key=self._get_sort_key)
+        if sorted_defs:
+            lines.append("# Subexpresiones comunes")
+            for name, expr_tuple in sorted_defs:
+                clean = name.replace("{", "").replace("}", "")
+                lines.append(f"{clean} = {self._expr_to_readable_string(expr_tuple)}")
+            lines.append("")
+
+        state_keys = [v for v in self.optimized_f if v in self.state_vars]
+        aux_keys = [v for v in self.optimized_f
+                    if v not in self.state_vars and v not in self.sub_defs]
+
+        if state_keys:
+            lines.append("# Recurrencias de estado")
+            for var in sorted(state_keys):
+                rhs = self._expr_to_readable_string(self.optimized_f[var])
+                lines.append(f"{var}(t+1) = {rhs}")
+
+        if aux_keys:
+            lines.append("")
+            lines.append("# Variables auxiliares")
+            for var in sorted(aux_keys):
+                rhs = self._expr_to_readable_string(self.optimized_f[var])
+                lines.append(f"{var} = {rhs}")
+
+        return "\n".join(lines)
