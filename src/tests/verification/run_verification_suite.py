@@ -4,9 +4,8 @@
    DIOPHANTUS - SUITE DE VERIFICACIÓN (runner maestro)
 ================================================================================
 Ejecuta de un tirón todos los tests de verificación basados en Z3/SymPy/VM y
-reporta un resumen con código de salida agregado. Resuelve el hueco señalado en
-§3.2 del informe ("sin test de integración E2E"): un único comando que valida
-la cadena soundness -> SymPy -> VM.
+reporta un resumen con código de salida agregado: un único comando que valida
+la cadena soundness -> SymPy -> VM de extremo a extremo.
 
 Cada test se ejecuta como subproceso; un test que haga [SKIP] (p. ej. por falta
 de z3) cuenta como omitido, no como fallo.
@@ -19,32 +18,41 @@ import os
 import sys
 import subprocess
 
+# La salida lleva caracteres no-ASCII (viñetas, marcas); forzar UTF-8 evita un
+# UnicodeEncodeError en consolas cuya codificación por defecto es cp1252.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
 # (archivo, descripción)
 TESTS = [
     ("test_pure_soundness.py",        "Soundness PURE por operador (Z3: solución<=>traza)"),
+    ("test_overflow_soundness.py",    "Soundness del truncamiento por presupuesto (overflow=0)"),
     ("test_property_based.py",        "Property-based: expresiones compuestas aleatorias"),
     ("test_sympy_system.py",          "Representación SymPy (polinomicidad + equivalencia)"),
     ("test_deep_optimizer_codegen.py","Generador de energía del deep_optimizer (sustitución SymPy)"),
     ("test_vm_ground_truth.py",       "VM contra ground-truth (algoritmos recursivos)"),
     ("test_tail_merge.py",            "Fusión de tail-calls (diferencial: preserva semántica)"),
-    ("test_trace_packer.py",          "Trace packer / función beta (Fase 2: colapso de la traza)"),
-    ("test_beta_backend.py",          "Beta backend (Fase 2: transición compilada -> testigos beta)"),
+    ("test_trace_packer.py",          "Trace packer / función beta"),
+    ("test_beta_backend.py",          "Beta backend"),
     ("test_parser_operators.py",      "Parseo de operadores anidados (regresión de precedencia)"),
-    ("test_linear_collapse.py",       "Colapso lineal (Fase 3: ∀i<T -> una ecuación)"),
-    ("test_digit_dominance.py",       "Dominancia de dígitos / Kummer-Lucas (Fase 3: colapso general)"),
-    ("test_collatz_collapse.py",      "Colapso de Collatz (Fase 3: transición no afín polinómica)"),
+    ("test_linear_collapse.py",       "Colapso lineal"),
+    ("test_digit_dominance.py",       "Dominancia de dígitos / Kummer-Lucas"),
+    ("test_collatz_collapse.py",      "Colapso de Collatz"),
     ("test_beta_general.py",          "Generalidad del beta backend (mismo motor, varios programas)"),
     ("test_structural_collapse.py",   "Colapso estructural genérico (detecta afín desde la transición)"),
-    ("test_collatz_closed.py",        "Sistema cerrado de Collatz (Fase 3: cierre del caso no afín)"),
+    ("test_collatz_closed.py",        "Sistema cerrado de Collatz"),
     ("test_z3_closed.py",             "Sistema cerrado emitido a Z3 (solver prueba solución⟺traza)"),
-    ("test_discovery.py",             "Motor de descubrimiento (Fase 4: identidades no inyectadas)"),
-    ("test_conserved.py",             "Cantidades conservadas (Fase 4: primeras integrales, lineal/no lineal)"),
-    ("test_collatz_cycles.py",        "No-existencia certificada de ciclos cortos de Collatz (Z3, §6.3)"),
-    ("test_primality.py",             "Primalidad CORRECTA: Baillie-PSW (reemplaza la versión errónea)"),
+    ("test_discovery.py",             "Motor de descubrimiento"),
+    ("test_conserved.py",             "Cantidades conservadas"),
+    ("test_collatz_cycles.py",        "No-existencia certificada de ciclos cortos de Collatz (Z3)"),
+    ("test_primality.py",             "Primalidad CORRECTA: Baillie-PSW "),
     ("test_primality_audit.py",     "Auditoría de artefactos de primalidad antiguos (defectos documentados)"),
-    ("test_lucas_discovery.py",      "Cruce motor<->Lucas (Fase 4: redescubre la base de Baillie-PSW)"),
+    ("test_lucas_discovery.py",      "Cruce motor<->Lucas"),
     ("test_capability.py",            "Umbral de capacidad del motor (integrable encuentra / caótico nada)"),
     ("test_certificates.py",          "Certificados algebraicos portables (re-verificables sin solver, MONETIZACION)"),
     ("test_conjectures.py",           "Resultados parciales certificados de problemas abiertos (banda + GAP)"),
@@ -60,6 +68,9 @@ TESTS = [
     ("test_conjecture_filter.py",     "Filtro de novedad de conjeturas (clásicas + prior por constante + convergencia)"),
     ("test_combinatorial_certs.py",   "Certificados combinatorios (coloreado vía Nullstellensatz, mismo recheck trustless)"),
     ("test_sat_certs.py",             "Certificados SAT/CNF (insatisfacibilidad booleana, mismo recheck trustless)"),
+    ("test_subset_sum_certs.py",      "Certificados subset-sum (numérico, mismo recheck trustless)"),
+    ("test_qubo_bound_certs.py",      "Certificados cota-QUBO (óptimo/cota inferior, mismo recheck trustless)"),
+    ("test_nn_linear_certs.py",       "Certificados NN-lineal (robustez de capa lineal vía Positivstellensatz)"),
     ("test_interpreter.py",           "Intérprete de ecuaciones (formato prefijo actual; recursivo + transición, sin eval)"),
     ("test_verifier_engine.py",       "Verificador formal BMC (alcanzabilidad sat/unsat sobre la arithmetización)"),
 ]

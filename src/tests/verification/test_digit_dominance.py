@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DE DOMINANCIA DE DIGITOS / KUMMER-LUCAS (Fase 3, Nivel 3)
+   DIOPHANTUS - TEST DE DOMINANCIA DE DIGITOS / KUMMER-LUCAS
 ================================================================================
-Valida el primitivo que el informe nombra para colapsar el cuantificador
+Valida el primitivo para colapsar el cuantificador
 universal acotado en el caso general. Comprueba:
 
   (1) KUMMER-LUCAS: binom(n,k) es impar  <=>  k ⪯ n (dominancia), contrastando

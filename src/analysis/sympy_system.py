@@ -1,9 +1,9 @@
 """
 ================================================================================
-   DIOPHANTUS - REPRESENTACIÓN SYMPY DEL SISTEMA DIOFÁNTICO (Fase 0, item 3)
+   DIOPHANTUS - REPRESENTACIÓN SYMPY DEL SISTEMA DIOFÁNTICO
 ================================================================================
 Convierte el sistema de ecuaciones (hasta ahora manipulado como *strings*, la
-"fuente de fragilidad nº1" señalada en §3.2 del informe) en objetos SymPy
+"fuente de fragilidad nº1") en objetos SymPy
 reales (`Eq`, `Poly`). Esto permite tratar el sistema PURE como lo que el
 teorema MRDP afirma que es —un polinomio entero— y manipularlo con el álgebra
 de SymPy en lugar de con sustituciones de subcadenas frágiles.
@@ -93,7 +93,7 @@ def build_system(equations):
 def as_polynomials(eqs, gens=None):
     """Devuelve la lista de `sympy.Poly` de los lados izquierdos. Lanza
     `PolynomialError`/`GeneratorsNeeded` si alguna ecuación NO es polinómica.
-    Es la comprobación operativa del criterio de éxito de la Fase 1: que el
+    Es la comprobación operativa del objetivo de aritmetización fiel: que el
     sistema sea un polinomio entero manipulable por SymPy."""
     if gens is None:
         gens = sorted({s for e in eqs for s in e.lhs.free_symbols},

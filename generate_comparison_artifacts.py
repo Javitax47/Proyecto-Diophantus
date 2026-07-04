@@ -8,7 +8,7 @@ def run(cmd):
 
 def main():
     print("=== GENERANDO EL ESPECTRO COMPLETO (CON SOLOVAY) ===")
-    
+
     # 1. FERMAT (Base 2)
     print("\n--- [1] Generando FERMAT ---")
     run("python diophantus.py src/examples/fermat.c")

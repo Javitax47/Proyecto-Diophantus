@@ -32,7 +32,7 @@ def parse_c_file(filepath):
             options=clang.cindex.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
         )
         if not tu: raise RuntimeError("Fallo Clang")
-        
+
         return {
             'state_vars': _find_vars(tu.cursor, filepath),
             'logic_tree': _find_main(tu.cursor),
@@ -103,11 +103,11 @@ def _parse_node(node):
     if k == CursorKind.RETURN_STMT:
         c = list(node.get_children())
         return {'type': 'Return', 'value': _parse_node(c[0]) if c else None}
-    
+
     if k == CursorKind.IF_STMT:
         c = list(node.get_children())
         return {'type': 'If', 'condition': _parse_node(c[0]), 'then_body': _parse_node(c[1]), 'else_body': _parse_node(c[2]) if len(c)>2 else None}
-    
+
     if k == CursorKind.BINARY_OPERATOR:
         children = list(node.get_children())
         if len(children) < 2: return None
@@ -152,7 +152,7 @@ def _parse_node(node):
 
     if k == CursorKind.CALL_EXPR:
         return {'type': 'FuncCall', 'name': node.spelling, 'args': [_parse_node(c) for c in node.get_children()]}
-    
+
     if k == CursorKind.INTEGER_LITERAL:
         ts = list(node.get_tokens())
         val = 0
@@ -182,7 +182,7 @@ def _parse_node(node):
 
     if k == CursorKind.DECL_REF_EXPR: return {'type': 'Var', 'name': node.spelling}
     if k == CursorKind.UNARY_OPERATOR: return {'type': 'UnaryOp', 'op': '-', 'operand': _parse_node(list(node.get_children())[0])}
-    if k in [CursorKind.PAREN_EXPR, CursorKind.CSTYLE_CAST_EXPR]: 
+    if k in [CursorKind.PAREN_EXPR, CursorKind.CSTYLE_CAST_EXPR]:
         children = list(node.get_children())
         if children: return _parse_node(children[0])
     if k == CursorKind.DECL_STMT:

@@ -3,10 +3,11 @@
 ================================================================================
    DIOPHANTUS - DEMOSTRADOR DE LA CAPA UNIVERSAL DE CERTIFICADOS *TRUSTLESS*
 ================================================================================
-Pasa una BATERÍA de afirmaciones de TRES dominios distintos —programas, coloreado
-de grafos y SAT/CNF— por el MISMO motor de certificados y, sobre todo, por el MISMO
-re-verificador mínimo (`recheck.py`, solo sympy, sin Z3 ni el motor). Demuestra que un
-único sustrato algebraico *trustless* cruza dominios hoy separados.
+Pasa una BATERÍA de afirmaciones de SEIS dominios distintos —programas, coloreado
+de grafos, SAT/CNF, subset-sum, cota-QUBO y NN-lineal— por el MISMO motor de
+certificados y, sobre todo, por el MISMO re-verificador mínimo (`recheck.py`, solo
+sympy, sin Z3 ni el motor). Demuestra que un único sustrato algebraico *trustless*
+cruza dominios hoy separados.
 
 Cada fila se RE-COMPRUEBA de forma independiente; el escéptico no confía en el emisor.
 Incluye un control de SOUNDNESS: un certificado manipulado debe ser RECHAZADO.
@@ -19,7 +20,8 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.product import verifier, combinatorial as cb, sat_certs as sat
+from src.product import (verifier, combinatorial as cb, sat_certs as sat,
+                         subset_sum as ss, qubo_bound as qb, nn_linear as nn)
 from src.product.recheck import recheck
 
 
@@ -77,6 +79,28 @@ def main():
     rows.append(row("SAT", "(x∨y)∧(¬x): satisfacible (modelo)",
                     sat.certify_sat_witness(2, [[1, 2], [-1]])))
 
+    # ---- Dominio 4: SUBSET-SUM (infactibilidad numérica, Nullstellensatz) ----
+    rows.append(row("subset", "{2,4,6} no suma 5 (pares≠impar)",
+                    ss.certify_infeasible([2, 4, 6], 5)))
+    rows.append(row("subset", "{1,2} no suma 4",
+                    ss.certify_infeasible([1, 2], 4)))
+    rows.append(row("subset", "{3,5,7,11} suma 15 (testigo)",
+                    ss.certify_witness([3, 5, 7, 11], 15)))
+
+    # ---- Dominio 5: COTA-QUBO (óptimo certificado: testigo + Nullstellensatz) ----
+    _opt = qb.certify_optimum({0: 1, 1: 1, 2: 1}, {(0, 1): -3, (1, 2): -3}, 3)
+    if _opt is not None:
+        rows.append(row("qubo", "óptimo p=-3: testigo lo alcanza", _opt['witness']))
+        rows.append(row("qubo", "óptimo p=-3: p≠-4 (cota inferior)",
+                        _opt['lower_bound']['infeasible_certs'][0]))
+
+    # ---- Dominio 6: NN-LINEAL (robustez de capa lineal, Positivstellensatz) ----
+    _box = [(0, 1), (0, 1)]
+    rows.append(row("nn-lin", "y=2x0+3x1+1 ≥ 0 en [0,1]² (robusto)",
+                    nn.certify_lower_bound([2, 3], 1, _box, L=0)))
+    rows.append(row("nn-lin", "y=2x0-3x1+1: testigo y=-2<0 (no robusto)",
+                    nn.certify_violation([2, -3], 1, _box, L=0)))
+
     # ---- impresión ----
     print(f"  {'dominio':<9} {'instancia':<42} {'veredicto':<10} recheck")
     print(f"  {'-'*9} {'-'*42} {'-'*10} {'-'*7}")
@@ -101,7 +125,8 @@ def main():
           f"soundness (cert falso rechazado): {C.G if sound else C.R}{'✓' if sound else '✗'}{C.E}")
     if passed == total and sound:
         print(f"\n{C.G}{C.B}✓ Un mismo certificado portable y un mismo re-verificador mínimo (sympy) "
-              f"certifican programas, grafos y SAT. Unificación trustless entre dominios.{C.E}")
+              f"certifican programas, grafos, SAT, subset-sum, cota-QUBO y NN-lineal. "
+              f"Unificación trustless entre dominios.{C.E}")
         return 0
     print(f"\n{C.R}{C.B}✗ Alguna fila no re-verificó o falló el control de soundness.{C.E}")
     return 1

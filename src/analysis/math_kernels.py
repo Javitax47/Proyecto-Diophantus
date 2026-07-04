@@ -4,7 +4,7 @@ import argparse
 
 """
 =============================================================================
-   MATH KERNELS V5.3 (UTF-8 Fix)
+   MATH KERNELS
 =============================================================================
 """
 
@@ -14,15 +14,15 @@ def dickson_eval(degree, P, mod):
     if degree == 0: return 2
     if degree == 1: return P % mod
     v, w = 2, P % mod # v=D_0, w=D_1
-    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo, 
+    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo,
     # o saltando si inicializamos con el resultado del MSB).
     # La forma canónica robusta:
     for bit in bin(degree)[2:]:
         v2 = (v * v - 2) % mod
         vw = (v * w - P) % mod
-        if bit == '0': 
+        if bit == '0':
             v, w = v2, vw
-        else:          
+        else:
             v, w = vw, (w * w - 2) % mod
     return v
 """
@@ -129,13 +129,13 @@ def main():
     if args.type == 'fermat': code = generate_fermat_kernel(args.var)
     elif args.type == 'lucas': code = generate_lucas_kernel(args.var)
     elif args.type == 'ecpp': code = generate_ecpp_kernel(args.var)
-        
+
     base = os.path.basename(args.file).replace('_formula.py', '')
     out = f"output/artifacts/{base}_{args.type}_closed.py"
     os.makedirs(os.path.dirname(out), exist_ok=True)
-    
-    # FIX: Forzar UTF-8 para caracteres matemáticos
-    with open(out, "w", encoding="utf-8") as f: 
+
+    # Forzar UTF-8 para caracteres matemáticos
+    with open(out, "w", encoding="utf-8") as f:
         f.write(code)
     print(f"[OK] Kernel {args.type} -> {out}")
 

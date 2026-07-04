@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL SISTEMA CERRADO DE COLLATZ (Fase 3, cierre no afin)
+   DIOPHANTUS - TEST DEL SISTEMA CERRADO DE COLLATZ
 ================================================================================
 Valida el sistema de restricciones de tamano constante (independiente de T)
 sobre las historias empaquetadas de collatz. Comprueba:
@@ -157,7 +157,7 @@ def test_full_system_o1(stats):
 
 
 def main():
-    print(f"{Colors.BOLD}=== TEST DEL SISTEMA CERRADO DE COLLATZ (Fase 3) ==={Colors.ENDC}")
+    print(f"{Colors.BOLD}=== TEST DEL SISTEMA CERRADO DE COLLATZ ==={Colors.ENDC}")
     stats = Stats()
     test_positive(stats)
     test_soundness(stats)

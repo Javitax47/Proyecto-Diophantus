@@ -15,24 +15,24 @@ from pathlib import Path
 class ECPP_Gen:
     @staticmethod
     def inverse_mod(a, n): return pow(a, -1, n)
-    
+
     @staticmethod
     def point_add(p1, p2, a, mod):
         if p1 is None: return p2
         if p2 is None: return p1
         x1, y1 = p1; x2, y2 = p2
         if x1 == x2 and y1 != y2: return None
-        if x1 == x2: 
+        if x1 == x2:
             if y1 == 0: return None
             try: m = (3 * x1 * x1 + a) * ECPP_Gen.inverse_mod(2 * y1, mod)
             except: return None
-        else: 
+        else:
             try: m = (y2 - y1) * ECPP_Gen.inverse_mod(x2 - x1, mod)
             except: return None
         x3 = (m * m - x1 - x2) % mod
         y3 = (m * (x1 - x3) - y1) % mod
         return (x3, y3)
-    
+
     @staticmethod
     def point_mul(p, k, a, mod):
         res = None
@@ -40,7 +40,7 @@ class ECPP_Gen:
             res = ECPP_Gen.point_add(res, res, a, mod)
             if bit == '1': res = ECPP_Gen.point_add(res, p, a, mod)
         return res
-    
+
     @staticmethod
     def get_cert(n):
         # Misma lógica robusta que el test_suite
@@ -58,7 +58,7 @@ class ECPP_Gen:
 
 # --- MOTOR ---
 class Colors:
-    HEADER = '\033[95m'; OKCYAN = '\033[96m'; OKGREEN = '\033[92m'; 
+    HEADER = '\033[95m'; OKCYAN = '\033[96m'; OKGREEN = '\033[92m';
     FAIL = '\033[91m'; ENDC = '\033[0m'; BOLD = '\033[1m'
 
 class BenchmarkSuite:
@@ -97,17 +97,17 @@ class BenchmarkSuite:
         # 2. Ejecución VM
         t0 = time.time()
         infile = self.output_dir / f"{c_path.stem}_interpreter_input.txt"
-        
+
         try:
             proc = subprocess.run([sys.executable, str(self.vm), str(infile), call_expr], cwd=self.root_dir, capture_output=True, text=True, timeout=300)
             time_v = time.time() - t0
             res = "N/A"
             for l in proc.stdout.split('\n'):
                 if "Result:" in l: res = l.split(":")[1].strip()
-            
+
             if res == "0": res_fmt = f"{Colors.OKGREEN}0 (Éxito){Colors.ENDC}"
             elif res == "N/A": res_fmt = f"{Colors.FAIL}ERROR{Colors.ENDC}"
-            else: 
+            else:
                 if "find_nth" in call_expr: res_fmt = f"{Colors.OKGREEN}{res} (Primo){Colors.ENDC}"
                 elif "factorial" in call_expr: res_fmt = f"{Colors.OKGREEN}{res}{Colors.ENDC}"
                 else: res_fmt = f"{Colors.FAIL}{res} (Fallo){Colors.ENDC}"
@@ -121,11 +121,11 @@ class BenchmarkSuite:
 def main():
     bench = BenchmarkSuite()
     print(f"\n{Colors.HEADER}=== DIOPHANTUS PERFORMANCE BENCHMARK ==={Colors.ENDC}\n")
-    
+
     bench.run_benchmark("Factorial", "recursion_test.c", "factorial(10)", "Base Lineal")
     bench.run_benchmark("Miller-Rabin", "primes_innovative.c", "find_nth_prime(10, 2, 0)", "Primo 29")
     bench.run_benchmark("Solovay", "primes_solovay_64.c", "solovay_64_bit(17)", "17 (Primo)")
-    
+
     def ecpp_setup():
         n = 1013 # Primo pequeño para test rápido
         c = ECPP_Gen.get_cert(n)

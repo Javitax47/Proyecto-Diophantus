@@ -11,7 +11,7 @@ from src.compiler import optimizer
 from src.compiler import latex_exporter
 from src.compiler import polynomial_converter
 from src.compiler import equation_exporter
-from src.compiler import cas_exporter 
+from src.compiler import cas_exporter
 
 def find_pdflatex():
     import shutil
@@ -32,17 +32,17 @@ def main():
 
         os.makedirs("output", exist_ok=True)
         base_filename = os.path.splitext(os.path.basename(args.input_file))[0]
-        
+
         # Rutas
         final_tex_path = os.path.join("output", f"{base_filename}_full_analysis.tex")
         interpreter_input_path = os.path.join("output", f"{base_filename}_interpreter_input.txt")
-        
+
         # Legacy artifacts (Z3)
         pure_poly_path = os.path.join("output", f"{base_filename}_pure_poly_system.txt")
         logical_poly_path = os.path.join("output", f"{base_filename}_logical_poly_system.txt")
         generator_path = os.path.join("output", f"{base_filename}_generator_formulas.txt")
         putnam_path = os.path.join("output", f"{base_filename}_putnam_equation.txt")
-        
+
         # Math artifacts
         math_formula_path = os.path.join("output", f"{base_filename}_mathematical_formula.txt")
         recurrence_path = os.path.join("output", f"{base_filename}_recurrence_system.txt")
@@ -61,15 +61,14 @@ def main():
             optimized_f, sub_defs, ast_map['state_vars'], function_relations,
             bit_width=ast_map['config'].get('BIT_WIDTH', 32)
         )
-        
+
         # PURE System
         pure_poly_system, function_definitions = poly_conv.convert(mode="PURE")
         all_pure_equations = []
         for f in function_definitions: all_pure_equations.extend(f['equations'])
         all_pure_equations.extend(pure_poly_system)
 
-        # Fase 0 (item 3): validar que el sistema PURE vive como objeto SymPy
-        # real (no string). Aditivo y defensivo: no altera el resto del pipeline.
+        # Validar que el sistema PURE se lee como objeto SymPy real (no string).
         try:
             from src.analysis import sympy_system
             _eqs, _syms = sympy_system.build_system(all_pure_equations)
@@ -81,7 +80,7 @@ def main():
 
         # LOGICAL System (Para Z3)
         logical_poly_system, logical_func_defs = poly_conv.convert(mode="LOGICAL")
-        
+
         # Guardar LOGICAL (Crítico para legacy suite)
         logical_lines = []
         if logical_func_defs:
@@ -89,7 +88,7 @@ def main():
             for f in logical_func_defs: logical_lines.extend(f['equations'])
             logical_lines.append("--- SISTEMA ---")
         logical_lines.extend(logical_poly_system)
-        
+
         with open(logical_poly_path, "w", encoding="utf-8") as f:
             f.write("\n".join(logical_lines))
         print(f"  -> Generado: {os.path.basename(logical_poly_path)}")
@@ -102,7 +101,7 @@ def main():
         eq_exp = equation_exporter.EquationExporter(
             unoptimized_f, optimized_f, sub_defs, ast_map['state_vars'], function_relations
         )
-        
+
         # Interpreter Input
         interpreter_content = eq_exp.export_optimized()
         with open(interpreter_input_path, "w", encoding="utf-8") as f: f.write(interpreter_content)
@@ -112,14 +111,14 @@ def main():
         math_sym = eq_exp.export_formula_symbolic(single_poly)
         math_op = eq_exp.export_formula_operational(single_poly)
         rec_sys = eq_exp.export_recurrence_system()
-        
+
         with open(math_formula_path, "w", encoding="utf-8") as f: f.write(math_sym + "\n\n" + math_op)
         with open(recurrence_path, "w", encoding="utf-8") as f: f.write(rec_sys)
 
         # CAS Scripts
         cas_exp = cas_exporter.CASExporter(all_pure_equations, ast_map['state_vars'])
         with open(sympy_script_path, "w", encoding="utf-8") as f: f.write(cas_exp.export_sympy_script())
-        
+
         # [Fase 6] LaTeX
         poly_info = {'existential_vars_count': 0, 'num_equations': len(all_pure_equations)}
         latex_exp = latex_exporter.LatexExporter(
@@ -131,15 +130,14 @@ def main():
             recurrence_content=rec_sys
         )
         with open(final_tex_path, "w", encoding="utf-8") as f: f.write(latex_exp.export_latex())
-        
+
         if overflow_triggered:
-            print("\n[ADVERTENCIA §4.2] La compilación truncó por presupuesto de "
-                  "recursión. El sistema generado SOLO es fiel para entradas cuya "
-                  "traza cabe en DIOPHANTUS_MAX_RECURSION; para trazas más largas el "
-                  "truncamiento codifica un programa distinto. Antes esto ocurría en "
-                  "silencio; ahora queda advertido. Aumenta el presupuesto si lo "
-                  "necesitas. (El anclaje estructural data-dependiente de `overflow` "
-                  "llega con la aritmetización fiel, Fase 1+.)")
+            print("\n[presupuesto] La compilación truncó por presupuesto de "
+                  "recursión. El sistema PURE ancla `overflow = 0`: las entradas "
+                  "cuya traza cabe en DIOPHANTUS_MAX_RECURSION tienen solución con "
+                  "el valor correcto, y las que lo exceden quedan sin solución en "
+                  "vez de con un resultado incorrecto. Aumenta el presupuesto para "
+                  "admitir trazas más largas.")
 
         print(f"\n[ÉXITO] Artefactos generados en output/")
 

@@ -69,7 +69,7 @@ def main(argv=None):
         with open(cert_path, "w", encoding="utf-8") as f:
             json.dump(cert, f, indent=2, ensure_ascii=False)
         ok, msg = recheck.recheck(cert)        # auto re-verificación independiente
-        verdict = f"✅ {cert['verdict']}" if ok else "❌ recheck falló"
+        verdict = f"OK {cert['verdict']}" if ok else "FALLO recheck"
         if not ok:
             any_fail = True
         rows.append((name, verdict, cert.get('claim', ''), os.path.basename(cert_path)))

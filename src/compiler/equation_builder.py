@@ -4,7 +4,7 @@ class EquationExporter:
     """
     Construye y exporta la Ecuación Maestra P=0 en dos formatos.
 
-    Incluye métodos para calcular de forma segura el tamaño de la salida 
+    Incluye métodos para calcular de forma segura el tamaño de la salida
     antes de generar el contenido completo en la memoria, evitando así
     errores de tipo 'MemoryError' con programas de entrada complejos.
     """
@@ -34,22 +34,22 @@ class EquationExporter:
         total_size = 0
         sorted_vars = sorted(self.unoptimized_f.keys())
         num_terms = len(sorted_vars)
-        
+
         for i, var in enumerate(sorted_vars):
             expr_tuple = self.unoptimized_f.get(var, var)
-            
+
             # Formato del término: (var[t+1] - (expr))^2
             lhs_size = len(f"{var}[t+1]".encode('utf-8'))
             expr_size = self._calculate_poly_string_size(expr_tuple, expand=True)
-            
+
             # Overhead de la plantilla: len( '() - ()^2' ) = 8
             term_size = lhs_size + expr_size + 8
             total_size += term_size
-            
+
             # Añadir el tamaño de " + \n" entre términos
             if i < num_terms - 1:
                 total_size += len(" + \n".encode('utf-8'))
-        
+
         # Añadir el tamaño de " = 0" al final
         total_size += len(" = 0".encode('utf-8'))
         return total_size
@@ -68,7 +68,7 @@ class EquationExporter:
             lhs = f"{var}[t+1]"
             rhs = self._expr_to_poly_string(expr_tuple, expand=True)
             terms.append(f"({lhs} - ({rhs}))^2")
-        
+
         return " + \n".join(terms) + " = 0"
 
     def export_optimized(self):
@@ -91,7 +91,7 @@ class EquationExporter:
                 clean_name = name.replace("{", "").replace("}", "")
                 rhs = self._expr_to_poly_string(expr_tuple, expand=False)
                 defs_section.append(f"{clean_name} = {rhs}")
-        
+
         # 2. Ecuación maestra P=0 que utiliza las C_n
         main_eq_section = ["\n--- [ECUACIÓN MAESTRA (OPTIMIZADA)] ---"]
         terms = []
@@ -100,7 +100,7 @@ class EquationExporter:
             lhs = f"{var}[t+1]"
             rhs = self._expr_to_poly_string(expr_tuple, expand=False)
             terms.append(f"({lhs} - ({rhs}))^2")
-            
+
         main_eq_section.append(" + \n".join(terms) + " = 0")
 
         return "\n".join(defs_section) + "\n" + "\n".join(main_eq_section)
@@ -126,11 +126,11 @@ class EquationExporter:
         if op in ('+', '-', '*', '/'): return f"({args[0]} {op} {args[1]})"
         if op == '&&': return f"({args[0]} * {args[1]})"
         if op == '||': return f"({args[0]} + {args[1]} - {args[0]} * {args[1]})"
-        
+
         op_map = {'==': 'EQ', '!=': 'NEQ', '>': 'GT', '<': 'LT', '>=': 'GTE', '<=': 'LTE'}
         if op in op_map:
             return f"{op_map[op]}({args[0]}, {args[1]})"
-            
+
         return f"UNKNOWN_OP({op}, {', '.join(args)})"
 
     def _calculate_poly_string_size(self, expr, expand):
@@ -160,9 +160,9 @@ class EquationExporter:
             return arg_sizes[0] + arg_sizes[1] + 7
         if op == '||': # "({s0} + {s1} - {s0} * {s1})"
             return arg_sizes[0] * 2 + arg_sizes[1] * 2 + 13
-        
+
         op_map = {'==': 'EQ', '!=': 'NEQ', '>': 'GT', '<': 'LT', '>=': 'GTE', '<=': 'LTE'}
         if op in op_map: # "OP(s0, s1)"
             return len(op_map[op]) + 1 + arg_sizes[0] + 2 + arg_sizes[1] + 1
-            
+
         return len(f"UNKNOWN_OP({op})".encode('utf-8')) # Fallback

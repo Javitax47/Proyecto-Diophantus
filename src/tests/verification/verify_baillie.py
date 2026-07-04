@@ -17,10 +17,10 @@ def test(n, expected_desc):
     start = time.perf_counter()
     res = G_formula(n)
     dt = (time.perf_counter() - start) * 1000
-    
+
     is_prime = (res > 0)
     res_str = "PRIMO" if is_prime else "COMPUESTO"
-    
+
     print(f"n={n:<10} | {expected_desc:<25} -> {Colors.OK if is_prime else Colors.FAIL}{res_str}{Colors.END} ({dt:.3f}ms)")
     return is_prime
 
@@ -33,7 +33,7 @@ test(17, "Primo Pequeño")
 # 2. El Mentiroso de Fermat (341) - Fermat dice Primo, Lucas debe decir NO.
 print("\n--- Cazando al Mentiroso de Fermat ---")
 # 341 = 11 * 31
-is_p = test(341, "Pseudoprimo 341") 
+is_p = test(341, "Pseudoprimo 341")
 if not is_p: print("   >> ¡DETECTADO! (Correcto)")
 
 # 3. El Mentiroso de Lucas (Si hubiera, probemos uno difícil)

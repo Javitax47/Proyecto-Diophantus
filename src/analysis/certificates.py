@@ -3,7 +3,7 @@
    DIOPHANTUS - CERTIFICADOS ALGEBRAICOS PORTABLES (el "producto estrella")
 ================================================================================
 Genera certificados de corrección RE-VERIFICABLES SIN CONFIAR EN EL SOLVER, que
-es lo que MONETIZACION.md (§2.2/§11.2) identifica como el producto recurrente:
+es lo que identifica como el producto recurrente:
 un tercero re-comprueba el veredicto con álgebra elemental, sin ejecutar Z3.
 
 Dos tipos:

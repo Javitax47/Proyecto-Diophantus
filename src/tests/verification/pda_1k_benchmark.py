@@ -35,7 +35,7 @@ def worker_vm(root_path, raw_file, func_name, args, out_queue):
         import sys
         if root_path not in sys.path: sys.path.append(root_path)
         from src.runtime.vm import VM, Parser
-        
+
         vm = VM(); parser = Parser()
         with open(raw_file, 'r', encoding='utf-8') as f:
             for line in f:
@@ -44,7 +44,7 @@ def worker_vm(root_path, raw_file, func_name, args, out_queue):
                 if m:
                     p_list = [x.strip() for x in m.group(2).split(',') if x.strip()]
                     vm.load_function(m.group(1), p_list, parser.parse(m.group(3)))
-        
+
         t0 = time.perf_counter()
         res = vm.run(func_name, args)
         dt = (time.perf_counter() - t0) * 1000
@@ -66,7 +66,7 @@ def run_vm_safe(raw_file, func_name, args, timeout=10.0):
 # --- ANÁLISIS FORENSE ---
 def main():
     print(f"\n{Colors.HEADER}{Colors.BOLD}=== INFORME FORENSE: PROTOCOLO PDA-1k (1000 CICLOS) ==={Colors.END}")
-    
+
     # 1. Compilación
     print(f"{Colors.BLUE}[1] Compilando 'avalanche.c'...{Colors.END}", end=" ")
     t0 = time.time()
@@ -76,10 +76,10 @@ def main():
         print(f"{Colors.FAIL}ERROR{Colors.END}"); return
 
     raw_file = os.path.join(OUTPUT_DIR, "avalanche_interpreter_input.txt")
-    
+
     # 2. Métricas de Compresión
     size_kb = get_file_size_kb(raw_file)
-    
+
     # Detección de Recursión Simbólica (H1)
     is_symbolic = False
     try:
@@ -87,7 +87,7 @@ def main():
             content = f.read()
             if "call(avalanche_cycle" in content: is_symbolic = True
             # Buscar el caso base real para confirmar
-            if "If(>=(step, 1000)" in content: 
+            if "If(>=(step, 1000)" in content:
                 base_case = "DETECTADO (step >= 1000)"
             else:
                 base_case = "NO DETECTADO (Peligro)"
@@ -96,7 +96,7 @@ def main():
     print(f"\n{Colors.BOLD}>>> ANÁLISIS DE COMPRESIÓN ESPACIAL (Hipótesis H1){Colors.END}")
     print(f"    Tamaño del Archivo:    {Colors.BLUE}{size_kb:.2f} KB{Colors.END}")
     print(f"    Caso Base:             {base_case}")
-    
+
     if is_symbolic and size_kb < 50:
         print(f"    Estructura:            {Colors.GREEN}RECURSIVA (COMPRIMIDA){Colors.END}")
         print(f"    Veredicto:             {Colors.GREEN}H1 CONFIRMADA{Colors.END} (El compilador capturó la lógica sin desenrollar).")
@@ -107,10 +107,10 @@ def main():
     # 3. Ejecución
     print(f"\n{Colors.BOLD}>>> PRUEBA DE SOLIDEZ (Ejecución VM){Colors.END}")
     print(f"    Ejecutando 1000 ciclos de caos aritmético...")
-    
+
     # Seed 123456789
     res, dt = run_vm_safe(raw_file, "avalanche_cycle", [123456789, 1, 0], timeout=600.0)
-    
+
     if str(res).isdigit():
         val_str = str(res)
         print(f"    Estado:                {Colors.GREEN}ÉXITO{Colors.END}")

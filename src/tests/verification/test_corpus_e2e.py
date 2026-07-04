@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST E2E SOBRE EL CORPUS REAL (Fase 0, item 2)
+   DIOPHANTUS - TEST E2E SOBRE EL CORPUS REAL
 ================================================================================
 Compila cada programa de `src/examples/*.c` con el pipeline real
 (`diophantus.py`) y verifica que el sistema PURE resultante es un polinomio

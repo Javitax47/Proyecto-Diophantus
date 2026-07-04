@@ -20,12 +20,12 @@ class Colors:
 
 def test_ecpp(n, label):
     print(f"\n--- Probando {label} (n={n}) ---")
-    
+
     # 1. Generar Certificado (El Prover)
     # Buscamos una curva y un punto válidos para este n
     print("  [Prover] Generando certificado...")
     cert = find_ecpp_certificate(n)
-    
+
     if not cert:
         print(f"  {Colors.FAIL}[SKIP]{Colors.END} No se encontró curva fácil (n muy pequeño o compuesto).")
         return
@@ -36,7 +36,7 @@ def test_ecpp(n, label):
     # 2. Verificar con la Fórmula Cerrada (El Verifier)
     print("  [Verifier] Evaluando G_formula (Singularidad)...")
     energy = G_formula(n, a, b, Gx, Gy, m)
-    
+
     # Interpretación: >0 es Éxito (Primo), <=0 es Fallo
     if energy > 0:
         print(f"  >> RESULTADO: {Colors.OK}VALIDADO (Energía {energy}){Colors.END}")

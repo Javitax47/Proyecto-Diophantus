@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL BETA BACKEND (Fase 2): transicion compilada -> (a,b,T)
+   DIOPHANTUS - TEST DEL BETA BACKEND: transicion compilada -> (a,b,T)
 ================================================================================
 Valida el puente compilador -> colapso beta de extremo a extremo:
 
@@ -11,7 +11,7 @@ Valida el puente compilador -> colapso beta de extremo a extremo:
       correcta, no 6*n).
   (2) La traza compilada se empaqueta en testigos beta (a, b, T) y
       check_beta_trajectory la verifica contra la MISMA transicion de un paso,
-      para varias longitudes -- el sistema de tamano constante de la Fase 2.
+      para varias longitudes -- el sistema de tamano constante.
 
 Uso:  python src/tests/verification/test_beta_backend.py
 Requisitos: LLVM/libclang.

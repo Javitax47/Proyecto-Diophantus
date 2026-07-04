@@ -41,24 +41,24 @@ def log_info(msg):   print(f"   ℹ {msg}")
 class ECPP_Prover:
     @staticmethod
     def inverse_mod(a, n): return pow(a, -1, n)
-    
+
     @staticmethod
     def point_add(p1, p2, a, mod):
         if p1 is None: return p2
         if p2 is None: return p1
         x1, y1 = p1; x2, y2 = p2
         if x1 == x2 and y1 != y2: return None
-        if x1 == x2: 
+        if x1 == x2:
             if y1 == 0: return None
             try: m = (3 * x1 * x1 + a) * ECPP_Prover.inverse_mod(2 * y1, mod)
             except: return None
-        else: 
+        else:
             try: m = (y2 - y1) * ECPP_Prover.inverse_mod(x2 - x1, mod)
             except: return None
         x3 = (m * m - x1 - x2) % mod
         y3 = (m * (x1 - x3) - y1) % mod
         return (x3, y3)
-    
+
     @staticmethod
     def point_mul(p, k, a, mod):
         res = None
@@ -66,7 +66,7 @@ class ECPP_Prover:
             res = ECPP_Prover.point_add(res, res, a, mod)
             if bit == '1': res = ECPP_Prover.point_add(res, p, a, mod)
         return res
-    
+
     @staticmethod
     def get_cert(n):
         for _ in range(2000):
@@ -88,19 +88,19 @@ class SystemAudit:
         self.root = Path(__file__).resolve().parent
         self.compiler = self.root / "diophantus.py"
         self.vm = self.root / "src" / "runtime" / "vm.py"
-        
-        # Nuevos módulos de la Fase 6/7
+
+        # Módulos de análisis algebraico
         self.math_kernel = self.root / "src" / "analysis" / "math_kernels.py"
         self.linker = self.root / "src" / "analysis" / "equation_linker.py"
         self.optimizer = self.root / "src" / "analysis" / "deep_optimizer.py"
-        
+
         self.output_dir = self.root / "output"
         self.artifacts_dir = self.output_dir / "artifacts"
         self.errors = 0
 
     def check_integrity(self):
         log_header("FASE 1: INTEGRIDAD DEL ENTORNO")
-        
+
         files = [
             self.compiler,
             self.vm,
@@ -109,7 +109,7 @@ class SystemAudit:
             self.linker,
             self.root / "src" / "compiler" / "parser.py"
         ]
-        
+
         all_ok = True
         for f in files:
             if f.exists():
@@ -117,11 +117,11 @@ class SystemAudit:
             else:
                 log_fail(f"Falta archivo crítico: {f}")
                 all_ok = False
-        
+
         if not all_ok:
             print("\n[FATAL] El entorno está incompleto.")
             sys.exit(1)
-        
+
         # Crear directorios si no existen
         self.output_dir.mkdir(exist_ok=True)
         self.artifacts_dir.mkdir(exist_ok=True)
@@ -133,7 +133,7 @@ class SystemAudit:
 
     def run_pipeline(self, name, filename, call_gen, validator_func):
         log_header(f"TEST: {name}")
-        
+
         # 1. Localizar
         c_path = self.locate_example(filename)
         if not c_path:
@@ -177,18 +177,18 @@ class SystemAudit:
         # 5. Ejecutar VM
         interpreter_file = self.output_dir / f"{base_name}_interpreter_input.txt"
         cmd_vm = [sys.executable, str(self.vm), str(interpreter_file), call_expr]
-        
+
         try:
             start = time.time()
             proc_vm = subprocess.run(cmd_vm, cwd=self.root, capture_output=True, text=True, timeout=60)
             dt = time.time() - start
-            
+
             val = None
             for line in proc_vm.stdout.split('\n'):
                 if "Result:" in line:
                     try: val = int(line.split("Result:")[1].strip())
                     except: pass
-            
+
             if val is not None:
                 if validator_func(val):
                     log_pass(f"Ejecución VM Correcta ({val}) en {dt:.3f}s")
@@ -198,19 +198,19 @@ class SystemAudit:
             else:
                 log_fail(f"VM Crash: {proc_vm.stderr[:100]}")
                 self.errors += 1
-                
+
         except subprocess.TimeoutExpired:
             log_fail("VM Timeout (>60s)")
             self.errors += 1
 
     def test_singularity_pipeline(self):
         log_header("TEST: PIPELINE DE SINGULARIDAD (Dickson/Linker)")
-        
+
         # 1. Crear un dummy formula para testear math_kernels.py
         dummy_file = self.artifacts_dir / "audit_dummy_formula.py"
         with open(dummy_file, "w") as f:
             f.write("def G_formula(n, x): return n")
-            
+
         # 2. Testear Transmutación (Fermat Kernel)
         log_info("Probando Math Kernel (Fermat)...")
         cmd_kernel = [
@@ -218,7 +218,7 @@ class SystemAudit:
             str(dummy_file), "--type", "fermat", "--var", "n"
         ]
         res = subprocess.run(cmd_kernel, cwd=self.root, capture_output=True, text=True)
-        
+
         fermat_out = self.artifacts_dir / "audit_dummy_fermat_closed.py"
         if res.returncode == 0 and fermat_out.exists():
             log_pass("Math Kernel: Generación Fermat OK")
@@ -248,7 +248,7 @@ class SystemAudit:
             "--var", "n"
         ]
         res = subprocess.run(cmd_linker, cwd=self.root, capture_output=True, text=True)
-        
+
         if res.returncode == 0 and linker_out.exists():
             log_pass("Equation Linker: Fusión Exitosa")
         else:
@@ -292,7 +292,7 @@ class SystemAudit:
 
         # --- TEST 4: ECPP ---
         def ecpp_setup():
-            cert = ECPP_Prover.get_cert(19) 
+            cert = ECPP_Prover.get_cert(19)
             if cert: return f"verify_ecpp_energy(19, {cert[0]}, {cert[1]}, {cert[2]}, {cert[3]}, {cert[4]})"
             return None
 

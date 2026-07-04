@@ -9,9 +9,9 @@ def rotr(x, n):
     return to_int32((ux >> n) | (ux << (32 - n)))
 
 def compress(h, x):
-    # Macro COMPRESS traducida: 
+    # Macro COMPRESS traducida:
     # (((h) + (x)) ^ 0x5A5A5A5A) + ROTR(...) + (x)
-    
+
     # 1. Suma inicial
     s1 = to_int32(h + x)
     # 2. XOR Mágico
@@ -23,21 +23,21 @@ def compress(h, x):
 
 def check_hash(nonce):
     print(f"Verificando Nonce: {nonce} (Hex: {hex(nonce & 0xFFFFFFFF)})")
-    
+
     state = 0x12345678
-    
+
     # 4 Rondas idénticas al código C
     for i in range(4):
         state = compress(state, nonce + i)
-        
+
     print(f"Hash Resultante: {state}")
-    
+
     if state < 1000000:
-        print("✅ ¡VÁLIDO! El hash es menor que 1,000,000")
+        print("¡VÁLIDO! El hash es menor que 1,000,000")
     else:
-        print("❌ FALLO. El hash es muy alto.")
+        print("FALLO. El hash es muy alto.")
 
 if __name__ == "__main__":
     # El valor que te dio Z3
-    mined_nonce = 729111555 
+    mined_nonce = 729111555
     check_hash(mined_nonce)

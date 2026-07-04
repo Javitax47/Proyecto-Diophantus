@@ -17,8 +17,8 @@ except ImportError:
 
 # HACK: Inyectamos un módulo en la función generada para que no explote la RAM
 # La función generada por matrix_kernel usa 'mat_mul(..., mod=None)' por defecto.
-# Como el código generado es estático, vamos a capturar la función y reescribirla 
-# o simplemente probar con un N más pequeño para ver la velocidad, 
+# Como el código generado es estático, vamos a capturar la función y reescribirla
+# o simplemente probar con un N más pequeño para ver la velocidad,
 # PERO el universal_optimizer generó el código con N hardcodeado dentro.
 
 # Solución: Vamos a editar el archivo generado 'massive_loop_compressed.py'

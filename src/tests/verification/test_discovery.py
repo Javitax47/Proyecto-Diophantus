@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL MOTOR DE DESCUBRIMIENTO (Fase 4, §10)
+   DIOPHANTUS - TEST DEL MOTOR DE DESCUBRIMIENTO
 ================================================================================
-Verifica el criterio de exito de la Fase 4: el motor descubre, sin plantilla,
+Verifica el objetivo de descubrimiento: el motor descubre, sin plantilla,
 una identidad cerrada que satisface la trayectoria de un programa no trivial.
 
   (1) PELL: la recurrencia (x,y)->(3x+4y,2x+3y) vive en la conica x^2-2y^2=1.
@@ -166,7 +166,7 @@ def test_from_compiler(stats):
 
 
 def main():
-    print(f"{Colors.BOLD}=== TEST DEL MOTOR DE DESCUBRIMIENTO ALGEBRAICO (Fase 4) ==={Colors.ENDC}")
+    print(f"{Colors.BOLD}=== TEST DEL MOTOR DE DESCUBRIMIENTO ALGEBRAICO ==={Colors.ENDC}")
     stats = Stats()
     test_pell(stats)
     test_fibonacci(stats)

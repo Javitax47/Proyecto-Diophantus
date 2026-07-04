@@ -21,7 +21,7 @@ class DiophantineCrawler:
         self.vm = None
         self.formula_module = None
         self.mode = self._detect_mode()
-        
+
         print(f"[Crawler] Modo detectado: {self.mode}")
         self._load_engine()
 
@@ -40,7 +40,7 @@ class DiophantineCrawler:
 
     def _load_engine(self):
         if self.mode == "VM_RAW":
-            if not VM_AVAILABLE: 
+            if not VM_AVAILABLE:
                 raise ImportError("No se encuentra src.runtime.vm")
             self.vm = VM()
             parser = Parser()
@@ -75,7 +75,7 @@ class DiophantineCrawler:
         if self.mode == "PURE_ENERGY":
             try:
                 res = self.formula_module.G_formula(n)
-                return res == 0 
+                return res == 0
             except TypeError:
                 return False # Argumentos incorrectos (ej. requiere certificado ECPP)
 
@@ -87,7 +87,7 @@ class DiophantineCrawler:
             if func == "n" and self.vm:
                 # Usar la última función definida (suele ser main o la lógica principal)
                 func = list(self.vm.functions.keys())[-1]
-            
+
             try:
                 # Intentamos llamar con (n) o (n, 0) para corrección de aridad
                 try: res = self.vm.run(func, [n])
@@ -111,21 +111,21 @@ class DiophantineCrawler:
         print(f"--- INICIANDO BÚSQUEDA ---")
         print(f"Semilla: {start}")
         print(f"Objetivo: {count} hallazgos")
-        
+
         found = 0
         current = start
         t_start = time.time()
-        
+
         # Safety break para no colgar el terminal si no hay soluciones
-        max_iter = 1000000 
-        
+        max_iter = 1000000
+
         while found < count and (current - start) < max_iter:
             if self.check(current):
                 dt = time.time() - t_start
                 print(f"  ★ HALLAZGO #{found+1}: {current} (T+{dt:.2f}s)")
                 found += 1
             current += 1
-            
+
         if found == 0:
             print("  (Sin resultados en el rango de búsqueda)")
 

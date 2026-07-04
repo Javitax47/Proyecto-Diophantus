@@ -28,10 +28,10 @@ def G_formula_the_beast(n, x):
     """
     La Ecuación Polinómica Final generada por Deep Optimizer V4.
     Representa la intersección de 14 hiper-superficies en 98 dimensiones.
-    
+
     Si G(n, x) > 0, entonces n es PRIMO sin lugar a dudas.
     """
-    # Esta función espera un vector 'x' perfectamente alineado con los 
+    # Esta función espera un vector 'x' perfectamente alineado con los
     # pasos internos del algoritmo.
     term_sum = (
          (x[80]**2 + x[87]**2 + x[90]**2 + x[93]**2 + x[94]**2 + x[95]**2 + x[96]**2 + x[97]**2 + 3)**2 +
@@ -81,16 +81,16 @@ def jacobi(a, n):
 def check_base_constraint(n, base):
     """Valida si 'n' satisface las ecuaciones para una base específica."""
     if n <= base: return True
-    
+
     # Lado Izquierdo de la Ecuación (Potencia Euler)
     lhs = power_mod(base, (n - 1) // 2, n)
-    
+
     # Lado Derecho de la Ecuación (Símbolo Jacobi)
     jac = jacobi(base, n)
     if jac == 0: return False # Falla crítica (factor encontrado)
-    
+
     rhs = jac % n # Normalizar a modular positivo
-    
+
     # La Ecuación Polinómica exige: (lhs - rhs)^2 = 0
     return lhs == rhs
 
@@ -102,16 +102,16 @@ def verify_diophantine_logic(n):
     if n < 2: return False
     if n == 2 or n == 3: return True
     if n % 2 == 0: return False
-    
+
     # LAS 12 COLUMNAS DEL TEMPLO (Bases Deterministas hasta 2^64)
     # La ecuación 'G_formula_the_beast' colapsa si ALGUNA de estas falla.
     bases = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
-    
+
     for b in bases:
         if n == b: return True
         if not check_base_constraint(n, b):
             return False # El polinomio se anula (G <= 0)
-            
+
     return True # El polinomio sobrevive (G > 0)
 
 # --- 3. SUITE DE PRUEBAS ---
@@ -119,7 +119,7 @@ def verify_diophantine_logic(n):
 def run_robustness_test():
     print("\n[1] PRUEBA DE ROBUSTEZ (Cazando Falsos Positivos)")
     print("    Verificando números que engañan a fórmulas más simples.")
-    
+
     # Lista de la infamia: Números que parecen primos pero no lo son
     tricky_numbers = [
         (561, "Carmichael (3 factores)"),
@@ -128,28 +128,28 @@ def run_robustness_test():
         (3215031751, "Pseudoprimo (engaña bases 2,3,5,7)"),
         (2152302898747, "Pseudoprimo Gigante (engaña hasta base 11)")
     ]
-    
+
     passed = True
     for n, desc in tricky_numbers:
         is_prime = verify_diophantine_logic(n)
         res_txt = "PRIMO (FALLO)" if is_prime else "COMPUESTO (OK)"
         print(f"  n={n:<15} | {desc:<35} -> {res_txt}")
         if is_prime: passed = False
-        
+
     if passed: print("  >> RESULTADO: INVICTO. Ningún pseudoprimo pasó el filtro.")
     else: print("  >> RESULTADO: FALLO DETECTADO.")
 
 def run_speed_test():
     print("\n[2] PRUEBA DE VELOCIDAD (Escalabilidad Logarítmica)")
     print("    Verificando primos masivos.")
-    
+
     primes = [
         (104729, "Primo pequeño"),
         (18446744073709551557, "Máximo uint64"),
         (2**61 - 1, "Mersenne 61 (19 dígitos)"),
         (2**127 - 1, "Mersenne 127 (39 dígitos)")
     ]
-    
+
     for n, desc in primes:
         t0 = time.time()
         is_prime = verify_diophantine_logic(n)
@@ -160,28 +160,28 @@ def run_speed_test():
 def run_continuous_stress():
     print("\n[3] STRESS TEST CONTINUO (10 Segundos)")
     print("    Generando números aleatorios de tamaño creciente...")
-    
+
     start_global = time.time()
     bits = 64
     max_digits = 0
     iters = 0
-    
+
     while time.time() - start_global < 10:
         n = random.getrandbits(bits) | 1 # Impar
-        
+
         t0 = time.time()
         is_p = verify_diophantine_logic(n)
         dt = (time.time() - t0) * 1000
-        
+
         digits = len(str(n))
         max_digits = max(max_digits, digits)
         iters += 1
-        
+
         print(f"  Bits: {bits:<5} | Dígitos: {digits:<4} | T: {dt:.2f} ms | {'PRIMO' if is_p else 'COMP.'}")
-        
+
         # Crecimiento exponencial de dificultad
         bits = int(bits * 1.2)
-        
+
     print(f"\n  >> Máximo alcanzado: {max_digits} dígitos en 10s.")
 
 def main():
@@ -189,13 +189,13 @@ def main():
     print("   LA BESTIA DE 64-BITS: BENCHMARK FINAL")
     print("   Algoritmo: Solovay-Strassen (12 Bases)")
     print("================================================================")
-    
+
     run_robustness_test()
     time.sleep(1)
     run_speed_test()
     time.sleep(1)
     run_continuous_stress()
-    
+
     print("\n================================================================")
     print("CONCLUSIÓN FINAL:")
     print("La estructura algebraica generada es Determinista y Eficiente.")

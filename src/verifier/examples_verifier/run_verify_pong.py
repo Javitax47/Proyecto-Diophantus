@@ -9,7 +9,7 @@ from src.verifier.verifier_main import run_verification
 # --- VERIFICACIÓN DE LÓGICA DE PUNTUACIÓN ---
 CONFIG = {
     # 1. Archivo del Sistema (Elige el modo rápido/LÓGICO)
-    "SYSTEM_FILE": "output/pong_logical_poly_system.txt", 
+    "SYSTEM_FILE": "output/pong_logical_poly_system.txt",
 
     # 2. Variables del Sistema (Extraídas de pong.c)
     "STATE_VARS": ['b', 'c', 'd', 'e', 'f', 'g', 'p', 'q'],
@@ -17,7 +17,7 @@ CONFIG = {
 
     # 3. Configuración del Verificador (sin cambios en este ejemplo)
     "VERIFICATION_TYPE": "SEQUENTIAL",
-    "BUG_CONDITION": "(f_t1 > f)", 
+    "BUG_CONDITION": "(f_t1 > f)",
     "K_STEPS": 3,
     "INITIAL_STATE": {
         'b': 1,     # Pelota en el límite izquierdo (a punto de salir)
@@ -25,7 +25,7 @@ CONFIG = {
         'c': 12, 'e': 0, 'p': 10, 'q': 1, 'f': 0, 'g': 0
     },
     "OUTPUT_FILE": "output/pong_verification_report_SEQUENTIAL.tex",
-    
+
     # En BOUNDS, mantenemos solo las entradas y el estado ACTUAL.
     # Dejamos f_t1 libre para que la BUG_CONDITION haga el filtrado inteligente.
     "BOUNDS": {

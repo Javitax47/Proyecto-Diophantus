@@ -4,22 +4,22 @@ def G(n, x):
     # Mapeo del vector x a las variables de tu formula
     # x es una lista de 16 enteros [x0...x15]
     # Ajustamos índices (Python 0-based vs Math 1-based)
-    
+
     # Termino A: Suma de cuadrados que deben ser 0
     # Indices visuales: 1, 2, 3, 6, 7, 11, 14, 15 -> Python: 0, 1, 2, 5, 6, 10, 13, 14
     A = (x[0]**2 + x[1]**2 + x[2]**2 + x[5]**2 + x[6]**2 + x[10]**2 + x[13]**2 + x[14]**2)
-    
+
     # Termino B: Restricción de diferencia = 2
     # Positivos: 5, 9, 10, 13 -> Python: 4, 8, 9, 12
     sum_pos = x[4]**2 + x[8]**2 + x[9]**2 + x[12]**2
-    
+
     # Negativos: 4, 8, 12, 16 -> Python: 3, 7, 11, 15
     sum_neg = x[3]**2 + x[7]**2 + x[11]**2 + x[15]**2
-    
+
     # Nota: En tu output original B era (-sum_neg + sum_pos - 2).
     # Al cuadrado da igual el signo global.
     B = (-sum_neg + sum_pos - 2)
-    
+
     # Polinomio Putnam
     return n * (1 - (A**2 + B**2))
 
@@ -44,9 +44,9 @@ for val in itertools.product(range(search_range), repeat=8):
     x_vec[7] = val[2]; x_vec[8] = val[3]
     x_vec[9] = val[4]; x_vec[11] = val[5]
     x_vec[12] = val[6]; x_vec[15] = val[7]
-    
+
     res = G(target_n, x_vec)
-    
+
     if res > 0:
         print(f"¡ÉXITO! Vector encontrado: {x_vec}")
         print(f"G({target_n}, x) = {res}")

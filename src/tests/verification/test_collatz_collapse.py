@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL COLAPSO DE COLLATZ (Fase 3, caso no afin)
+   DIOPHANTUS - TEST DEL COLAPSO DE COLLATZ
 ================================================================================
 Valida la forma polinomica por paso de la transicion de collatz y el colapso de
 su esqueleto lineal sobre la traza empaquetada. Comprueba:

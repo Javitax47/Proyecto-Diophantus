@@ -2,7 +2,7 @@
 ================================================================================
    DIOPHANTUS - EXPORTADOR A QUBO (backend de optimización binaria / annealing)
 ================================================================================
-Tercer backend del compilador, junto a LaTeX y CAS (INFORME §, "QUBO infravalorado"):
+Tercer backend del compilador, junto a LaTeX y CAS:
 convierte un sistema diofántico {p_i(v)=0} en un problema QUBO
 
         minimizar  x^T Q x + c     sobre  x ∈ {0,1}^n

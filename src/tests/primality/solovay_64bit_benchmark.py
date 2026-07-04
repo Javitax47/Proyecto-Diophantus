@@ -38,10 +38,10 @@ def verify_64_bit(n):
     if n < 2: return False
     if n == 2 or n == 3: return True
     if n % 2 == 0: return False
-    
+
     # LAS 12 BASES DE HIERRO
     bases = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37]
-    
+
     for b in bases:
         if n == b: return True
         if not check_base(n, b):
@@ -54,7 +54,7 @@ def main():
     print("==============================================================")
     print("Verificando determinismo con 12 bases.")
     print("--------------------------------------------------------------")
-    
+
     # 1. Carmichaels Clásicos (Fáciles)
     print("\n--- FASE 1: Carmichaels Clásicos ---")
     carmichaels = [561, 1105, 1729, 41041]
@@ -73,7 +73,7 @@ def main():
         3215031751,     # Engaña 2, 3, 5, 7 (EL REY DE 32-BITS)
         2152302898747   # Engaña 2, 3, 5, 7, 11
     ]
-    
+
     for n in strong_liars:
         is_prime = verify_64_bit(n)
         print(f"n={n:<15} -> {'PRIMO (Error)' if is_prime else 'COMPUESTO (Correcto)'}")
@@ -82,12 +82,12 @@ def main():
     print("\n--- FASE 3: Primos Reales (64-bit y más) ---")
     # Primo más grande de 64 bits: 18,446,744,073,709,551,557
     max_uint64_prime = 18446744073709551557
-    
+
     start = time.time()
     res = verify_64_bit(max_uint64_prime)
     dt = (time.time() - start) * 1000
     print(f"Max uint64 prime -> {'PRIMO' if res else 'COMPUESTO'} ({dt:.3f} ms)")
-    
+
     # Mersenne 61 (Supera 64 bits, pero la lógica sigue siendo válida probabilísticamente)
     m61 = 2**61 - 1
     start = time.time()

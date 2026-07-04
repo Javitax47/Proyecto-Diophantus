@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL TRACE PACKER / FUNCION BETA (Fase 2, Nivel 2)
+   DIOPHANTUS - TEST DEL TRACE PACKER / FUNCION BETA
 ================================================================================
 Valida la codificacion de Goedel que sustituye el desenrollado: toda la traza
 se mete en dos enteros (a, b) con beta(a, b, i) = x_i. Comprueba:
@@ -11,7 +11,7 @@ se mete en dos enteros (a, b) con beta(a, b, i) = x_i. Comprueba:
   (2) COLLATZ REAL: la trayectoria 3n+1 de varios n se codifica y se recupera.
   (3) INDEPENDENCIA DE LA LONGITUD: el MISMO esquema beta codifica trazas de
       longitudes muy distintas (5 y varios cientos) sin "recompilar" -- la
-      propiedad que persigue la Fase 2 (el numero de variables es constante; lo
+      propiedad perseguida (el numero de variables es constante; lo
       que crece es el tamano de los testigos a, b).
 
 Uso:  python src/tests/verification/test_trace_packer.py

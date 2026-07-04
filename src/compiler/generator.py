@@ -5,29 +5,34 @@ from collections import defaultdict
 # Asegurar límite alto internamente también
 sys.setrecursionlimit(200000)
 
+# Valor devuelto por una llamada recursiva que agota el presupuesto de
+# desenrollado. Es un símbolo (no un entero) para que el converter lo distinga
+# de un 0 legítimo y ancle la variable `overflow` en consecuencia.
+OVERFLOW_MARKER = "__OVERFLOW__"
+
 class AstFlattener:
     def __init__(self, state_vars, functions_ast, struct_defs, config, symbolic_mode=False):
         self.state_vars = set(state_vars)
         self.functions = functions_ast
         self.struct_defs = struct_defs
-        
+
         self.current_state = {var: var for var in state_vars}
         self.aux_vars = {}
         self.input_vars = set()
-        
+
         self.scope_stack = []
         self.call_counter = 0
         self.recursion_depth = defaultdict(int)
         self.assign_counter = 0 # Para SSA estricto
-        
+
         self.MAX_LOOP_UNROLL = config.get('MAX_LOOP_UNROLL', 5)
         self.MAX_RECURSION_DEPTH = config.get('MAX_RECURSION_DEPTH', 50)
         self.symbolic_mode = symbolic_mode
 
-        # SOUNDNESS (§4.2): rastreo de truncamiento por presupuesto. Si la
-        # expansion alcanza el limite de recursion, el sistema generado deja de
-        # ser fiel al programa original; en vez de fallar en silencio lo
-        # registramos para anclar una variable `overflow` (ver PolynomialConverter).
+        # Rastreo del truncamiento por presupuesto de recursion. Cuando la
+        # expansion alcanza el limite, la llamada devuelve OVERFLOW_MARKER; el
+        # converter usa ese marcador para anclar `overflow = 0`, de modo que el
+        # sistema no admite soluciones para trazas que exceden el presupuesto.
         self.overflow_triggered = False
         self.overflow_events = 0
 
@@ -41,14 +46,14 @@ class AstFlattener:
                 _fdef['body'] = self._normalize_early_returns(_fdef['body'])
                 if _os.environ.get('DIOPH_NO_TAIL_MERGE') != '1':
                     _fdef['body'] = self._merge_tail_calls(_fdef['body'])
-        
+
         # Cache para resolución
         self.resolve_cache = {}
         self.resolving_stack = set()
 
     def generate_function_F(self, logic_tree):
         self._visit(logic_tree)
-        
+
         function_F = {}
         for var in self.state_vars:
             if var in self.current_state:
@@ -65,9 +70,9 @@ class AstFlattener:
         self.aux_vars = {}
         params = self.functions[func_name]['params']
         for p in params: self.current_state[p] = p
-            
+
         body_expr = self._visit(func_node)
-        
+
         self.resolve_cache = {}
         self.resolving_stack = set()
         return {
@@ -96,7 +101,7 @@ class AstFlattener:
         """
         # 1. Tipos base
         if isinstance(expr, int): return expr
-        
+
         # 2. Check Memoización (hashable types only)
         try:
             if expr in self.resolve_cache: return self.resolve_cache[expr]
@@ -107,7 +112,7 @@ class AstFlattener:
             # DETECCIÓN DE CICLOS
             if expr in self.resolving_stack:
                 return expr # Ciclo detectado: devolver el símbolo sin expandir
-            
+
             if expr in self.aux_vars:
                 self.resolving_stack.add(expr)
                 res = self._resolve_expression(self.aux_vars[expr])
@@ -115,7 +120,7 @@ class AstFlattener:
                 self.resolve_cache[expr] = res
                 return res
             return expr # Variable libre o input
-        
+
         # 4. Tuplas (Operaciones)
         if isinstance(expr, tuple):
             op = expr[0]
@@ -124,7 +129,7 @@ class AstFlattener:
             try: self.resolve_cache[expr] = res
             except: pass
             return res
-            
+
         return expr
 
     # --- VISITANTES ---
@@ -158,35 +163,35 @@ class AstFlattener:
     def _execute_conditional(self, cond, body_node, else_node):
         # Guardar estado antes
         state_before = self.current_state.copy()
-        
+
         # Ejecutar rama TRUE
         self._visit(body_node)
         state_true = self.current_state.copy()
-        
+
         # Restaurar y ejecutar rama FALSE
         self.current_state = state_before.copy()
         if else_node: self._visit(else_node)
         state_false = self.current_state
-        
+
         # Merge (Phi function)
         self._merge_states(state_false, state_true, cond)
 
     def _visit_If(self, node):
         cond = self._visit(node['condition'])
         val_then = None; val_else = None
-        
+
         # State Merge Logic
         state_before = self.current_state.copy()
-        
+
         if node['then_body']: val_then = self._visit(node['then_body'])
         state_then = self.current_state.copy()
-        
+
         self.current_state = state_before
         if node['else_body']: val_else = self._visit(node['else_body'])
         state_else = self.current_state
-        
+
         self._merge_states(state_else, state_then, cond)
-        
+
         # Return value merge (ternary)
         if val_then is not None and val_else is not None:
             return ('if', cond, val_then, val_else)
@@ -358,40 +363,39 @@ class AstFlattener:
     def _visit_FuncCall(self, node):
         name = node['name']
         args = [self._visit(a) for a in node.get('args', [])]
-        
+
         if self.symbolic_mode or name not in self.functions:
             self.input_vars.add(name)
             return ('call', name, tuple(args))
-            
+
         if self.recursion_depth[name] >= self.MAX_RECURSION_DEPTH:
-            # TRUNCAMIENTO POR PRESUPUESTO (§4.2): se alcanzo MAX_RECURSION_DEPTH.
-            # Devolver 0 aqui hace que el sistema codifique un programa distinto
-            # del original. En vez de hacerlo en silencio, lo registramos: el
-            # converter anclara `overflow = 0` y, al haberse disparado el evento,
-            # el sistema sera insatisfacible (sin teoremas falsos).
+            # Se agoto el presupuesto de desenrollado. Se devuelve OVERFLOW_MARKER
+            # en lugar de un valor: el converter lo propaga a la variable
+            # `overflow`, anclada a 0, de forma que una traza que necesite mas
+            # profundidad hace el sistema insatisfacible en vez de producir un
+            # resultado incorrecto.
             self.overflow_events += 1
             if not self.overflow_triggered:
-                print(f"  [AVISO §4.2] Truncamiento por presupuesto: '{name}' "
-                      f"alcanzo MAX_RECURSION_DEPTH={self.MAX_RECURSION_DEPTH}. El "
-                      f"sistema generado solo es fiel al programa para entradas "
-                      f"cuya traza cabe en ese presupuesto; para trazas mas largas "
-                      f"el truncamiento (return 0) codifica un programa distinto. "
-                      f"Aumenta DIOPHANTUS_MAX_RECURSION si necesitas mas profundidad.")
+                print(f"  [presupuesto] '{name}' alcanzo "
+                      f"MAX_RECURSION_DEPTH={self.MAX_RECURSION_DEPTH}. El sistema "
+                      f"PURE ancla overflow=0: las entradas cuya traza excede el "
+                      f"presupuesto quedan sin solucion. Aumenta "
+                      f"DIOPHANTUS_MAX_RECURSION para admitir trazas mas largas.")
             self.overflow_triggered = True
-            return 0
-            
+            return OVERFLOW_MARKER
+
         self.recursion_depth[name] += 1
         self.call_counter += 1
         # Push Scope
         self.scope_stack.append(f"c{self.call_counter}_{name}")
-        
+
         # Map Params to Args
         func_def = self.functions[name]
         old_state = self.current_state.copy()
-        
+
         for p, val in zip(func_def['params'], args):
             # Usar SSA para los parámetros en esta instancia
-            target = self._new_ssa_var(p) 
+            target = self._new_ssa_var(p)
             self.aux_vars[target] = val
             # Mapeamos el nombre base del param al nuevo target SSA en el scope actual
             # Pero como _visit_Var usa _get_scoped_name, necesitamos que el nombre base
@@ -401,7 +405,7 @@ class AstFlattener:
             self.current_state[scoped_p] = val
 
         ret = self._visit(func_def['body'])
-        
+
         # Pop Scope
         self.scope_stack.pop()
         self.current_state = old_state # Restaurar variables locales del caller
@@ -415,20 +419,20 @@ class AstFlattener:
         # Determinar nombre
         name = ""
         if node['target']['type'] == 'Var': name = node['target']['name']
-        
+
         val = self._visit(node['value'])
         op = node['op']
-        
+
         # Resolver valor actual para operadores compuestos +=
         if op != '=':
             curr = self._visit(node['target'])
             base_op = op[0] # + de +=
             val = (base_op, curr, val)
-            
+
         # SSA: Generar nueva versión de la variable
         # Pero si es State Var, actualizamos el puntero en current_state
         scoped_name = self._get_scoped_name(name)
-        
+
         if scoped_name in self.state_vars:
             self.current_state[scoped_name] = val
         else:
@@ -445,12 +449,12 @@ class AstFlattener:
         return self.current_state.get(scoped, scoped)
 
     def _visit_Constant(self, node): return node['value']
-    
+
     def _visit_BinaryOp(self, node):
         l = self._visit(node['left'])
         r = self._visit(node['right'])
         return (node['op'], l, r)
-        
+
     def _visit_UnaryOp(self, node):
         op = node['op']
         v = self._visit(node['operand'])
@@ -462,11 +466,11 @@ class AstFlattener:
         # ++ / --
         name = node['target']['name']
         op = '+' if node['op'] == '++' else '-'
-        
+
         # Tratar como assign: x = x + 1
         curr = self._visit(node['target'])
         val = (op, curr, 1)
-        
+
         scoped = self._get_scoped_name(name)
         if scoped in self.state_vars:
             self.current_state[scoped] = val
@@ -474,28 +478,27 @@ class AstFlattener:
             ssa = self._new_ssa_var(name)
             self.aux_vars[ssa] = val
             self.current_state[scoped] = ssa
-            
+
     def _visit_Declare(self, node):
         name = node['target']
         val = self._visit(node['value']) if node['value'] else 0
-        
+
         ssa = self._new_ssa_var(name)
         self.aux_vars[ssa] = val
         self.current_state[self._get_scoped_name(name)] = ssa
 
 def generate_function(ast_map):
     flattener = AstFlattener(
-        ast_map['state_vars'], 
-        ast_map['functions'], 
-        ast_map['struct_defs'], 
+        ast_map['state_vars'],
+        ast_map['functions'],
+        ast_map['struct_defs'],
         ast_map['config']
     )
     F = flattener.generate_function_F(ast_map['logic_tree'])
 
     # Relaciones simbólicas
     rels = {}
-    # (Opcional: Generar rels si se necesita Fase 6)
 
-    # §4.2: se propaga si la expansion trunco por presupuesto, para que el
-    # converter ancle la variable `overflow` en consecuencia.
+    # Se propaga si la expansion trunco por presupuesto, para que el converter
+    # ancle la variable `overflow` en consecuencia.
     return F, flattener.input_vars, rels, flattener.overflow_triggered

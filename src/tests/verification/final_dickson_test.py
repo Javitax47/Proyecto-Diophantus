@@ -78,11 +78,11 @@ def main():
         # Evaluar Fermat
         res_f = f_fermat(n) if f_fermat else 0
         is_p_f = res_f > 0
-        
+
         # Evaluar Lucas
         res_l = f_lucas(n) if f_lucas else 0
         is_p_l = res_l > 0
-        
+
         # Evaluar Baillie-PSW (La Final)
         t0 = time.time()
         res_b = f_bpsw(n)
@@ -90,7 +90,7 @@ def main():
         is_p_b = res_b > 0
 
         # --- Formateo de Resultados ---
-        
+
         # Función auxiliar para colorear la salida
         def fmt(pred, truth):
             txt = "PRIMO" if pred else "COMP."
@@ -101,7 +101,7 @@ def main():
 
         out_f = fmt(is_p_f, is_prime_truth) if f_fermat else "N/A"
         out_l = fmt(is_p_l, is_prime_truth) if f_lucas else "N/A"
-        
+
         # Baillie-PSW es especial, si falla es rojo (error grave), no amarillo
         if is_p_b == is_prime_truth:
             out_b = f"{Colors.OKGREEN}{Colors.BOLD}{'PRIMO' if is_p_b else 'COMP.'}{Colors.ENDC}"
@@ -110,11 +110,11 @@ def main():
             bpsw_errors += 1
 
         truth_str = "PRIMO" if is_prime_truth else "COMP."
-        
+
         print(f"{n:<12} | {truth_str:<10} || {out_f:<21} | {out_l:<21} || {out_b:<25} ({dt_b:.3f}ms)")
 
     print("-" * 85)
-    
+
     if bpsw_errors == 0:
         print(f"\n{Colors.OKGREEN}{Colors.BOLD}>>> RESULTADO FINAL: ÉXITO ABSOLUTO <<<{Colors.ENDC}")
         print("La Ecuación Baillie-PSW ha superado todas las pruebas.")

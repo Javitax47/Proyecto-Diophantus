@@ -8,7 +8,7 @@ class LatexExporter:
     def __init__(self, unoptimized_f, optimized_f, sub_defs, state_vars, input_vars,
                  poly_system, single_poly_equation, poly_converter_info,
                  function_definitions=None, logical_func_defs=None,
-                 math_formula_content_symbolic=None, 
+                 math_formula_content_symbolic=None,
                  math_formula_content_operational=None,
                  recurrence_content=None,
                  generator_content_data=None):
@@ -50,9 +50,9 @@ class LatexExporter:
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{geometry}
-\geometry{a4paper, margin=0.8in} 
+\geometry{a4paper, margin=0.8in}
 \usepackage{amssymb}
-\usepackage{breqn} 
+\usepackage{breqn}
 \usepackage{booktabs}
 \usepackage{url}
 
@@ -109,15 +109,15 @@ Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo o
     def _build_recurrence_section(self):
         if not self.recurrence_content: return ""
         content = "\\part{Sistema Dinámico (Recurrencia Infinita)}\n"
-        
+
         lines = self.recurrence_content.split('\n')
         latex_blocks = []
-        
+
         for line in lines:
             if "===" in line or not line.strip(): continue
-            
+
             # Detectar ecuaciones
-            if " = " in line: 
+            if " = " in line:
                 parts = line.split(" = ", 1)
                 if len(parts) == 2:
                     lhs = parts[0].strip()
@@ -144,7 +144,7 @@ Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo o
                 if current_block:
                     latex_blocks.append(r"\begin{dmath*}" + "\n" + " \\\\\n".join(current_block) + "\n" + r"\end{dmath*}")
                     current_block = []
-                latex_blocks.append(line + r"\\") 
+                latex_blocks.append(line + r"\\")
             else:
                 clean_line = self._sanitize_math_formula(line)
                 # Aplicar wrapping manual
@@ -174,7 +174,7 @@ Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo o
             current += char
             if char == '(': balance += 1
             if char == ')': balance -= 1
-            
+
             if len(current) > chunk_size and balance == 0 and char in ['+', '-']:
                 parts.append(current)
                 current = ""
@@ -192,31 +192,31 @@ Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo o
         clean_line = line.split(' = ')[0] if ' = ' in line else line
         terms = clean_line.split(' + ')
         formatted_terms = [self._format_poly_expression(term) for term in terms]
-        
+
         output_lines = []
         current_line = ""
-        
+
         for term in formatted_terms:
             # Añadir separador
             term_with_sep = (" + " if current_line else "") + term
-            
+
             if len(current_line) + len(term_with_sep) > line_length:
                 # Si el término es monstruoso, lo rompemos también
                 if len(term) > line_length:
                      # Caso recursivo o forzado
                      output_lines.append(current_line + " +")
-                     current_line = term 
+                     current_line = term
                 else:
                     output_lines.append(current_line)
                     current_line = "+ " + term
             else:
                 current_line += term_with_sep
-                
+
         if current_line: output_lines.append(current_line)
-        
+
         body = (" \\\\\n& ").join(output_lines)
         return body if force_no_equals else f"& {body} = 0"
-    
+
     def _format_var(self, v): return str(v).replace('_', r'\_')
     def _format_tuple_to_latex(self, expr): return str(expr)
     def _format_expanded_latex(self, expr, sub): return str(expr)

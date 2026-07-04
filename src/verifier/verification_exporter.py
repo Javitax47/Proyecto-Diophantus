@@ -10,7 +10,7 @@ def _escape_tex(text):
     if not text:
         return ""
     text = str(text)
-    text = text.replace('_', r'\_') 
+    text = text.replace('_', r'\_')
     return text.replace('%', r'\%') \
                .replace('$', r'\$') \
                .replace('#', r'\#') \
@@ -39,10 +39,10 @@ class VerificationExporter:
         content = []
         content.append(self._format_header())
         content.append(self._format_summary())
-        
+
         if self.z3_result == "sat" and self.z3_model:
             content.append(self._format_model())
-        
+
         content.append(self._format_equations())
         content.append("\n\\end{document}\n")
         return "\n".join(content)
@@ -122,14 +122,14 @@ Se ha intentado encontrar un estado del sistema que cumpla la siguiente condici�
         all_keys = set()
         for frame in self.z3_model:
             all_keys.update(frame.keys())
-        
+
         # Filtrar y ordenar claves
         state_keys = sorted([k for k in all_keys if 'I_' not in k and k != 'x_t1' and k != 'x_t0'])
         input_keys = sorted([k for k in all_keys if 'I_' in k])
-        
+
         col_names = ["t"] + state_keys + input_keys
         col_format = "|c|" + "c" * len(state_keys) + "|" + "c" * len(input_keys)
-        
+
         output = [
             "\\subsection*{Camino de Secuencia que Altera el Invariante}",
             "Z3 ha proporcionado la siguiente secuencia de estados y entradas:",
@@ -138,10 +138,10 @@ Se ha intentado encontrar un estado del sistema que cumpla la siguiente condici�
             f"\\begin{{tabular}}{{{col_format}}}",
             "\\hline"
         ]
-        
+
         header_row = " & ".join([_escape_tex(k.replace("I_", "In ")) for k in col_names]) + " \\\\ \\hline"
         output.append(header_row)
-        
+
         for t, frame in enumerate(self.z3_model):
             row_data = [str(t)]
             for key in state_keys:
@@ -149,7 +149,7 @@ Se ha intentado encontrar un estado del sistema que cumpla la siguiente condici�
             for key in input_keys:
                 row_data.append(_escape_tex(str(frame.get(key, '-'))))
             output.append(" & ".join(row_data) + " \\\\ \\hline")
-        
+
         output.extend([
             "\\end{tabular}",
             "\\end{center}"
@@ -175,24 +175,24 @@ Se ha intentado encontrar un estado del sistema que cumpla la siguiente condici�
         """
         # 1. Reemplazar multiplicación '*' por '\cdot'
         eq_str = eq_str.replace('*', r' \cdot ')
-        
+
         # 2. Transformar accesos a array: b[t+1] -> b_{t+1}
         eq_str = re.sub(r'(\w+)\[([^\]]+)\]', r'\1_{\2}', eq_str)
-        
+
         # 3. CORRECCIÓN: Asegurar que C_n y e_n tengan llaves en el subíndice
         # Busca C_ o e_ seguido de dígitos y los envuelve en {}
         eq_str = re.sub(r'([Ce])_(\d+)', r'\1_{\2}', eq_str)
-        
+
         # 4. Alinear en el igual
         eq_str = eq_str.replace('=', '&=', 1)
-        
+
         return eq_str
 
     def _format_equations(self):
         """Crea la sección que lista todas las ecuaciones polinómicas."""
         latex_eqs = [self._latexify_equation(eq) for eq in self.poly_system]
         eqs_block = "\\\\ \n".join(latex_eqs)
-        
+
         return f"""
 \\section*{{Sistema de Ecuaciones Polinómicas Verificado}}
 El solucionador Z3 recibió el siguiente sistema de ecuaciones:

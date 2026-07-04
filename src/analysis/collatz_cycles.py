@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - NO-EXISTENCIA CERTIFICADA DE CICLOS DE COLLATZ (§6.3 del informe)
+   DIOPHANTUS - NO-EXISTENCIA CERTIFICADA DE CICLOS DE COLLATZ
 ================================================================================
 Codifica "existe un ciclo no trivial de longitud L" de la dinamica de collatz
 (variante (3n+1)/2) como un sistema diofantico y deja que Z3 lo refute (UNSAT).

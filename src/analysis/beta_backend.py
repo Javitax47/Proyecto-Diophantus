@@ -1,13 +1,13 @@
 """
 ================================================================================
-   DIOPHANTUS - BETA BACKEND (Fase 2): de la transicion compilada a (a, b, T)
+   DIOPHANTUS - BETA BACKEND: de la transicion compilada a (a, b, T)
 ================================================================================
 Conecta el compilador con el colapso beta. Extrae la funcion de transicion de UN
 PASO de un programa (compilando en symbolic_mode, que mantiene la llamada
 recursiva como ('call',...) en vez de desenrollarla) y la convierte en un step
 ejecutable. Con el, un "Witness Miner" ejecuta el programa y empaqueta toda la
 traza en los testigos beta (a, b, T) -- el sistema de tamano constante de la
-Fase 2, valido para cualquier profundidad sin recompilar.
+Valido para cualquier profundidad sin recompilar.
 """
 
 import operator

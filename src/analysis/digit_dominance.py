@@ -1,8 +1,8 @@
 """
 ================================================================================
-   DIOPHANTUS - DOMINANCIA DE DIGITOS / KUMMER-LUCAS (Fase 3, Nivel 3)
+   DIOPHANTUS - DOMINANCIA DE DIGITOS / KUMMER-LUCAS
 ================================================================================
-Herramienta nombrada por el informe (§5, Nivel 3) para colapsar el cuantificador
+Herramienta para colapsar el cuantificador
 universal acotado del sistema beta en el caso GENERAL (no solo lineal): empaquetar
 la historia de cada registro en un entero gigante en base 2^k (un digito por paso)
 e imponer la correccion de TODOS los pasos a la vez mediante la relacion de

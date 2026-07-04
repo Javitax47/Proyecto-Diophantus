@@ -3,7 +3,7 @@
 ================================================================================
    DIOPHANTUS - PRODUCTO MONETIZABLE (verifier + recheck + metering + atlas)
 ================================================================================
-Valida la capa de producto (MONETIZACION.md C1/C2/§4): el activo estrella
+Valida la capa de producto (la capa de producto): el activo estrella
 convertido en algo demostrable, re-verificable por terceros y facturable.
 
 Comprueba:

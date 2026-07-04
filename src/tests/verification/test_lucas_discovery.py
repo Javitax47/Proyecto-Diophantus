@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - CRUCE MOTOR DE DESCUBRIMIENTO <-> SUCESIONES DE LUCAS (Fase 4)
+   DIOPHANTUS - CRUCE MOTOR DE DESCUBRIMIENTO <-> SUCESIONES DE LUCAS
 ================================================================================
-Une el motor de descubrimiento (Fase 4) con la primalidad CORRECTA (primality.py,
+Une el motor de descubrimiento con la primalidad CORRECTA (primality.py,
 Baillie-PSW). Las sucesiones de Lucas U_n, V_n (parametros P, Q; D=P^2-4Q) son la
 base del componente Lucas de Baillie-PSW, y satisfacen identidades cerradas. El
 motor las redescubre sin plantilla:

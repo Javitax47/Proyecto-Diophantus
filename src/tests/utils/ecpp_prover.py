@@ -9,17 +9,17 @@ class ECPP_Prover:
     def point_add_proj(X1, Y1, Z1, X2, Y2, Z2, a, n):
         if Z1 == 0: return X2, Y2, Z2
         if Z2 == 0: return X1, Y1, Z1
-        
+
         U1 = (Y1 * Z2) % n; U2 = (Y2 * Z1) % n
         V1 = (X1 * Z2) % n; V2 = (X2 * Z1) % n
-        
+
         if V1 == V2:
-            if U1 != U2: return 0, 1, 0 
+            if U1 != U2: return 0, 1, 0
             else: return ECPP_Prover.point_double_proj(X1, Y1, Z1, a, n)
-            
+
         u = (U2 - U1) % n; v = (V2 - V1) % n
         v2 = (v * v) % n; v3 = (v2 * v) % n; w = (Z1 * Z2) % n
-        
+
         A = (u * u * w - v3 - 2 * V1 * v2) % n
         X3 = (v * A) % n
         Y3 = (u * (V1 * v2 - X3) - U1 * v3) % n
@@ -59,7 +59,7 @@ class ECPP_Prover:
             y = random.randint(0, n-1)
             b = (y*y - x*x*x - a*x) % n
             if (4*a**3 + 27*b**2) % n == 0: continue
-            
+
             # Buscar orden pequeño para test rápido
             for m in range(2, 30):
                 Rx, Ry, Rz = ECPP_Prover.point_mul_proj(m, x, y, a, n)

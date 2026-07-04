@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - EMISION DEL SISTEMA CERRADO A Z3 (Fase 3, cierre del caveat)
+   DIOPHANTUS - EMISION DEL SISTEMA CERRADO A Z3
 ================================================================================
 Construye el sistema de restricciones cerrado de collatz (R1-R5, todas O(1))
 como un sistema de BIT-VECTORS de Z3 y deja que el SOLVER —no `==` de Python—

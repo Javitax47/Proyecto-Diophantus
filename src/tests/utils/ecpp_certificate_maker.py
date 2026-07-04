@@ -14,10 +14,10 @@ def point_add(p1, p2, a, mod):
     if p2 is None: return p1
     x1, y1 = p1
     x2, y2 = p2
-    
+
     if x1 == x2 and y1 != y2: return None
     if x1 == x2 and y1 == y2 and y1 == 0: return None
-    
+
     try:
         if x1 == x2: # Doubling
             m = (3 * x1 * x1 + a) * inverse_mod(2 * y1, mod)
@@ -25,7 +25,7 @@ def point_add(p1, p2, a, mod):
             m = (y2 - y1) * inverse_mod(x2 - x1, mod)
     except ValueError:
         return None # Factor encontrado (Singularidad)
-    
+
     x3 = (m * m - x1 - x2) % mod
     y3 = (m * (x1 - x3) - y1) % mod
     return (x3, y3)
@@ -46,32 +46,32 @@ def find_ecpp_certificate(p, max_attempts=100000):
     n*P = Infinito.
     """
     # print(f"   [Maker] Buscando curva para p={p} ({max_attempts} intentos max)...")
-    
+
     for i in range(max_attempts):
         a = random.randint(0, p-1)
         x = random.randint(0, p-1)
         y = random.randint(0, p-1)
-        
+
         # Calculamos b para que el punto (x,y) esté en la curva
         b = (y*y - x*x*x - a*x) % p
-        
+
         # Discriminante no singular: 4a^3 + 27b^2 != 0
         if (4*a**3 + 27*b**2) % p == 0: continue
-        
+
         # Verificación rápida: ¿Es el orden igual a p?
         # Probamos si p * P = Infinito (O)
         try:
             P = (x, y)
             # Para p grandes, esto es lento, pero necesario.
             res = point_mul(P, p, a, p)
-            
+
             if res is None: # Punto en el infinito
                 # Verificación extra de seguridad (que no sea orden pequeño)
                 # (Omitida por velocidad en demo, asumimos primalidad de p)
                 return a, b, x, y, p
         except:
             pass
-            
+
     return None
 
 if __name__ == "__main__":

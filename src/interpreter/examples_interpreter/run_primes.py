@@ -9,7 +9,7 @@ from src.interpreter.interpreter import get_engine
 
 def main():
     parser = argparse.ArgumentParser(description="Ejecuta el Buscador de Primos Optimizado.")
-    parser.add_argument('--mode', choices=['SEQUENTIAL', 'Z3_LOGICAL', 'Z3_PURE'], 
+    parser.add_argument('--mode', choices=['SEQUENTIAL', 'Z3_LOGICAL', 'Z3_PURE'],
                         default='SEQUENTIAL', help='Motor de ejecución a utilizar.')
     args = parser.parse_args()
 
@@ -23,16 +23,16 @@ def main():
         print(f"Error inicializando motor: {e}")
         print(f"¿Has compilado 'examples/primes.c'?")
         sys.exit(1)
-    
+
     # Estado inicial (coincide con las variables globales de primes.c)
     current_state = {
-        'n': 1, 
-        'd': 3, 
-        'r': 0, 
-        'state': 0, 
+        'n': 1,
+        'd': 3,
+        'r': 0,
+        'state': 0,
         'found_prime': 2
     }
-    
+
     print(f"\n--- BUSCADOR DE PRIMOS DIOPHANTUS ({args.mode}) ---")
     print("Iniciando búsqueda... (Ctrl+C para detener)")
     time.sleep(1)
@@ -45,16 +45,16 @@ def main():
         while True:
             # 2. Inputs (No hay inputs externos en este algoritmo)
             inputs = {}
-            
+
             # 3. Calcular Siguiente Estado
             # El motor resuelve las ecuaciones polinómicas para avanzar un paso
             next_state = engine.compute_next_state(current_state, inputs)
             current_state.update(next_state)
             steps += 1
-            
+
             # 4. Detectar hallazgo (Cambio en la variable de salida)
             current_prime = current_state.get('found_prime', 0)
-            
+
             if current_prime != last_prime:
                 elapsed = time.time() - start_time_total
                 print(f"[HITO] ¡Nuevo Primo Hallado! >> {current_prime} << (Paso: {steps}, T: {elapsed:.2f}s)")

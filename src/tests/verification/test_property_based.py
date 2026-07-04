@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - PROPERTY-BASED TESTING DEL MODO PURE (Fase 0, item 2)
+   DIOPHANTUS - PROPERTY-BASED TESTING DEL MODO PURE
 ================================================================================
 Generaliza `test_pure_soundness` de operadores sueltos a EXPRESIONES COMPUESTAS
 aleatorias (aritmética anidada con comparaciones y módulo). Para cada expresión
@@ -12,7 +12,7 @@ y cada asignación de entrada comprueba con Z3 la propiedad central:
 
 Es decir: aritmetización fiel para programas pequeños, no solo para operadores
 aislados. Cubre el "property-based testing con programas aleatorios pequeños"
-que pide el informe (§7, Fase 0, item 2).
+buscada.
 
 Uso:  python src/tests/verification/test_property_based.py [n_exprs]
 Requisitos: z3-solver.

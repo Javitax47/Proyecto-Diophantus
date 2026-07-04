@@ -38,16 +38,16 @@ def print_header(title):
 
 def compile_target(c_file):
     print(f"Compilando {c_file} para generar sistemas de ecuaciones...")
-    
+
     compiler_script = project_root / "diophantus.py"
-    
+
     # Buscar el archivo C en el proyecto
     c_path = None
     for p in project_root.rglob(c_file):
-        if "output" not in p.parts: 
+        if "output" not in p.parts:
             c_path = p
             break
-            
+
     if not c_path:
         print(f"¡ERROR! No se encuentra el archivo {c_file}")
         return False
@@ -59,9 +59,9 @@ def compile_target(c_file):
         # Usamos ruta relativa desde la raíz para que el output vaya a output/
         rel_path = c_path.relative_to(project_root)
         cmd = [sys.executable, str(compiler_script), str(rel_path)]
-        
+
         result = subprocess.run(cmd, cwd=project_root, capture_output=True, text=True)
-        
+
         if result.returncode != 0:
             print(f"¡ERROR CRÍTICO! Falló la compilación de {c_file}")
             print(result.stderr[:300]) # Mostrar error
@@ -110,13 +110,13 @@ TEST_SUITE = [
             "INPUT_VARS": ['getch', 'kbhit'],
             "VERIFICATION_TYPE": "SEQUENTIAL",
             "K_STEPS": 5,
-            "BUG_CONDITION": "(p_t1 > p + 1)", 
+            "BUG_CONDITION": "(p_t1 > p + 1)",
             "INITIAL_STATE": {'b': 40, 'p': 10, 'q': 10, 'f': 0},
             "BOUNDS": {"p": {"min": 1, "max": 23}},
             "OUTPUT_FILE": str(OUTPUT_DIR / "report_test_02_pong_teleport.tex")
         }
     },
-    
+
     # ==============================================
     # 2. SIMPLE COUNTER
     # ==============================================
@@ -173,7 +173,7 @@ TEST_SUITE = [
 
 def main():
     print(f"=== INICIANDO LEGACY TEST SUITE (ADAPTADO) ===\n")
-    
+
     # 1. Compilación previa de todos los targets necesarios
     targets = ["pong.c", "simple_counter.c", "level_regulator.c"]
     for t in targets:
@@ -184,18 +184,18 @@ def main():
 
     # 2. Ejecución de Pruebas
     results = []
-    
+
     for i, test in enumerate(TEST_SUITE):
         print_header(f"TEST {i+1}/{len(TEST_SUITE)}: {test['name']}")
         print(f"Descripción: {test['desc']}")
-        
+
         # Verificar si el archivo de sistema existe antes de correr
         sys_file = test['config']['SYSTEM_FILE']
         if not os.path.exists(sys_file):
             print(f"Error: Archivo no encontrado {sys_file}")
             results.append("SKIP (File Missing)")
             continue
-            
+
         try:
             # Capturamos stdout para buscar SAT/UNSAT
             # Como run_verification imprime a stdout, no podemos capturarlo fácilmente
@@ -206,9 +206,9 @@ def main():
         except Exception as e:
             print(f"\n[!!!] EXCEPCIÓN EN TEST: {e}")
             results.append(f"ERROR: {e}")
-            
-        time.sleep(0.2) 
-        
+
+        time.sleep(0.2)
+
     # 3. Resumen
     print("\n" + "="*60)
     print("RESUMEN DE EJECUCIÓN")

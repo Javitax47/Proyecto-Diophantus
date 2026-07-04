@@ -97,6 +97,36 @@ def certify_nonneg(p, var_names, claim="", max_deg=2):
     }
 
 
+def certify_positivstellensatz(p, constraints, multipliers, constant, var_names, claim=""):
+    """Emite un certificado de Positivstellensatz (Handelman lineal): prueba
+    `p >= 0` sobre el dominio `{g_j >= 0}` con la identidad
+        p = constant + sum_j multipliers_j * constraints_j,
+    con `constant >= 0` y cada `multipliers_j >= 0` (constantes). Auto-verifica la
+    identidad y los signos; devuelve el dict-certificado o None si no cuadra."""
+    p = _exprs([p], var_names)[0]
+    gs = _exprs(constraints, var_names)
+    if constant < 0 or any(m < 0 for m in multipliers):
+        return None
+    acc = sympy.Integer(constant) + sum(sympy.Integer(multipliers[j]) * gs[j]
+                                        for j in range(len(gs)))
+    if sympy.expand(acc - p) != 0:
+        return None
+    return {
+        'schema': CERT_SCHEMA,
+        'tool_version': TOOL_VERSION,
+        'kind': 'positivstellensatz',
+        'verdict': 'NONNEG',
+        'claim': claim or "el polinomio es no negativo (>= 0) sobre el dominio",
+        'var_names': list(var_names),
+        'polynomial': str(sympy.expand(p)),
+        'certificate': {
+            'constant': str(constant),
+            'terms': [[str(multipliers[j]), str(sympy.expand(gs[j]))] for j in range(len(gs))],
+        },
+        'created': _now(),
+    }
+
+
 # ---------------------------------------------------------------------------
 #  Frontend de programa real (C -> sistema PURE -> certificado)
 # ---------------------------------------------------------------------------

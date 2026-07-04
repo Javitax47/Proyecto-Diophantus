@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - SISTEMA CERRADO DE COLLATZ (Fase 3, cierre del caso no afin)
+   DIOPHANTUS - SISTEMA CERRADO DE COLLATZ
 ================================================================================
 Ensambla un SISTEMA DE RESTRICCIONES de tamano CONSTANTE (independiente de la
 longitud T de la trayectoria) sobre las historias empaquetadas en base B=2^k

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DE SOUNDNESS DEL MODO PURE (Fase 0, item 2 del informe)
+   DIOPHANTUS - TEST DE SOUNDNESS DEL MODO PURE
 ================================================================================
 Verifica empíricamente, con Z3, la propiedad central de la aritmetización fiel:
 
     el sistema diofántico PURE tiene solución entera  <=>  la traza es válida.
 
-Es decir, para cada operador aritmetizado en §4.1 se comprueba sobre una rejilla
+Es decir, para cada operador aritmetizado en se comprueba sobre una rejilla
 de entradas concretas que:
   (a) el sistema ES satisfacible cuando la salida coincide con la semántica real
       del operador (la traza existe), y
@@ -125,7 +125,7 @@ def main():
     print()
     if stats.failed == 0:
         print(f"{Colors.OKGREEN}{Colors.BOLD}✓ {stats.passed}/{total} casos OK — "
-              f"el sistema PURE es sólido para los operadores de §4.1.{Colors.ENDC}")
+              f"el sistema PURE es sólido para los operadores de{Colors.ENDC}")
         sys.exit(0)
     else:
         print(f"{Colors.FAIL}{Colors.BOLD}✗ {stats.failed}/{total} casos FALLARON.{Colors.ENDC}")

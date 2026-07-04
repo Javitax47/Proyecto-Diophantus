@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL COLAPSO LINEAL (Fase 2/3, Nivel 3/5)
+   DIOPHANTUS - TEST DEL COLAPSO LINEAL
 ================================================================================
 Valida que, para recurrencias lineales x_{i+1}=c*x_i+d, los T pasos colapsan en
 UNA sola ecuacion sobre la traza empaquetada N (eliminacion del cuantificador

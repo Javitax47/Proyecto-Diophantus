@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - COLAPSO ESTRUCTURAL GENERICO (Fase 3, camino universal)
+   DIOPHANTUS - COLAPSO ESTRUCTURAL GENERICO
 ================================================================================
 En vez de tratar cada algoritmo a mano, detecta AUTOMATICAMENTE la estructura de
 la transicion COMPILADA de cualquier programa y aplica el colapso adecuado:

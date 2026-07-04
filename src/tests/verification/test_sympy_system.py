@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DE LA REPRESENTACIÓN SYMPY (Fase 0, item 3 del informe)
+   DIOPHANTUS - TEST DE LA REPRESENTACIÓN SYMPY
 ================================================================================
 Valida `src/analysis/sympy_system.py`, que migra el sistema de ecuaciones de
 strings frágiles a objetos SymPy reales. Comprueba:
 
-  (1) POLINOMICIDAD: el sistema PURE generado para los operadores de §4.1 es un
+  (1) POLINOMICIDAD: el sistema PURE generado para los operadores de es un
       polinomio entero genuino que SymPy puede construir como `Poly`. Es el
-      criterio de éxito de la Fase 1 ("un P(x)=0 real que SymPy manipula").
+      objetivo de aritmetización fiel ("un P(x)=0 real que SymPy manipula").
   (2) EQUIVALENCIA SEMÁNTICA: cada ecuación, leída por SymPy, evalúa idéntico
       al `eval` del string original sobre asignaciones enteras aleatorias — la
       migración no cambia la semántica (rigor de no-regresión).

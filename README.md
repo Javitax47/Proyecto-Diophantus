@@ -103,6 +103,9 @@ Unificación de la verificación independiente mediante un único validador mini
 *   **Programas:** Verificación de inalcanzabilidad y testigo.
 *   **Combinatoria:** Coloreabilidad de grafos mediante Hilbert-Nullstellensatz (`src/product/combinatorial.py`).
 *   **SAT/CNF:** Demostración de insatisfacibilidad booleana (`src/product/sat_certs.py`).
+*   **Subset-sum:** Factibilidad de subconjunto-suma mediante Nullstellensatz / testigo entero (`src/product/subset_sum.py`).
+*   **Cota-QUBO:** Óptimo o cota inferior de un QUBO mediante Nullstellensatz + testigo (`src/product/qubo_bound.py`).
+*   **NN-lineal:** Robustez de una capa lineal sobre una caja mediante Positivstellensatz (Handelman) + testigo (`src/product/nn_linear.py`).
 
 ---
 

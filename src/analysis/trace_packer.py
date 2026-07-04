@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - TRACE PACKER (Fase 2, Nivel 2 del informe: la funcion beta)
+   DIOPHANTUS - TRACE PACKER
 ================================================================================
 Primer ladrillo del "colapso beta" que elimina el desenrollado: en lugar de una
 copia de las variables por paso, TODA la traza x_0, x_1, ..., x_{T} se codifica

@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - COLAPSO DE COLLATZ (Fase 3, caso NO afin via seleccion por paridad)
+   DIOPHANTUS - COLAPSO DE COLLATZ
 ================================================================================
 La transicion de collatz (variante de collatz.c: par -> n/2 ; impar -> (3n+1)/2)
 no es afin, pero SI admite una forma POLINOMICA por paso introduciendo el bit de

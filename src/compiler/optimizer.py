@@ -42,30 +42,30 @@ class Optimizer:
         counts = defaultdict(int)
         for expr_tuple in self.f_function.values():
             self._collect_subexpressions(expr_tuple, counts)
-            
+
         # 2. Identificar las subexpresiones que vale la pena reemplazar.
         #    Criterios: se repiten más de una vez y tienen una longitud mínima.
         for expr_tuple, count in counts.items():
-            if count > 1 and len(str(expr_tuple)) > 10: 
+            if count > 1 and len(str(expr_tuple)) > 10:
                 sub_name = f"C_{{{self.sub_counter}}}"
                 self.sub_map[expr_tuple] = sub_name
                 self.sub_defs[sub_name] = expr_tuple
                 self.sub_counter += 1
-        
+
         print(f"  [Optimizer] ...{len(self.sub_defs)} subexpresiones comunes encontradas y extraídas.")
-        
+
         # 3. Construir la función F optimizada reemplazando las subexpresiones.
         optimized_f_func = {}
         for var, expr_tuple in self.f_function.items():
             optimized_f_func[var] = self._replace_subexpressions(expr_tuple)
-        
+
         # 4. Optimizar las propias definiciones (pueden anidarse, ej. C_5 usa C_2).
         optimized_sub_defs = {}
         for name, expr_tuple in self.sub_defs.items():
             op = expr_tuple[0]
             args = [self._replace_subexpressions(child) for child in expr_tuple[1:]]
             optimized_sub_defs[name] = (op,) + tuple(args)
-            
+
         return optimized_f_func, optimized_sub_defs
 
     def _collect_subexpressions(self, expr, counts):
@@ -75,9 +75,9 @@ class Optimizer:
         """
         if not isinstance(expr, tuple):
             return
-        
+
         counts[expr] += 1
-        
+
         for child in expr[1:]:
             self._collect_subexpressions(child, counts)
 
@@ -88,11 +88,11 @@ class Optimizer:
         """
         if not isinstance(expr, tuple):
             return expr # Caso base: es una variable, constante o C_n ya reemplazado.
-        
+
         # Si la expresión completa es una subexpresión común, la reemplazamos.
         if expr in self.sub_map:
             return self.sub_map[expr]
-        
+
         # Si no, reemplazamos recursivamente a sus hijos y reconstruimos la tupla.
         op = expr[0]
         args = [self._replace_subexpressions(child) for child in expr[1:]]

@@ -23,7 +23,7 @@ class EquationExporter:
         op = expr[0]
         if op == 'if':
             return f"If({self._tuple_to_generic_string(expr[1])}, {self._tuple_to_generic_string(expr[2])}, {self._tuple_to_generic_string(expr[3])})"
-        
+
         # Añadir soporte para CALL en prefijo
         if op == 'call':
             func_name = expr[1]
@@ -33,7 +33,7 @@ class EquationExporter:
                 args = raw_args[1:]
             else:
                 args = raw_args
-            
+
             arg_strings = [self._tuple_to_generic_string(a) for a in args]
             return f"call({func_name}, {', '.join(arg_strings)})"
 
@@ -49,12 +49,12 @@ class EquationExporter:
         op_map = {'+': '+', '-': '-', '*': '*', '/': '/', '%': '%', '==': '==', '!=': '!=', '<': '<', '>': '>', '<=': '<=', '>=': '>=', '&&': '&&', '||': '||'}
         if op in op_map: return f"({args[0]} {op_map[op]} {args[1]})"
         if op == 'neg': return f"-({args[0]})"
-        
+
         # --- CORRECCIÓN: Filtrado de argumento de cierre ---
         if op == 'call':
             func_name = expr[1]
             raw_call_args = expr[2]
-            
+
             # Heurística: Si hay argumentos y el primero parece ser el nombre de la función
             # (o una referencia a ella), lo saltamos. Esto corrige el error de aridad.
             # Verificamos si raw_call_args[0] (como string) es igual a func_name
@@ -63,10 +63,10 @@ class EquationExporter:
                 first_arg_str = str(raw_call_args[0]).replace("{", "").replace("}", "")
                 if first_arg_str == func_name:
                     clean_args = raw_call_args[1:]
-            
+
             call_args_str = [self._expr_to_readable_string(a) for a in clean_args]
             return f"P_{func_name}({', '.join(call_args_str)})"
-            
+
         return f"{op}({', '.join(args)})"
 
     # --- Exportaciones Base ---
@@ -80,13 +80,13 @@ class EquationExporter:
             for func_name, func_data in self.function_relations.items():
                 params = func_data['params']
                 body_expr = func_data['body']
-                
+
                 # CAMBIO: Usar formato GENÉRICO (Prefijo: +(a,b)) para evitar ambigüedad de parseo
                 # Antes: readable_body = self._expr_to_readable_string(body_expr)
-                
+
                 # Usamos el método que ya tenías para formato interno:
                 prefix_body = self._tuple_to_generic_string(body_expr)
-                
+
                 lines.append(f"P_{func_name}({', '.join(params)}) = {prefix_body}")
             lines.append("--- [FIN DEFINICIONES] ---\n")
         lines.append(self.export_optimized_for_interpreter())
@@ -133,39 +133,39 @@ class EquationExporter:
     def _export_formula_logic(self, poly_str, operational):
         output = []
         math_P = poly_str
-        
+
         # 1. Limpieza base
         math_P = math_P.replace("**2", "^2")
         math_P = math_P.replace("*", " \\cdot ")
-        
+
         # 2. Identificar TOKENS
         raw_tokens = set(re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', math_P))
-        reserved_keywords = {'div', 'mod', 'floor', 'if', 'call', 's', 't'} 
+        reserved_keywords = {'div', 'mod', 'floor', 'if', 'call', 's', 't'}
         special_vars = {'target', 'result'}
-        
+
         vars_to_process = []
         for token in raw_tokens:
             if token in reserved_keywords: continue
             if token in special_vars: continue
             vars_to_process.append(token)
         vars_to_process.sort(key=len, reverse=True)
-        
+
         # 3. Variables E/S
         math_P = math_P.replace("result[t+1]", "R").replace("result", "R")
         math_P = math_P.replace("target[t+1]", "N").replace("target", "N")
-        math_P = re.sub(r'\[t\+1\]', '', math_P) 
-        
+        math_P = re.sub(r'\[t\+1\]', '', math_P)
+
         if operational:
             title = "FÓRMULA OPERACIONAL (Vectorial)"
             rename_map = {var: f"x_{{{i+1}}}" for i, var in enumerate(vars_to_process)}
-            
+
             for original, new_name in rename_map.items():
                 pattern = r'\b' + re.escape(original) + r'\b'
                 math_P = re.sub(pattern, lambda m: new_name, math_P)
-                
+
             num_vars = len(vars_to_process)
             sum_notation = f"\\sum_{{\\mathbf{{x}} \\in \\mathbb{{N}}^{{{num_vars}}}}}"
-            
+
             output.append(f"=== {title} ===")
             output.append(r"f(N) = \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor")
             output.append(r"\mathcal{D}(N, R, \mathbf{x}) = " + sum_notation + r" \left( " + math_P + r" \right)")
@@ -182,7 +182,7 @@ class EquationExporter:
                 else:
                     esc = var.replace('_', r'\_')
                     new_name = rf"\mathit{{{esc}}}"
-                
+
                 math_P = re.sub(r'\b' + re.escape(var) + r'\b', lambda m: new_name, math_P)
 
             output.append(f"=== {title} ===")

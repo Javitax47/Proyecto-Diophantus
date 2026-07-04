@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - COLAPSO LINEAL (Fase 2/3, Nivel 5 del informe)
+   DIOPHANTUS - COLAPSO LINEAL
 ================================================================================
 Eliminacion del cuantificador universal acotado para recurrencias LINEALES,
 empaquetando toda la traza en un solo entero (dominancia de digitos).
@@ -21,7 +21,7 @@ dimension temporal se muda al TAMANO del testigo N, que es donde el MRDP dice
 que debe vivir. El numero de ecuaciones es CONSTANTE, independiente de T.
 
 Esto realiza, para el caso lineal, la vision del Nivel 3/5: colapsar la
-recursion en una caracterizacion cerrada (cf. matrix_kernel.py y §5.5 del
+recursion en una caracterizacion cerrada (cf. matrix_kernel.py y del
 informe). El caso no lineal (p. ej. collatz) requiere la simulacion de maquinas
 de registros + Kummer-Lucas, fuera de este modulo.
 """
@@ -78,7 +78,7 @@ def pack_and_collapse(c, d, x0, T):
 # Cubre cualquier maquina de registros con actualizacion afin (varios registros
 # que se mezclan linealmente), p. ej. Fibonacci [a,b] -> [b, a+b]. Cada
 # componente j satisface su propia ecuacion cerrada sobre las historias
-# empaquetadas N_l; son m ecuaciones, constante en T (cf. §5.5 y matrix_kernel).
+# empaquetadas N_l; son m ecuaciones, constante en T (cf. y matrix_kernel).
 
 def coupled_trace(A, d, x0, T):
     """Traza de x_{i+1} = A·x_i + d. A es m×m (lista de listas), d y x0 vectores.

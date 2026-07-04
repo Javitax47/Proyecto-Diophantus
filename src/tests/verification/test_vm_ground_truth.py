@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DE LA VM CONTRA GROUND-TRUTH (Fase 0, item 2a)
+   DIOPHANTUS - TEST DE LA VM CONTRA GROUND-TRUTH
 ================================================================================
 Verifica que la Máquina Virtual de pila (`src/runtime/vm.py`) ejecuta la lógica
 recursiva con la MISMA semántica que una referencia en Python, sobre un conjunto
 de algoritmos clásicos y muchas entradas. Es la pata "(a) ejecutar en VM contra
-ground truth" del item 2 del informe.
+ground truth" del item 2.
 
 Las funciones se definen directamente en el formato de AST de la VM (sin pasar
 por el compilador C, para que el test sea rápido y autocontenido) y se contrasta

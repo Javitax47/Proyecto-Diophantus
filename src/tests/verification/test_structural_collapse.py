@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL COLAPSO ESTRUCTURAL GENERICO (Fase 3, universal)
+   DIOPHANTUS - TEST DEL COLAPSO ESTRUCTURAL GENERICO
 ================================================================================
 Demuestra que el colapso se descubre AUTOMATICAMENTE desde la transicion
 compilada de cualquier programa, sin hardcodear:

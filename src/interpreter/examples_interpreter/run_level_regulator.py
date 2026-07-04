@@ -37,31 +37,31 @@ def render_dashboard(state, step, mode):
     level = state.get('level', 0)
     rate = state.get('rate', 0)
     throttle = state.get('throttle_input', 0)
-    
+
     print(f"--- SIMULACIÓN DE REGULADOR DE NIVEL (Paso {step}) ---")
     print(f"Motor: {mode} | Project Diophantus\n")
-    
+
     # Visualización del Tanque Gráfica
     max_bar = 20
     # Escalamos para que se vea bien incluso con niveles negativos (underflow)
-    display_level = max(0, min(100, level)) 
+    display_level = max(0, min(100, level))
     bar_fill = int((display_level / 100) * max_bar)
     bar_str = "█" * bar_fill + "░" * (max_bar - bar_fill)
-    
+
     print(f"NIVEL:    [{bar_str}] {level}")
     print(f"CONSUMO:  {rate} unidades/frame")
-    
+
     # Visualización del Throttle (Válvula)
     status = "APAGADO (0)" if throttle == 0 else f"ENCENDIDO (Nivel {throttle})"
     print(f"VÁLVULA:  {status}")
-    
+
     print("\n" + "="*40)
     print(" CONTROLES EN TIEMPO REAL:")
     print(" [0]     -> Cerrar Válvula")
     print(" [1]-[5] -> Abrir Válvula (Nivel 1-5)")
     print(" [Q]     -> Salir")
     print("="*40)
-    
+
     print("\n--- Estado del Sistema ---")
     if level < 0:
         print(">>> ALERTA CRÍTICA: ¡UNDERFLOW DEL TANQUE DETECTADO! <<<")
@@ -74,13 +74,13 @@ def render_dashboard(state, step, mode):
 
 def main():
     parser = argparse.ArgumentParser(description="Ejecuta el regulador de nivel.")
-    parser.add_argument('--mode', choices=['SEQUENTIAL', 'Z3_LOGICAL', 'Z3_PURE'], 
+    parser.add_argument('--mode', choices=['SEQUENTIAL', 'Z3_LOGICAL', 'Z3_PURE'],
                         default='SEQUENTIAL', help='Motor de ejecución a utilizar.')
     args = parser.parse_args()
 
     # Ruta base por defecto (ajustar si la estructura de carpetas cambia)
     base_path = os.path.join(os.path.dirname(__file__), '../../../output/level_regulator')
-    
+
     # 1. Inicializar el Motor usando la factoría
     try:
         engine = get_engine(args.mode, base_path)
@@ -88,14 +88,14 @@ def main():
         print(f"Error inicializando motor: {e}")
         print(f"Asegúrate de haber compilado 'examples/level_regulator.c' en: {base_path}")
         sys.exit(1)
-    
+
     # 2. Definir Estado Inicial
     current_state = {
         'level': 100,  # Empezamos llenos para probar
-        'rate': 6, 
+        'rate': 6,
         'throttle_input': 0 # Empezamos apagados
     }
-    
+
     print("Iniciando simulación interactiva...")
     time.sleep(1)
 
@@ -104,27 +104,27 @@ def main():
         while True:
             # 3. Renderizar
             render_dashboard(current_state, step, args.mode)
-            
+
             # 4. Gestión de Entradas (Teclado)
             if kb_hit():
                 key = kb_get()
                 try:
                     # Intentar decodificar la tecla
                     char = key.decode('utf-8').lower()
-                    
+
                     if char == 'q':
                         print("\nSaliendo...")
                         break
-                    
+
                     # Control numérico del throttle
                     if char in '012345':
                         new_val = int(char)
                         # Inyectamos el valor directamente en el estado actual
                         current_state['throttle_input'] = new_val
-                        
+
                 except:
                     pass # Ignorar teclas especiales
-            
+
             # 5. Calcular Siguiente Estado
             # Pasamos inputs vacío porque throttle_input es una variable de estado en este modelo C
             try:
@@ -135,7 +135,7 @@ def main():
                  break
 
             step += 1
-            
+
             # Velocidad de simulación
             time.sleep(0.2)
 

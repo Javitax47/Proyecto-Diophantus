@@ -39,7 +39,7 @@ class Style:
     HEADER = '\033[95m'; BLUE = '\033[94m'; CYAN = '\033[96m'; GREEN = '\033[92m'
     WARN = '\033[93m'; FAIL = '\033[91m'; END = '\033[0m'; BOLD = '\033[1m'
     GREY = '\033[90m'; PURPLE = '\033[35m'
-    
+
     @staticmethod
     def print_box(title, content_lines):
         # Ancho fijo de 80 caracteres
@@ -59,7 +59,7 @@ NUMBER_ZOO = [
     (561,        False, "Carmichael Number"),
     (127,        True,  "Mersenne Prime (M7)"),
     (524287,     True,  "Mersenne Prime (M19)"),
-    (2147483647, True,  "Mersenne Prime (M31)") 
+    (2147483647, True,  "Mersenne Prime (M31)")
 ]
 
 # --- MODELOS ---
@@ -114,7 +114,7 @@ def worker_vm_precision(root_path, vm_path, func, args, out_queue):
         import sys
         if root_path not in sys.path: sys.path.append(root_path)
         from src.runtime.vm import VM, Parser
-        
+
         # 2. Carga (Fuera del reloj)
         vm = VM(); parser = Parser()
         with open(vm_path, 'r', encoding='utf-8') as f:
@@ -123,14 +123,14 @@ def worker_vm_precision(root_path, vm_path, func, args, out_queue):
                 if m:
                     p_list = [x.strip() for x in m.group(2).split(',') if x.strip()]
                     vm.load_function(m.group(1), p_list, parser.parse(m.group(3)))
-        
+
         # 3. Medición Crítica
         gc.disable()
         t_start = time.perf_counter_ns()
         res = vm.run(func, args)
         t_end = time.perf_counter_ns()
         gc.enable()
-        
+
         dt_ms = (t_end - t_start) / 1e6
         out_queue.put((res, dt_ms))
 
@@ -145,7 +145,7 @@ def worker_formula_precision(root_path, mod_path, func_name, args, out_queue, it
     try:
         import sys
         if root_path not in sys.path: sys.path.append(root_path)
-        
+
         spec = importlib.util.spec_from_file_location("mod_iso", mod_path)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
@@ -157,11 +157,11 @@ def worker_formula_precision(root_path, mod_path, func_name, args, out_queue, it
         # Medición
         gc.disable()
         t_start = time.perf_counter_ns()
-        
+
         res = None
         for _ in range(iters):
             res = f(*args)
-            
+
         t_end = time.perf_counter_ns()
         gc.enable()
 
@@ -174,31 +174,31 @@ def worker_formula_precision(root_path, mod_path, func_name, args, out_queue, it
 def run_safe(target_type, path, func_name, args, timeout=TIMEOUT_SEC):
     """Orquestador de procesos con Timeout."""
     q = multiprocessing.Queue()
-    
+
     # Ajustar iteraciones según tamaño del número (para no eternizar Fórmulas)
     n_val = args[0]
     iters = ITERATIONS_PRECISION
     if n_val > 100000 or len(args) > 2: iters = 1 # ECPP o N grande -> 1 sola vez
-    
+
     if target_type == "VM":
         p = multiprocessing.Process(target=worker_vm_precision, args=(PROJECT_ROOT, path, func_name, args, q))
     else:
         p = multiprocessing.Process(target=worker_formula_precision, args=(PROJECT_ROOT, path, func_name, args, q, iters))
-        
+
     p.start()
     p.join(timeout)
-    
+
     if p.is_alive():
         p.terminate()
         p.join()
         return "TIMEOUT", timeout * 1000
-    
+
     if not q.empty():
         res, dt = q.get()
         if isinstance(res, str) and res.startswith("ERR:"):
             return res, 0
         return res, dt
-        
+
     return "CRASH (Silent)", 0
 
 # --- VISUALIZADOR DE ECUACIONES ---
@@ -217,23 +217,23 @@ def get_display_content(model, mod):
                     lines = [l.strip() for l in f if l.strip() and not l.startswith('---') and not l.startswith('P_')]
                 # Filtrar ecuaciones interesantes (no triviales)
                 complex_eqs = [l for l in lines if ('*' in l or 'If' in l) and len(l) < 80]
-                
+
                 for i, eq in enumerate(complex_eqs[:4]):
                     math_eq = eq.replace('**', '^').replace('*', '·').replace(' - ', ' - ').replace(' + ', ' + ')
                     if ' = 0' not in math_eq: math_eq += ' = 0'
                     display.append(f"   (Eq {i+1}):  {math_eq}")
-                
+
                 display.append(f"   ... [ {len(lines)} Equations Total ] ...")
                 display.append(f"   Complexity: ~{len(lines)} Variables")
             except: display.append("   [Data Unavailable]")
         else: display.append(f"   [File Not Found: {poly_file}]")
         display.append("   Status: Deterministic Simulation")
         return display
-    
+
     # 2. Si es Fórmula: Extraer metadatos __LATEX_REPR__
     elif mod and hasattr(mod, "__LATEX_REPR__"):
         return mod.__LATEX_REPR__
-    
+
     return ["   [Mathematical Metadata Not Found in Artifact]"]
 
 def format_time(dt_ms):
@@ -258,7 +258,7 @@ def run_scientific_benchmark():
                 try:
                     c = find_ecpp_certificate(n, max_attempts=2000000)
                     dt = (time.perf_counter() - t0) * 1000
-                    if c: 
+                    if c:
                         cert_store[n] = c
                         a, b = c[0], c[1]
                         print(f"{Style.GREEN}FOUND{Style.END} (a={a}, b={b}) in {format_time(dt)}")
@@ -280,14 +280,14 @@ def run_scientific_benchmark():
         # Obtener y mostrar la Ecuación
         content = get_display_content(model, mod)
         Style.print_box(f"{model['name']} ({model['type']})", content)
-        
+
         print(f"{'N':<12} | {'TYPE':<22} | {'TIME':<12} | {'VERDICT':<15} | {'NOTES'}")
         print("-" * 90)
 
         for n, truth, desc in NUMBER_ZOO:
             raw_val = None
             duration = 0
-            
+
             # --- EJECUCIÓN (Con medición precisa de ECPP) ---
             if model['requires_vm']:
                 vm_path = os.path.join(OUTPUT_DIR, model['vm_file'])
@@ -295,12 +295,12 @@ def run_scientific_benchmark():
                 else:
                     args = [n, 0, 0, 0]
                     raw_val, duration = run_safe("VM", vm_path, model['vm_func'], args)
-            
+
             elif model.get('is_ecpp'):
                 # Medimos el tiempo total: Lookup + Ejecución
                 t0 = time.perf_counter()
                 cert = cert_store.get(n)
-                
+
                 if cert:
                     args = [n] + list(cert)
                     # run_safe devuelve tiempo puro de ejecución, sumamos overhead python
@@ -312,21 +312,21 @@ def run_scientific_benchmark():
                     raw_val = "NO_CERT"
                     # El tiempo es lo que tardó el 'get' y el 'if' (nanosegundos, pero real)
                     duration = (time.perf_counter() - t0) * 1000
-            
+
             else:
                 # Fórmulas estándar
                 path = os.path.join(ARTIFACTS_DIR, model['file'])
                 raw_val, duration = run_safe("FORMULA", path, "G_formula", [n])
 
             # --- JUICIO Y FORMATO ---
-            
+
             # Convertir duración numérica a string bonito
             time_str = format_time(duration)
 
             if raw_val == "TIMEOUT":
                 print(f"{str(n):<12} | {desc:<22} | {'> ' + str(TIMEOUT_SEC) + ' s':<12} | {Style.GREY}{'TIMEOUT':<15}{Style.END} | Execution Aborted")
                 continue
-            
+
             if raw_val == "NO_CERT":
                 if not truth:
                     # Éxito: Compuesto y no hay cert. Mostramos el tiempo real del lookup.
@@ -342,7 +342,7 @@ def run_scientific_benchmark():
 
             # Evaluación Numérica
             is_prime_pred = (raw_val == model['target_val'])
-            
+
             if is_prime_pred == truth:
                 status = f"{Style.GREEN}CORRECT{Style.END}"
                 note = "Valid"

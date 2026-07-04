@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DE DESCUBRIMIENTO DE CANTIDADES CONSERVADAS (Fase 4)
+   DIOPHANTUS - TEST DE DESCUBRIMIENTO DE CANTIDADES CONSERVADAS
 ================================================================================
 El motor descubre PRIMERAS INTEGRALES Q(T(s))=lambda*Q(s) del mapa de transicion
 (no de una orbita) -> valen para CUALQUIER semilla. Comprueba que redescubre,

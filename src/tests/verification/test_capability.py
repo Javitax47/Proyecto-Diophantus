@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - UMBRAL DE CAPACIDAD DEL MOTOR DE DESCUBRIMIENTO (Fase 4)
+   DIOPHANTUS - UMBRAL DE CAPACIDAD DEL MOTOR DE DESCUBRIMIENTO
 ================================================================================
 Mapea, como regresion, DONDE encuentra estructura el motor y donde para —el
 "umbral de capacidad"— con honestidad:

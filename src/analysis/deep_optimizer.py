@@ -13,7 +13,7 @@ def build_energy_terms(final_eqs, aux_vars, protected_vars):
     """Genera, por cada ecuación, el término `(expr)**2` mapeando las variables
     auxiliares a `dioph_x[i]`.
 
-    ROBUSTEZ (§3.2): el mapeo se hace por SUSTITUCIÓN SymPy estructural
+    ROBUSTEZ: el mapeo se hace por SUSTITUCIÓN SymPy estructural
     (`expr.subs({Symbol(v): dioph_x[i]})`), no por reemplazo de subcadenas. Esto
     elimina el antiguo hack de placeholders `__AUX_{i}__` —que existía solo para
     evitar que un nombre corto (p. ej. `x`) se reemplazara dentro de otro
@@ -52,7 +52,7 @@ def main():
     args = parser.parse_args()
 
     print("--- DEEP OPTIMIZER V18: ATOMIC ---")
-    
+
     if not os.path.exists(args.file):
         print(f"Error: No existe {args.file}")
         sys.exit(1)
@@ -66,13 +66,13 @@ def main():
     # 2. Configurar Inputs
     input_names = [x.strip() for x in args.inputs.split(',')]
     protected_vars = []
-    
+
     for name in input_names:
         if name in vars_map:
             protected_vars.append(vars_map[name])
         if f"{name}_next" in vars_map:
             protected_vars.append(vars_map[f"{name}_next"])
-    
+
     protected_str = set([str(s) for s in protected_vars])
 
     # 3. Configurar Anchor
@@ -81,7 +81,7 @@ def main():
         try:
             key, val = args.anchor.split('=')
             key = key.strip(); val = int(val.strip())
-            
+
             if key in vars_map: subs_rules[vars_map[key]] = val
             if f"{key}_next" in vars_map: subs_rules[vars_map[f"{key}_next"]] = val
         except: pass
@@ -101,7 +101,7 @@ def main():
     # 4. Reducción
     all_symbols = set()
     for eq in current_eqs: all_symbols.update(eq.free_symbols)
-    
+
     vars_to_kill = [v for v in all_symbols if str(v) not in protected_str]
     vars_to_kill.sort(key=lambda x: str(x))
 
@@ -114,10 +114,10 @@ def main():
         for eq in current_eqs:
             curr = eq.subs(subs_map)
             if curr == 0: continue
-            
+
             candidates = [v for v in curr.free_symbols if str(v) not in protected_str]
             solved = False
-            
+
             if candidates:
                 for v in candidates:
                     try:
@@ -138,10 +138,10 @@ def main():
 
     # 5. Generación
     final_eqs = [eq.subs(subs_map) for eq in current_eqs if eq.subs(subs_map) != 0]
-    
+
     final_syms = set()
     for eq in final_eqs: final_syms.update(eq.free_symbols)
-    
+
     aux_vars = sorted([str(s) for s in final_syms if str(s) not in protected_str])
 
     # Generación robusta de los términos de energía (sustitución SymPy, no
@@ -150,10 +150,10 @@ def main():
 
     base_name = os.path.basename(args.file).replace('_analysis_sympy.py', '')
     out_file = f"output/artifacts/{base_name}_formula.py"
-    
+
     clean_inputs = [i for i in input_names if i in vars_map or f"{i}_next" in vars_map]
     args_def = ", ".join(clean_inputs) + ", dioph_x"
-    
+
     content = f"""
 def G_formula({args_def}):
     # Vars: {len(aux_vars)} | Inputs: {list(inputs_found)}
@@ -164,7 +164,7 @@ def G_formula({args_def}):
 """
     os.makedirs("output/artifacts", exist_ok=True)
     with open(out_file, "w") as f: f.write(content)
-    
+
     print(f"[ÉXITO] Fórmula generada: {out_file} ({len(aux_vars)} vars)")
 
 if __name__ == "__main__":

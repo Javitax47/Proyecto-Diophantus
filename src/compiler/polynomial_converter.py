@@ -1,5 +1,7 @@
 import re
 
+from src.compiler.generator import OVERFLOW_MARKER
+
 class PolynomialConverter:
     """
     Toma un AST de tuplas "aritmetizado" y lo convierte en un sistema
@@ -11,11 +13,20 @@ class PolynomialConverter:
         self.sub_defs = sub_defs
         self.state_vars = set(state_vars)
         self.function_relations = function_relations
-        # §4.1: ancho en bits para la aritmetización de operadores bit a bit.
+        # Ancho en bits para la aritmetización de operadores bit a bit.
         self.bit_width = bit_width
         self.existential_vars_count = 0
         self.polynomial_system = []
         self.mode = "PURE" # Default
+
+        # Anclaje de `overflow`: cada expresión convertida deja en `_ind_of` el
+        # indicador (string {0,1}) de si la rama seleccionada usa un valor
+        # truncado por presupuesto de recursión. Si alguna raíz puede valer 1 se
+        # ancla `overflow = 0`, dejando el sistema sin solución para las trazas
+        # que exceden el presupuesto en vez de con una solución incorrecta.
+        self._ind_of = {}
+        self._overflow_terms = []
+        self._saw_overflow = False
 
     def _new_e_var(self):
         var_name = f"e_{self.existential_vars_count}"
@@ -39,9 +50,9 @@ class PolynomialConverter:
         self.polynomial_system.append(f"({expr}) - ({self._sum_of_four_squares()}) = 0")
 
     def _reify_ge0(self, target, d_expr):
-        """Reifica el predicado `d_expr >= 0` en una variable booleana `target`
-        (SOUNDNESS §4.1). Tras estas ecuaciones, toda solución entera cumple
-        `target in {0,1}` y `target = 1  <=>  d_expr >= 0`:
+        """Reifica el predicado `d_expr >= 0` en una variable booleana `target`.
+        Tras estas ecuaciones, toda solución entera cumple `target in {0,1}` y
+        `target = 1  <=>  d_expr >= 0`:
 
             target*(1 - target) = 0                      (target booleano)
             d_expr = target*s1 - (1 - target)*(1 + s2)    (s1, s2 >= 0)
@@ -56,7 +67,7 @@ class PolynomialConverter:
         )
 
     def _emit_boolean(self, var):
-        """Impone `var in {0,1}` (booleanización, §4.1)."""
+        """Impone `var in {0,1}` (booleanización)."""
         self.polynomial_system.append(f"{var}*(1 - {var}) = 0")
 
     def _pow2_expr(self, exp_operand):
@@ -76,10 +87,10 @@ class PolynomialConverter:
 
     def _bit_decompose(self, value_expr):
         """Descompone `value_expr` en `self.bit_width` bits {0,1} tales que
-        `value_expr = Σ 2^i·b_i` (SOUNDNESS §4.1). Devuelve la lista de
-        variables de bit. La ecuación de descomposición acota implícitamente el
-        valor a [0, 2^W − 1], de modo que se asume operando sin signo (coherente
-        con el tratamiento unsigned —UDiv/URem— del modo LOGICAL)."""
+        `value_expr = Σ 2^i·b_i`. Devuelve la lista de variables de bit. La
+        ecuación de descomposición acota implícitamente el valor a [0, 2^W − 1],
+        de modo que se asume operando sin signo (coherente con el tratamiento
+        unsigned —UDiv/URem— del modo LOGICAL)."""
         bits = [self._new_e_var() for _ in range(self.bit_width)]
         for b in bits:
             self._emit_boolean(b)
@@ -87,14 +98,53 @@ class PolynomialConverter:
         self.polynomial_system.append(f"({value_expr}) - ({terms}) = 0")
         return bits
 
+    def _or(self, x, y):
+        """OR booleano de dos indicadores {0,1} (`x + y - x*y`), con
+        cortocircuito sobre los literales 0 y 1 para no emitir ecuaciones cuando
+        no hace falta."""
+        if x == "0": return y
+        if y == "0": return x
+        if x == "1" or y == "1": return "1"
+        iv = self._new_e_var()
+        self.polynomial_system.append(f"{iv} - ({x} + {y} - ({x})*({y})) = 0")
+        return iv
+
+    def _or_all(self, inds):
+        acc = "0"
+        for i in inds:
+            acc = self._or(acc, i)
+        return acc
+
+    def _args_ind(self, arg_vars):
+        """Indicador de truncamiento de una operación cuyos operandos se usan
+        todos: el OR de los indicadores de los operandos."""
+        return self._or_all([self._ind_of.get(a, "0") for a in arg_vars])
+
+    def _select(self, cond, a, b):
+        """Indicador seleccionado por una condición {0,1}: el peso phi de una
+        rama `if`. Devuelve `cond*a + (1-cond)*b` (PURE) o `If(cond!=0,a,b)`
+        (LOGICAL); cortocircuita a 0 cuando ambas ramas están limpias."""
+        if a == "0" and b == "0":
+            return "0"
+        if self.mode == "LOGICAL":
+            expr = f"If({cond} != 0, {a}, {b})"
+        else:
+            expr = f"({cond})*({a}) + (1 - ({cond}))*({b})"
+        iv = self._new_e_var()
+        self.polynomial_system.append(f"{iv} - ({expr}) = 0")
+        return iv
+
     def convert(self, mode="PURE"):
         self.mode = mode
         self.polynomial_system = []
-        self.existential_vars_count = 0 
+        self.existential_vars_count = 0
+        self._ind_of = {}
+        self._overflow_terms = []
+        self._saw_overflow = False
         function_definitions = []
-        
+
         print(f"  [PolyConverter] Iniciando conversión ({self.mode})...")
-        
+
         if self.function_relations:
             for func_name, func_data in self.function_relations.items():
                 body_expr = func_data['body']
@@ -108,38 +158,73 @@ class PolynomialConverter:
         for name, expr_tuple in sorted_defs:
             clean_name = name.replace("{", "").replace("}", "")
             self._convert_expr_to_poly(clean_name, expr_tuple)
-        
+            self._collect_overflow(clean_name)
+
         for var in sorted(self.optimized_f.keys()):
             if var in self.sub_defs or var not in self.state_vars: continue
             lhs = f"{var}[t+1]"
             self._convert_expr_to_poly(lhs, self.optimized_f[var])
-            
+            self._collect_overflow(lhs)
+
         for var in sorted(self.optimized_f.keys()):
             if var in self.sub_defs or var in self.state_vars: continue
             self._convert_expr_to_poly(var, self.optimized_f[var])
-            
+            self._collect_overflow(var)
+
+        self._emit_overflow_anchor()
+
         print(f"  [PolyConverter] {len(self.polynomial_system)} ecuaciones generadas.")
         return self.polynomial_system, function_definitions
+
+    def _collect_overflow(self, target):
+        ind = self._ind_of.get(target, "0")
+        if ind != "0":
+            self._overflow_terms.append(ind)
+
+    def _emit_overflow_anchor(self):
+        """Si alguna raíz depende de un valor truncado, define `overflow` como el
+        OR de los indicadores de raíz y lo ancla a 0. Para una traza dentro del
+        presupuesto todos los indicadores valen 0 (anclaje satisfecho, valor
+        correcto); para una traza que lo excede el indicador vale 1 y el anclaje
+        `overflow = 0` vuelve el sistema insatisfacible."""
+        if not self._saw_overflow:
+            return
+        acc = self._or_all(self._overflow_terms)
+        self.polynomial_system.append(f"overflow - ({acc}) = 0")
+        self.polynomial_system.append("overflow = 0")
 
     def _convert_expr_to_poly(self, target_var, expr):
         if not isinstance(expr, tuple):
             # Las llaves de los nombres CSE (C_{n}, delimitador anticolisión del
             # optimizer) deben quitarse para que la referencia coincida con su
             # definición ya saneada (C_n) y sea un identificador válido en SymPy.
-            # _resolve_operand ya lo hace; aquí cubrimos la asignación directa
-            # (p. ej. una variable de estado igualada a un CSE).
             clean = str(expr).replace("{", "").replace("}", "")
+            if clean == OVERFLOW_MARKER:
+                if self.mode == "LOGICAL":
+                    # El modo LOGICAL conserva la semántica acotada de un
+                    # solucionador BMC: el valor truncado es 0.
+                    self.polynomial_system.append(f"{target_var} - (0) = 0")
+                    self._ind_of[target_var] = "0"
+                else:
+                    # El valor truncado queda como variable libre y su indicador
+                    # de truncamiento a 1; el anclaje de `overflow` lo neutraliza.
+                    self.polynomial_system.append(f"{target_var} - ({OVERFLOW_MARKER}) = 0")
+                    self._ind_of[target_var] = "1"
+                    self._saw_overflow = True
+                return
             self.polynomial_system.append(f"{target_var} - ({clean}) = 0")
+            self._ind_of[target_var] = "0"
             return
 
         op = expr[0]
-        
+
         if op == 'call':
             func_name = expr[1]
             args = expr[2]
             resolved_args = [self._resolve_operand(arg) for arg in args]
             args_str = ", ".join(resolved_args + [target_var])
             self.polynomial_system.append(f"P_{func_name}({func_name}, {args_str}) = 0")
+            self._ind_of[target_var] = self._args_ind(resolved_args)
             return
 
         arg_vars = [self._resolve_operand(arg) for arg in expr[1:]]
@@ -157,35 +242,34 @@ class PolynomialConverter:
             elif op == '!=': rhs = f"If({arg_vars[0]} != {arg_vars[1]}, 1, 0)"
             elif op == '&&': rhs = f"If(And({arg_vars[0]} != 0, {arg_vars[1]} != 0), 1, 0)"
             elif op == '||': rhs = f"If(Or({arg_vars[0]} != 0, {arg_vars[1]} != 0), 1, 0)"
-            elif op == '/': 
+            elif op == '/':
                  # Z3 Python API uses UDiv for unsigned division
                  rhs = f"UDiv({arg_vars[0]}, {arg_vars[1]})"
             elif op == '%':
                  rhs = f"URem({arg_vars[0]}, {arg_vars[1]})"
-            
-            # --- FIX: COMPARADORES UNSIGNED ---
-            # Usamos funciones UGT, ULT, UGE, ULE de Z3 explícitamente
-            # Esto asume que el CryptoSolver inyectará estas funciones en el contexto
+
+            # Comparadores unsigned: funciones UGT, ULT, UGE, ULE de Z3, que el
+            # CryptoSolver inyecta en el contexto de evaluación.
             elif op == '>':  rhs = f"If(UGT({arg_vars[0]}, {arg_vars[1]}), 1, 0)"
             elif op == '<':  rhs = f"If(ULT({arg_vars[0]}, {arg_vars[1]}), 1, 0)"
             elif op == '>=': rhs = f"If(UGE({arg_vars[0]}, {arg_vars[1]}), 1, 0)"
             elif op == '<=': rhs = f"If(ULE({arg_vars[0]}, {arg_vars[1]}), 1, 0)"
-            
-            else: 
+
+            else:
                 rhs = f"({arg_vars[0]} {op} {arg_vars[1]})"
-            
+
             self.polynomial_system.append(f"{target_var} - ({rhs}) = 0")
+            self._ind_of[target_var] = "0"
             return
 
         # --- MODO PURO (MATEMÁTICO) ---
         if op in ('+', '-', '*'):
             self.polynomial_system.append(f"{target_var} - ({arg_vars[0]} {op} {arg_vars[1]}) = 0")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op in ('&', '|', '^'):
-            # OPERADORES BIT A BIT (SOUNDNESS §4.1): antes se emitían como
-            # strings (`a & b`) que SymPy no trata como polinomios — y `^` además
-            # colisionaba con la potencia en el exportador CAS. Ahora se
-            # descomponen ambos operandos en bits y se combina bit a bit con
-            # polinomios: AND -> a_i·b_i, OR -> a_i+b_i−a_i·b_i, XOR -> a_i+b_i−2a_i·b_i.
+            # Operadores bit a bit: se descomponen ambos operandos en bits y se
+            # combina bit a bit con polinomios: AND -> a_i·b_i,
+            # OR -> a_i+b_i−a_i·b_i, XOR -> a_i+b_i−2a_i·b_i.
             a, b = arg_vars
             abits = self._bit_decompose(a)
             bbits = self._bit_decompose(b)
@@ -199,11 +283,11 @@ class PolynomialConverter:
                 f"{(1 << i)}*({per_bit(abits[i], bbits[i])})" for i in range(self.bit_width)
             )
             self.polynomial_system.append(f"{target_var} - ({terms}) = 0")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op in ('<<', '>>'):
-            # Desplazamientos (§4.1): a<<k = a·2^k; a>>k = floor(a / 2^k),
-            # reusando la división euclídea acotada. El factor 2^k es constante
-            # si k lo es, o un polinomio en los bits de k si k es variable
-            # (ver _pow2_expr): 2^k = Π ((2^(2^j)-1)·k_j + 1).
+            # Desplazamientos: a<<k = a·2^k; a>>k = floor(a / 2^k), reusando la
+            # división euclídea acotada. El factor 2^k es constante si k lo es, o
+            # un polinomio en los bits de k si k es variable (ver _pow2_expr).
             a, b = arg_vars
             try:
                 factor = str(1 << int(b))            # exponente constante
@@ -216,13 +300,21 @@ class PolynomialConverter:
                 self.polynomial_system.append(f"({a}) - ({factor} * {target_var} + {rem}) = 0")
                 self._emit_nonneg_four_squares(rem)                       # rem >= 0
                 self._emit_nonneg_four_squares(f"({factor}) - 1 - ({rem})")  # rem < 2^k
-        elif op == 'neg': self.polynomial_system.append(f"{target_var} - (-{arg_vars[0]}) = 0")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
+        elif op == 'neg':
+            self.polynomial_system.append(f"{target_var} - (-{arg_vars[0]}) = 0")
+            self._ind_of[target_var] = self._ind_of.get(arg_vars[0], "0")
         elif op == 'if':
             # cond procede de una comparación/booleano ya reificado a {0,1}
             # (ver ramas de comparación más abajo), de modo que esta
             # combinación convexa es una identidad polinómica exacta.
             cond, vt, vf = arg_vars
             self.polynomial_system.append(f"{target_var} - (({cond}) * ({vt}) + (1 - {cond}) * ({vf})) = 0")
+            # Se trunca si se usa el valor de la condición o si la rama
+            # seleccionada por la condición está truncada.
+            self._ind_of[target_var] = self._or(
+                self._ind_of.get(cond, "0"),
+                self._select(cond, self._ind_of.get(vt, "0"), self._ind_of.get(vf, "0")))
         elif op in ('/', '%'):
             a, b = arg_vars
             if op == '/':
@@ -233,27 +325,29 @@ class PolynomialConverter:
                 quotient = self._new_e_var()
             # Relación de división euclídea: a = b*q + r
             self.polynomial_system.append(f"({a}) - (({b}) * ({quotient}) + {remainder}) = 0")
-            # SOUNDNESS (§4.1 del informe): sin acotar el resto, (q, r) no son
-            # únicos y el sistema admite soluciones espurias que no corresponden
-            # a ninguna ejecución. Imponemos 0 <= r < b mediante el teorema de
+            # Sin acotar el resto, (q, r) no son únicos y el sistema admite
+            # soluciones espurias. Se impone 0 <= r < b mediante el teorema de
             # Lagrange (todo natural es suma de cuatro cuadrados). Se asume
             # divisor b > 0, que es el caso de todo el corpus de ejemplos.
             self._emit_nonneg_four_squares(remainder)                       # r >= 0
             self._emit_nonneg_four_squares(f"({b}) - 1 - ({remainder})")    # r <= b - 1
-        # --- COMPARACIONES REIFICADAS (SOUNDNESS §4.1) ---
-        # Antes se emitían relacionales simbólicos (`a == b`, `a < b`) que SymPy
-        # no trata como polinomios; solo el intérprete propio les daba semántica.
-        # Ahora cada comparación produce un resultado booleano {0,1} mediante
-        # holguras de cuatro cuadrados, dejando el sistema PURE genuinamente
-        # diofántico: sus soluciones enteras están en biyección con las trazas.
+            self._ind_of[target_var] = self._args_ind(arg_vars)
+        # --- COMPARACIONES REIFICADAS A {0,1} ---
+        # Cada comparación produce un resultado booleano {0,1} mediante holguras
+        # de cuatro cuadrados, dejando el sistema PURE genuinamente diofántico:
+        # sus soluciones enteras están en biyección con las trazas.
         elif op == '<':   # a < b  <=>  b - a - 1 >= 0
             self._reify_ge0(target_var, f"({arg_vars[1]}) - ({arg_vars[0]}) - 1")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op == '>':   # a > b  <=>  a - b - 1 >= 0
             self._reify_ge0(target_var, f"({arg_vars[0]}) - ({arg_vars[1]}) - 1")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op == '<=':  # a <= b <=>  b - a >= 0
             self._reify_ge0(target_var, f"({arg_vars[1]}) - ({arg_vars[0]})")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op == '>=':  # a >= b <=>  a - b >= 0
             self._reify_ge0(target_var, f"({arg_vars[0]}) - ({arg_vars[1]})")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op in ('==', '!='):
             # a == b  <=>  (a <= b) AND (a >= b).  Reificamos ambas y su producto.
             cle = self._new_e_var(); self._reify_ge0(cle, f"({arg_vars[1]}) - ({arg_vars[0]})")
@@ -262,6 +356,7 @@ class PolynomialConverter:
                 self.polynomial_system.append(f"{target_var} - ({cle}*{cge}) = 0")
             else:  # a != b  <=>  1 - (a == b)
                 self.polynomial_system.append(f"{target_var} - (1 - {cle}*{cge}) = 0")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         elif op in ('&&', '||'):
             # Operandos lógicos booleanizados; AND -> producto, OR -> suma menos producto.
             a, b = arg_vars
@@ -271,26 +366,35 @@ class PolynomialConverter:
                 self.polynomial_system.append(f"{target_var} - ({a}*{b}) = 0")
             else:
                 self.polynomial_system.append(f"{target_var} - ({a} + {b} - {a}*{b}) = 0")
+            self._ind_of[target_var] = self._args_ind(arg_vars)
         else:
             if len(arg_vars) == 2:
                 self.polynomial_system.append(f"{target_var} - ({arg_vars[0]} {op} {arg_vars[1]}) = 0")
+                self._ind_of[target_var] = self._args_ind(arg_vars)
             else:
                 raise ValueError(f"Operador desconocido: {op}")
 
     def _resolve_operand(self, operand):
         if operand is None:
-            # ROBUSTEZ: un operando None indica que el generador dejó una
-            # expresión sin resolver (p. ej. un nodo AST no soportado). Antes
-            # esto se colaba como el literal "None" en las ecuaciones,
-            # produciendo un sistema corrupto en silencio. Fallar pronto y con
-            # un mensaje accionable (filosofía anti-corrupción de §4.2).
+            # Un operando None indica que el generador dejó una expresión sin
+            # resolver (p. ej. un nodo AST no soportado). Fallar pronto y con un
+            # mensaje accionable en vez de colar el literal "None" en las
+            # ecuaciones y producir un sistema corrupto en silencio.
             raise ValueError(
                 "operando None: el generador dejó una expresión sin resolver "
                 "(probable nodo AST no soportado); el sistema no sería un "
                 "polinomio válido."
             )
         if not isinstance(operand, tuple):
-            return str(operand).replace("{", "").replace("}", "")
+            s = str(operand).replace("{", "").replace("}", "")
+            if s == OVERFLOW_MARKER:
+                if self.mode == "LOGICAL":
+                    return "0"
+                self._ind_of[OVERFLOW_MARKER] = "1"
+                self._saw_overflow = True
+                return OVERFLOW_MARKER
+            self._ind_of.setdefault(s, "0")
+            return s
         temp_var = self._new_e_var()
         self._convert_expr_to_poly(temp_var, operand)
         return temp_var

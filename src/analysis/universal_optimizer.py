@@ -20,14 +20,14 @@ class UniversalOptimizer:
         self.vm = VM()
         self.parser = Parser()
         self._load_vm()
-        
+
     def _load_vm(self):
         if not os.path.exists(self.vm_file):
             raise FileNotFoundError(f"No existe: {self.vm_file}")
-        
+
         with open(self.vm_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            
+
         # Cargar funciones del bytecode
         count = 0
         for line in content.split('\n'):
@@ -37,7 +37,7 @@ class UniversalOptimizer:
                 params = [x.strip() for x in p_str.split(',') if x.strip()]
                 self.vm.load_function(name, params, self.parser.parse(body))
                 count += 1
-        
+
         if count == 0:
             raise ValueError("Bytecode vacío o inválido.")
 
@@ -46,7 +46,7 @@ class UniversalOptimizer:
         print(f"  [Miner] Ejecutando sonda en '{func_name}' con semilla {start_val}...")
         trajectory = [start_val]
         current = start_val
-        
+
         for _ in range(probes):
             try:
                 # Intentamos ejecutar un paso.
@@ -55,22 +55,22 @@ class UniversalOptimizer:
                     next_val = self.vm.run(func_name, [current, 0])
                 except:
                     next_val = self.vm.run(func_name, [current])
-                
+
                 trajectory.append(next_val)
                 current = next_val
             except Exception as e:
                 print(f"  [Miner] Error en ejecución: {e}")
                 break
-        
+
         return trajectory
 
     def infer_pattern(self, traj):
         """Motor de Inferencia Algebraica."""
         if len(traj) < 4: return None
-        
+
         x0, x1, x2, x3 = traj[0], traj[1], traj[2], traj[3]
         print(f"  [Analyst] Traza observada: {traj} ...")
-        
+
         # CASO 1: Estática (No hace nada)
         if x0 == x1 == x2:
             print("  [DETECTADO] Identidad (A=1, B=0)")
@@ -82,7 +82,7 @@ class UniversalOptimizer:
         if d1 == d2:
             print(f"  [DETECTADO] Progresión Aritmética (x -> x + {d1})")
             return 1, d1
-            
+
         # CASO 3: Geométrica (Multiplicación) -> x_new = A * x
         if x0 != 0 and x1 != 0:
             if x1 % x0 == 0 and x2 % x1 == 0:
@@ -115,7 +115,7 @@ class UniversalOptimizer:
                 if (x1 * x1) % pos_M == x2 and (x2 * x2) % pos_M == x3:
                      print(f"  [DETECTADO] Cuadrática Modular (x -> x^2 % {pos_M})")
                      return 'MOD_SQUARE', (pos_M,)
-        
+
         # CASO 6: Producto Modular (Linear Congruential) -> x_new = (A * x) % M
         # x1 = A*x0 % M
         # x2 = A*x1 % M
@@ -135,27 +135,27 @@ def main():
     args = parser.parse_args()
 
     print("--- UNIVERSAL OPTIMIZER V1.0 ---")
-    
+
     opt = UniversalOptimizer(args.vm_file)
-    
+
     # 1. Minería
     traj = opt.mine_trajectory(args.func, args.seed)
-    
+
     # 2. Inferencia
     coeffs = opt.infer_pattern(traj)
-    
+
     if coeffs:
         A, B = coeffs
         # 3. Síntesis
         code = matrix_kernel.get_matrix_code(A, B, args.steps)
-        
+
         base_name = os.path.basename(args.vm_file).replace('_interpreter_input.txt', '')
         out_path = f"output/artifacts/{base_name}_compressed.py"
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        
+
         with open(out_path, "w") as f:
             f.write(code)
-            
+
         print(f"\n[ÉXITO] Compresión Temporal Completada.")
         print(f"        Archivo: {out_path}")
         print(f"        Reducción: {args.steps} ops -> ~{len(bin(args.steps))} ops (Matriciales)")

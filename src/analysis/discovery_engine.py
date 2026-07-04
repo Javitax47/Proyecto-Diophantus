@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - MOTOR DE DESCUBRIMIENTO ALGEBRAICO (Fase 4, §10 del informe)
+   DIOPHANTUS - MOTOR DE DESCUBRIMIENTO ALGEBRAICO
 ================================================================================
 Invierte la flecha: en vez de INYECTAR una identidad (Weierstrass, Dickson...)
 como plantilla, DESCUBRE automaticamente identidades polinomicas cerradas que
@@ -14,7 +14,7 @@ Cada vector del nucleo es un INVARIANTE descubierto. Se valida fuera de muestra
 (en puntos de la trayectoria no usados para descubrirlo) para descartar
 artefactos de muestreo finito.
 
-Esto realiza el criterio de exito de la Fase 4: para una recurrencia no trivial
+Esto realiza el objetivo de descubrimiento: para una recurrencia no trivial
 (p. ej. Pell -> x^2-2y^2=1 ; Fibonacci -> identidad de Matiyasevich) el motor
 devuelve una identidad cerrada que NADIE inyecto.
 """

@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS - PRIMALIDAD CORRECTA: Baillie-PSW (reemplaza la version erronea)
+   DIOPHANTUS - PRIMALIDAD CORRECTA: Baillie-PSW
 ================================================================================
 La antigua "Ecuacion Suprema" del proyecto (baillie_psw_formula.py) NO era
 Baillie-PSW y estaba mal: combinaba un Fermat base 2 DEBIL (no strong) con un

@@ -1,6 +1,6 @@
 """
 ================================================================================
-   DIOPHANTUS PRODUCT - MEDICIÓN DE USO Y TIERS  (pricing enforzable, C1/§4)
+   DIOPHANTUS PRODUCT - MEDICIÓN DE USO Y TIERS  (pricing enforzable)
 ================================================================================
 Primitiva mínima para que el pricing del plan (Hobby/Pro/Team + uso por
 verificación) sea ENFORZABLE en el SaaS, no sólo una tabla en un documento:
@@ -8,7 +8,7 @@ cuotas por tier, conteo de uso persistente y decisión allow/deny + coste por
 verificación extra. Es el gancho de facturación; el cobro real (Stripe, etc.)
 se conecta encima.
 
-Tiers (alineados con MONETIZACION.md §4):
+Tiers (por tier):
   hobby : gratis, cuota mensual limitada.
   pro   : $99/mes, cuota amplia, $0.50 por verificación extra.
   team  : $999/mes, cuota muy amplia, $0.30 por verificación extra.

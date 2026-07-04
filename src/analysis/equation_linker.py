@@ -4,7 +4,7 @@ import argparse
 
 def generate_linker_script(files, input_var):
     combined_code = "import sys\n\n"
-    
+
     # Metadata con caracteres Unicode
     combined_code += f"""
 __LATEX_REPR__ = [
@@ -19,21 +19,21 @@ __LATEX_REPR__ = [
 """
     combined_code += "# FUSIÓN DE ENERGÍAS\n"
     terms = []
-    
+
     for i, fpath in enumerate(files):
         # LEER CON UTF-8 IMPLÍCITO
-        with open(fpath, 'r', encoding='utf-8') as f: 
+        with open(fpath, 'r', encoding='utf-8') as f:
             code = f.read()
-            
+
         # Namespace Isolation
         code = code.replace("__LATEX_REPR__", f"__META_{i}__")
         code = code.replace("dickson_eval", f"d_{i}")
         code = code.replace("ec_point_mul_proj", f"ec_{i}")
         code = code.replace("G_formula", f"G_{i}")
-        
+
         combined_code += f"\n# --- {os.path.basename(fpath)} ---\n{code}\n"
         terms.append(f"G_{i}({input_var})")
-        
+
     energy_expr = " + ".join(terms)
     combined_code += f"""
 def G_formula({input_var}):
@@ -50,9 +50,9 @@ def main():
 
     content = generate_linker_script(args.inputs, args.var)
     out_path = os.path.join("output/artifacts", args.output)
-    
+
     # ESCRITURA UTF-8 BLINDADA
-    with open(out_path, "w", encoding="utf-8") as f: 
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"[OK] Linker -> {out_path}")
 

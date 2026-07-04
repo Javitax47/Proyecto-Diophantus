@@ -152,6 +152,26 @@ def _cmd_sat(args):
     return 0
 
 
+def _cmd_subset(args):
+    """Certificado de subset-sum: ¿algún subconjunto de --weights suma --target?
+    Mismo formato portable, mismo recheck.py (vertical numérico de la capa)."""
+    from src.product import subset_sum as ss
+    cert, _feasible = ss.certify(args.weights, args.target, max_deg=args.max_deg)
+    if cert is None:
+        print(json.dumps({'verdict': 'UNKNOWN',
+                          'reason': f'sin certificado a grado <= {args.max_deg}'}, indent=2))
+        return 3
+    out = json.dumps(cert, indent=2, ensure_ascii=False)
+    if args.output:
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write(out)
+        print(f"[subset] {cert.get('verdict')} — certificado escrito en {args.output} "
+              f"(re-verifícalo: python -m src.product.recheck {args.output})")
+    else:
+        print(out)
+    return 0
+
+
 def _cmd_atlas(args):
     from src.product import atlas
     idx = atlas.load_or_build()
@@ -210,6 +230,13 @@ def build_parser():
     sa.add_argument("--max-deg", type=int, default=2, help="grado de búsqueda del certificado")
     sa.add_argument("-o", "--output", help="fichero de salida del certificado")
     sa.set_defaults(func=_cmd_sat)
+
+    ss_p = sub.add_parser("subset", help="certificado de subset-sum (¿un subconjunto suma target?)")
+    ss_p.add_argument("--weights", nargs="+", type=int, required=True, help="lista de enteros")
+    ss_p.add_argument("--target", type=int, required=True, help="suma objetivo")
+    ss_p.add_argument("--max-deg", type=int, default=3, help="grado de búsqueda del certificado")
+    ss_p.add_argument("-o", "--output", help="fichero de salida del certificado")
+    ss_p.set_defaults(func=_cmd_subset)
 
     a = sub.add_parser("atlas", help="índice algoritmo <-> identidad")
     a.add_argument("--query", help="término de búsqueda (programa o identidad)")

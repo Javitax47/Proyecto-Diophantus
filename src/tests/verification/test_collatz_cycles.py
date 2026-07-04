@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - NO-EXISTENCIA CERTIFICADA DE CICLOS DE COLLATZ (§6.3 del informe)
+   DIOPHANTUS - NO-EXISTENCIA CERTIFICADA DE CICLOS DE COLLATZ
 ================================================================================
 Z3 refuta (UNSAT) la existencia de ciclos no triviales cortos de la dinamica de
 collatz (variante (3n+1)/2), codificada como sistema diofantico. NO prueba la

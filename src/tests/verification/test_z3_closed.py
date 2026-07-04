@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL SISTEMA CERRADO EMITIDO A Z3 (Fase 3, cierre del caveat)
+   DIOPHANTUS - TEST DEL SISTEMA CERRADO EMITIDO A Z3
 ================================================================================
 Cierra el caveat de honestidad: el sistema cerrado de collatz (R1-R5) ya no se
 comprueba con `==` de Python, sino que se EMITE como bit-vectors de Z3 y es el

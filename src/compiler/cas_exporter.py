@@ -10,7 +10,7 @@ class CASExporter:
         self.state_vars = state_vars
         self.all_vars = set()
         self.sanitized_system = []
-        
+
         self._process_system()
 
     def _process_system(self):
@@ -18,7 +18,7 @@ class CASExporter:
             # 1. Normalizar sintaxis básica
             clean_eq = self._sanitize_equation_syntax(eq)
             self.sanitized_system.append(clean_eq)
-            
+
             # 2. Extraer variables para declaración
             self._extract_vars_from_string(clean_eq)
 
@@ -29,23 +29,23 @@ class CASExporter:
             poly = f"({lhs}) - ({rhs})"
         else:
             poly = eq
-            
+
         # Reemplazos de sintaxis C/Diophantus a Python/SymPy
         # Arrays: b[t+1] -> b_next
         poly = poly.replace("[t+1]", "_next").replace("[", "_").replace("]", "")
         # Potencias
         poly = poly.replace("^", "**")
-        
+
         # IMPORTANTE: Manejo de llamadas P_func(args)
-        # Las dejamos tal cual, pero aseguramos que sean interpretables como 
+        # Las dejamos tal cual, pero aseguramos que sean interpretables como
         # "Function Symbol" o variables si SymPy se queja.
         # Para evitar problemas con SymPy Function('name')(args),
         # convertimos las llamadas en strings planos sanitizados para que sean variables atómicas
         # PERO preservando la identidad de los argumentos para que Gröbner vea la dependencia.
-        
+
         # Estrategia: P_func(a, b) -> P_func__a__b
         # Esto crea una variable única que representa ese estado de computación.
-        
+
         def replace_call(match):
             func_name = match.group(1)
             args_str = match.group(2)
@@ -60,14 +60,14 @@ class CASExporter:
         # Nota: Esto no soporta anidamiento profundo P(P(...)) en una sola regex simple,
         # pero el compilador suele aplanar antes.
         poly = re.sub(r'P_(\w+)\((.*?)\)', replace_call, poly)
-        
+
         return poly
 
     def _extract_vars_from_string(self, text):
         # Extraer todo lo que parezca una variable Python
         raw_tokens = set(re.findall(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b', text))
         reserved = {'div', 'floor', 'if', 'pow'} # Keywords matemáticas
-        
+
         for token in raw_tokens:
             if token not in reserved and not token[0].isdigit():
                 self.all_vars.add(token)
@@ -78,12 +78,12 @@ class CASExporter:
 
     def export_sympy_script(self):
         var_list = sorted(list(self.all_vars))
-        
+
         # Variables protegidas (Input/Output del algoritmo ECPP)
         protected_base = ['n', 'curve_a', 'curve_b', 'Px', 'Py', 'result']
         # Añadir versiones _next
         protected = protected_base + [p + "_next" for p in protected_base]
-        
+
         lines = [
             "import sys",
             "import time",

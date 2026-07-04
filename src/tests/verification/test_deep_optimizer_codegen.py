@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ================================================================================
-   DIOPHANTUS - TEST DEL GENERADOR DE ENERGÍA DEL DEEP OPTIMIZER (Fase 0, item 3)
+   DIOPHANTUS - TEST DEL GENERADOR DE ENERGÍA DEL DEEP OPTIMIZER
 ================================================================================
 Valida `deep_optimizer.build_energy_terms`, que reemplazó la generación de la
 fórmula de energía basada en strings (hack `__AUX__`) por sustitución SymPy

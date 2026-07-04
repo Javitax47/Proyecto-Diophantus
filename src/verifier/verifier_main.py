@@ -33,7 +33,7 @@ def sanitize_name(name):
 
 def get_equation_system(system_file_path, state_vars_list, input_vars_list):
     print(f"[Verifier] 1. Cargando sistema de ecuaciones desde {system_file_path}...")
-    
+
     try:
         with open(system_file_path, 'r', encoding='utf-8') as f:
             poly_system_strings = [line.strip() for line in f if line.strip() and not line.startswith("---")]
@@ -42,10 +42,10 @@ def get_equation_system(system_file_path, state_vars_list, input_vars_list):
         sys.exit(1)
 
     all_vars_set = set()
-    
+
     # Regex robusto para capturar variables
     var_regex = re.compile(r'\b([a-zA-Z_][a-zA-Z0-9_]*(?:\[t\+1\]|_t\d+)?)')
-    
+
     for eq_str in poly_system_strings:
         for match in var_regex.finditer(eq_str):
             var_name = match.group(1)
@@ -73,24 +73,24 @@ def parse_equation_to_z3(eq_str, z3_var_map):
     """
     try:
         sane_expr = sanitize_name(eq_str)
-        
+
         # Limpiar sufijos "= 0" de forma segura
         # Primero quitamos espacios al final
         sane_expr = sane_expr.rstrip()
-        if sane_expr.endswith("= 0"): 
+        if sane_expr.endswith("= 0"):
             sane_expr = sane_expr[:-3]
-        elif sane_expr.endswith("=0"): 
+        elif sane_expr.endswith("=0"):
             sane_expr = sane_expr[:-2]
-        
+
         # Convertir potencias X^2 -> pow(X, 2)
         expr_str_pow = re.sub(r'(\b[a-zA-Z_0-9]+\b)\^2', r'pow(\1, 2)', sane_expr)
-        
+
         # Entorno de ejecución seguro para eval
         z3_globals = {"pow": pow, "If": If, "And": And, "Or": Or, "True": True, "False": False}
-        
+
         # Evaluar
         z3_lhs = eval(expr_str_pow, z3_globals, z3_var_map)
-        
+
         # Verificar tipo de retorno y convertir a restricción booleana si es necesario
         if isinstance(z3_lhs,  ArithRef):
             return (z3_lhs == 0) # Si es aritmética (A - B), asumimos A - B = 0
@@ -98,7 +98,7 @@ def parse_equation_to_z3(eq_str, z3_var_map):
             return z3_lhs        # Si ya es booleana (A == B), retornamos tal cual
         elif isinstance(z3_lhs, bool):
             return z3_lhs        # Si se simplificó a True/False python
-            
+
         return None
 
     except Exception as e:
@@ -110,10 +110,10 @@ def parse_equation_to_z3(eq_str, z3_var_map):
 
 def _apply_bounds(solver, z3_var_map, bounds_config, k_steps):
     if not bounds_config: return
-    
+
     # 1. Bounds relajados para variables internas (C_n, e_n)
     # Fundamental para que Z3 no se pierda en el infinito
-    INTERNAL_BOUND = 100000 
+    INTERNAL_BOUND = 100000
     for name, var in z3_var_map.items():
         if name.startswith("e_") or name.startswith("C_"):
             solver.add(var >= -INTERNAL_BOUND)
@@ -122,7 +122,7 @@ def _apply_bounds(solver, z3_var_map, bounds_config, k_steps):
     # 2. Bounds de usuario (Física del juego)
     for var_name, limits in bounds_config.items():
         min_v, max_v = limits.get("min"), limits.get("max")
-        
+
         # Aplicar a todos los pasos de tiempo (t0, t1...)
         for t in range(k_steps + 1):
             t_name = f"{sanitize_name(var_name)}_t{t}"
@@ -137,11 +137,11 @@ def run_verification(config):
     bug_cond = config["BUG_CONDITION"]
     bounds = config.get("BOUNDS", {})
     k_steps = config.get("K_STEPS", 1)
-    
+
     print(f"--- VERIFICANDO: {os.path.basename(system_file)} ---")
-    
+
     equations, all_vars_base = get_equation_system(system_file, config["STATE_VARS"], config["INPUT_VARS"])
-    
+
     solver = Solver()
     z3_full_map = {}
 
@@ -176,13 +176,13 @@ def run_verification(config):
             if t in vars_by_time[v]:
                 context[v] = vars_by_time[v][t]
                 context[f"{v}_t1"] = vars_by_time[v][t+1]
-        
+
         for eq in equations:
             c = parse_equation_to_z3(eq, context)
-            if c is not None: 
+            if c is not None:
                 solver.add(c)
                 equations_added += 1
-    
+
     print(f"[Verifier] Se añadieron {equations_added} restricciones de transición.")
 
     # --- Estado Inicial (t=0) ---
@@ -196,7 +196,7 @@ def run_verification(config):
     bug_checks = []
     # Rango de chequeo
     limit = k_steps if "_t1" in bug_cond else k_steps + 1
-    
+
     for t in range(limit):
         context_bug = {}
         for v in base_vars:
@@ -204,7 +204,7 @@ def run_verification(config):
                 context_bug[v] = vars_by_time[v][t]
                 if t+1 in vars_by_time[v]:
                     context_bug[f"{v}_t1"] = vars_by_time[v][t+1]
-        
+
         try:
             # Evaluar condición de bug
             # Inyectamos nombres seguros para eval
@@ -228,13 +228,13 @@ def run_verification(config):
         debug_path = str(config["OUTPUT_FILE"]).replace(".tex", "_debug.smt2")
         with open(debug_path, "w") as f:
             f.write(solver.to_smt2())
-            
+
     start_t = time.time()
     result = solver.check()
     elapsed = time.time() - start_t
-    
+
     print(f"[Verifier] Resolución: {result} ({elapsed:.4f}s)")
-    
+
     # Si encontramos bug (SAT), mostrarlo
     if result == sat:
         model = solver.model()
