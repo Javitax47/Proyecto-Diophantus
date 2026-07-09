@@ -4,9 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 [![Status](https://img.shields.io/badge/Status-v1.0%20Prototipo%20de%20Investigaci%C3%B3n-orange)](https://github.com/Javitax47/Proyecto-Diophantus)
 
-> **Compilador de Algoritmos a Geometría Algebraica.**
->
-> *Transformando la lógica dinámica del software en verdades matemáticas estáticas.*
+> Compilador de algoritmos a geometría algebraica.
 
 ---
 
@@ -16,8 +14,9 @@
 
 El resultado final no es un ejecutable binario, sino un polinomio $P(x_1, \dots, x_n) = 0$ que posee soluciones enteras si y solo si el algoritmo original finaliza con éxito.
 
-![Project Diophantus Demo](verifier_test_suite_output.gif)
-*(Visualización: Transformación de código fuente C a un Informe de Análisis Matemático en PDF)*
+![Project Diophantus Demo](pictures/compilacion.png)
+
+Para resultados y validación experimental, ver [`OVERVIEW.md`](OVERVIEW.md).
 
 ---
 
@@ -314,27 +313,6 @@ Proyecto-Diophantus/
 
 ---
 
-## Hitos Científicos y Validación
-
-### 1. Primalidad y Teoría de Números
-El proyecto ofrece implementaciones verificadas de diversos tests de primalidad, corrigiendo y abstrayendo la lógica hacia formas polinómicas:
-*   **Análisis de Fermat y Miller-Rabin:** Implementación del test de Miller-Rabin en `src/analysis/primality.py` y soporte para la compilación de estos flujos en sistemas de ecuaciones diofánticas.
-*   **Certificación Determinista en 64 bits:** Uso de las bases de Sorenson-Webster para garantizar la corrección determinista de la función `is_prime_deterministic_64`.
-*   **Test de Baillie-PSW:** Integración unificada y robusta de Miller-Rabin fuerte base 2 y Lucas fuerte de Selfridge, validada rigurosamente.
-
-### 2. Modelado de Trayectorias (Conjetura de Collatz)
-Aplicación de la compilación diofántica para la transformación de la trayectoria dinámica de la conjetura de Collatz ($3n+1$) en un sistema estático de ecuaciones algebraicas, codificando la topología de la ejecución en un polinomio continuo.
-
-### 3. Compilación Diofántica Universal
-Construcción práctica de ecuaciones polinómicas asociadas a algoritmos reales:
-*   **Conversión de Código C:** Generación automatizada de polinomios $P(x_1, \dots, x_n) = 0$ representativos del comportamiento de algoritmos en C.
-*   **Soporte de Ejecución y Witness Mining:** Entorno de ejecución y extracción de testigos diseñado específicamente para sistemas polinómicos redundantes o de gran profundidad.
-
-### 4. Verificación Formal Algebraica
-Integración directa con el demostrador SMT Z3 para verificar aserciones lógicas e inalcanzabilidad de fallos en programas de control, tales como sistemas de regulación o simulaciones de física simplificadas.
-
----
-
 ## Relación con el Estado del Arte
 
 Diophantus comparte similitudes y conceptos clave con dos áreas consolidadas de las ciencias de la computación:
@@ -417,7 +395,3 @@ Este proyecto constituye una implementación constructiva y práctica de los pri
 Agradecemos las contribuciones teóricas fundamentales de Yuri Matiyasevich, Julia Robinson, Martin Davis, Hilary Putnam, Shafi Goldwasser y Joe Kilian.
 
 El código fuente, el compilador, la máquina virtual y las herramientas asociadas se distribuyen bajo la **Licencia MIT**. Consulte el archivo `LICENSE` para obtener más detalles.
-
----
-
-> *"Las matemáticas son el arte de dar el mismo nombre a cosas diferentes."* — Henri Poincaré
