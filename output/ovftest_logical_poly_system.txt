@@ -1,0 +1,13 @@
+input_val[t+1] - (input_val) = 0
+e_0 - (If(ULE(countdown, 0), 1, 0)) = 0
+e_2 - (If(ULE(c1_countdown_countdown, 0), 1, 0)) = 0
+e_4 - (If(ULE(c1_countdown_c2_countdown_countdown, 0), 1, 0)) = 0
+e_6 - (If(ULE(c1_countdown_c2_countdown_c3_countdown_countdown, 0), 1, 0)) = 0
+e_8 - (If(ULE(c1_countdown_c2_countdown_c3_countdown_c4_countdown_countdown, 0), 1, 0)) = 0
+e_10 - (If(ULE(c1_countdown_c2_countdown_c3_countdown_c4_countdown_c5_countdown_countdown, 0), 1, 0)) = 0
+e_9 - (If(e_10 != 0, 7, 0)) = 0
+e_7 - (If(e_8 != 0, 7, e_9)) = 0
+e_5 - (If(e_6 != 0, 7, e_7)) = 0
+e_3 - (If(e_4 != 0, 7, e_5)) = 0
+e_1 - (If(e_2 != 0, 7, e_3)) = 0
+result[t+1] - (If(e_0 != 0, 7, e_1)) = 0

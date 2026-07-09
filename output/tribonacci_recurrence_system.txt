@@ -1,0 +1,28 @@
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Subexpresiones comunes
+C_0 = (0 + 1)
+C_1 = (C_{0} + 1)
+C_2 = (C_{1} + 1)
+C_3 = (C_{4} + seed_c)
+C_4 = (seed_a + seed_b)
+C_5 = (C_{2} + 1)
+C_6 = (C_{7} + C_{3})
+C_7 = (seed_b + seed_c)
+C_8 = (C_{5} + 1)
+C_9 = (C_{10} + C_{6})
+C_10 = (seed_c + C_{3})
+C_11 = (C_{8} + 1)
+C_12 = (C_{13} + C_{9})
+C_13 = (C_{3} + C_{6})
+C_14 = (C_{11} + 1)
+C_15 = (C_{16} + C_{12})
+C_16 = (C_{6} + C_{9})
+
+# Recurrencias de estado
+out(t+1) = If((0 >= 20), seed_a, If((C_{0} >= 20), seed_b, If((C_{1} >= 20), seed_c, If((C_{2} >= 20), C_{3}, If((C_{5} >= 20), C_{6}, If((C_{8} >= 20), C_{9}, If((C_{11} >= 20), C_{12}, If((C_{14} >= 20), C_{15}, If(((C_{14} + 1) >= 20), ((C_{9} + C_{12}) + C_{15}), __OVERFLOW__)))))))))
+seed_a(t+1) = seed_a
+seed_b(t+1) = seed_b
+seed_c(t+1) = seed_c

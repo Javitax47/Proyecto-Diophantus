@@ -159,9 +159,11 @@ class EquationExporter:
             title = "FÓRMULA OPERACIONAL (Vectorial)"
             rename_map = {var: f"x_{{{i+1}}}" for i, var in enumerate(vars_to_process)}
 
-            for original, new_name in rename_map.items():
-                pattern = r'\b' + re.escape(original) + r'\b'
-                math_P = re.sub(pattern, lambda m: new_name, math_P)
+            pattern = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+            def replace_var(match):
+                word = match.group(0)
+                return rename_map.get(word, word)
+            math_P = pattern.sub(replace_var, math_P)
 
             num_vars = len(vars_to_process)
             sum_notation = f"\\sum_{{\\mathbf{{x}} \\in \\mathbb{{N}}^{{{num_vars}}}}}"
@@ -173,6 +175,7 @@ class EquationExporter:
 
         else:
             title = "FÓRMULA SIMBÓLICA (Estructural)"
+            rename_map = {}
             for var in vars_to_process:
                 if re.match(r'^e_\d+$', var): new_name = var.replace('e_', r'\epsilon_{') + '}'
                 elif re.match(r'^C_\d+$', var): new_name = var.replace('C_', r'\mathcal{C}_{') + '}'
@@ -182,8 +185,13 @@ class EquationExporter:
                 else:
                     esc = var.replace('_', r'\_')
                     new_name = rf"\mathit{{{esc}}}"
+                rename_map[var] = new_name
 
-                math_P = re.sub(r'\b' + re.escape(var) + r'\b', lambda m: new_name, math_P)
+            pattern = re.compile(r'\b[a-zA-Z_][a-zA-Z0-9_]*\b')
+            def replace_var(match):
+                word = match.group(0)
+                return rename_map.get(word, word)
+            math_P = pattern.sub(replace_var, math_P)
 
             output.append(f"=== {title} ===")
             output.append(r"f(N) = \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor")

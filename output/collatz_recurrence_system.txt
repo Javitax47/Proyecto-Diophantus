@@ -1,1 +1,34 @@
-Sistema de recurrencia generado (Placeholder)
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Subexpresiones comunes
+C_0 = If(C_{1}, C_{3}, C_{4})
+C_1 = (C_{2} == 0)
+C_2 = (start_n % 2)
+C_3 = (start_n / 2)
+C_4 = (C_{5} / 2)
+C_5 = (C_{6} + 1)
+C_6 = (3 * start_n)
+C_7 = If(C_{1}, C_{8}, C_{9})
+C_8 = (0 + 1)
+C_9 = (0 + 2)
+C_10 = If(C_{11}, C_{13}, C_{14})
+C_11 = (C_{12} == 0)
+C_12 = (C_{0} % 2)
+C_13 = (C_{0} / 2)
+C_14 = (C_{15} / 2)
+C_15 = (C_{16} + 1)
+C_16 = (3 * C_{0})
+C_17 = If(C_{11}, C_{18}, C_{19})
+C_18 = (C_{7} + 1)
+C_19 = (C_{7} + 2)
+C_20 = (C_{21} == 0)
+C_21 = (C_{10} % 2)
+C_22 = If(C_{20}, C_{23}, C_{24})
+C_23 = (C_{17} + 1)
+C_24 = (C_{17} + 2)
+
+# Recurrencias de estado
+start_n(t+1) = start_n
+total_steps(t+1) = If((start_n == 1), 0, If((0 > 200), -(1), If((C_{0} == 1), C_{7}, If((C_{7} > 200), -(1), If((C_{10} == 1), C_{17}, If((C_{17} > 200), -(1), If((If(C_{20}, (C_{10} / 2), (((3 * C_{10}) + 1) / 2)) == 1), C_{22}, If((C_{22} > 200), -(1), __OVERFLOW__))))))))

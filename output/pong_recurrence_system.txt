@@ -1,1 +1,48 @@
-Sistema de recurrencia generado (Placeholder)
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Subexpresiones comunes
+C_0 = (b_movido_v11 < 1)
+C_1 = (b_movido_v11 > 78)
+C_2 = If(C_{3}, q_next_v9, C_{8})
+C_3 = (C_{4} && C_{7})
+C_4 = (C_{5} == 105)
+C_5 = If(C_{6}, k_v2, k_v1)
+C_6 = P_kbhit()
+C_7 = (q > 1)
+C_8 = If(C_{9}, q_next_v10, q_next_v6)
+C_9 = (C_{10} && C_{11})
+C_10 = (C_{5} == 107)
+C_11 = (q < 18)
+C_12 = If(C_{13}, p_next_v7, C_{16})
+C_13 = (C_{14} && C_{15})
+C_14 = (C_{5} == 119)
+C_15 = (p > 1)
+C_16 = If(C_{17}, p_next_v8, p_next_v5)
+C_17 = (C_{18} && C_{19})
+C_18 = (C_{5} == 115)
+C_19 = (p < 18)
+
+# Recurrencias de estado
+b(t+1) = If(C_{0}, 40, If(C_{1}, 40, b_movido_v11))
+c(t+1) = If(C_{0}, 12, If(C_{1}, 12, c_movido_v12))
+d(t+1) = If(((((b_movido_v11 == 2) && (c_movido_v12 >= C_{12})) && (c_movido_v12 < (C_{12} + 5))) || (((b_movido_v11 == 77) && (c_movido_v12 >= C_{2})) && (c_movido_v12 < (C_{2} + 5)))), (0 - d), d)
+e(t+1) = If(((c_movido_v12 == 1) || (c_movido_v12 == 22)), (0 - e), e)
+f(t+1) = If(C_{0}, (f + 1), f)
+g(t+1) = If(C_{0}, g_next_v22, If(C_{1}, (g + 1), g_next_v22))
+p(t+1) = C_{12}
+q(t+1) = C_{2}
+
+# Variables auxiliares
+b_movido_v11 = (b + d)
+c_movido_v12 = (c + e)
+g_next_v22 = g
+k_v1 = 0
+k_v2 = P_getch()
+p_next_v5 = p
+p_next_v7 = (p - 1)
+p_next_v8 = (p + 1)
+q_next_v10 = (q + 1)
+q_next_v6 = q
+q_next_v9 = (q - 1)

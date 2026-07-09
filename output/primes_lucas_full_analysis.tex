@@ -3,9 +3,9 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 \usepackage{geometry}
-\geometry{a4paper, margin=0.8in} 
+\geometry{a4paper, margin=0.8in}
 \usepackage{amssymb}
-\usepackage{breqn} 
+\usepackage{breqn}
 \usepackage{booktabs}
 \usepackage{url}
 
@@ -29,24 +29,28 @@ result[t+1] &= 0 \\
 \end{align*}\part{Conversión a Polinomio}
 \subsection*{Ecuación Unificada P=0}
 \begin{align*}
-& (RET - (0))^{2} + (n[t+1] - (n))^{2} + (result[t+1] - (0))^{2} = 0
+& (n[t+1] - (n))^{2} + (result[t+1] - (0))^{2} = 0
 \end{align*}\part{Fórmulas Generadoras}
 \begin{small}
 \begin{align*}
-G &= 1 - ((RET - (0))^{2} + (n[t+1] - (n))^{2} + (result[t+1] - (0))^{2}) \\
+G &= 1 - ((n[t+1] - (n))^{2} + (result[t+1] - (0))^{2}) \\
 \end{align*}
 \end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
 \section{Representación Simbólica}
 \begin{dmath*}
 f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
-\mathcal{D}_{sym} &= (\mathit{RET} - (0))^2 + (\mathit{n} - (\mathit{n}))^2 + (R - (0))^2
+\mathcal{D}_{sym} &= (\mathit{n} - (\mathit{n}))^2 + (R - (0))^2
 \end{dmath*}\newpage
 \section{Representación Operacional}
 \begin{dmath*}
 f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
-\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{2}} \left( (x_{1} - (0))^2 + (x_{2} - (x_{2}))^2 + (R - (0))^2 \right)
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{1}} \left( (x_{1} - (x_{1}))^2 + (R - (0))^2 \right)
 \end{dmath*}
-Vector de estado: $\mathbf{x} \in \mathbb{R}^{2}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{1}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
 \begin{align*}
-\text{Sistema de recurrencia generado (Placeholder)} \\
+Transición de estado x(t+1) &= F(x(t)). Las C_n son subexpresiones \\
+\text{comunes reutilizadas; las P_f, relaciones de funciones recursivas.} \\
+\text{# Recurrencias de estado} \\
+n(t+1) &= n \\
+result(t+1) &= 0 \\
 \end{align*}\end{document}

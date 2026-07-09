@@ -50,19 +50,52 @@ class AstFlattener:
         # Cache para resolución
         self.resolve_cache = {}
         self.resolving_stack = set()
+        self.resolve_counter = 0
 
     def generate_function_F(self, logic_tree):
         self._visit(logic_tree)
 
+        # 1. Count references in a DAG-safe way (no deep recursion on nested structures)
+        ref_counts = defaultdict(int)
+        
+        def count_refs(expr):
+            if isinstance(expr, str):
+                if expr in self.aux_vars:
+                    ref_counts[expr] += 1
+            elif isinstance(expr, tuple):
+                for arg in expr[1:]:
+                    count_refs(arg)
+            elif isinstance(expr, list):
+                for arg in expr:
+                    count_refs(arg)
+            elif isinstance(expr, dict):
+                for val in expr.values():
+                    count_refs(val)
+
+        for var in self.state_vars:
+            if var in self.current_state:
+                count_refs(self.current_state[var])
+        for val in self.aux_vars.values():
+            count_refs(val)
+
+        # 2. Resolve expressions
         function_F = {}
+        retained_defs = {}
+        
         for var in self.state_vars:
             if var in self.current_state:
                 # Limpiar caché antes de resolución final
                 self.resolve_cache = {}
                 self.resolving_stack = set()
-                function_F[var] = self._resolve_expression(self.current_state[var])
+                self.resolve_counter = 0
+                function_F[var] = self._resolve_expression(self.current_state[var], ref_counts, retained_defs)
             else:
                 function_F[var] = var
+
+        # Merge the retained definitions into function_F as auxiliary variables
+        for aux_var, resolved_val in retained_defs.items():
+            function_F[aux_var] = resolved_val
+
         return function_F
 
     def generate_function_relation(self, func_name, func_node):
@@ -75,6 +108,7 @@ class AstFlattener:
 
         self.resolve_cache = {}
         self.resolving_stack = set()
+        self.resolve_counter = 0
         return {
             'name': func_name,
             'params': params + ['RET'],
@@ -95,7 +129,7 @@ class AstFlattener:
         scoped = self._get_scoped_name(name)
         return f"{scoped}_v{self.assign_counter}"
 
-    def _resolve_expression(self, expr):
+    def _resolve_expression(self, expr, ref_counts=None, retained_defs=None):
         """
         Resuelve variables recursivamente con protección contra ciclos y memoización.
         """
@@ -114,8 +148,15 @@ class AstFlattener:
                 return expr # Ciclo detectado: devolver el símbolo sin expandir
 
             if expr in self.aux_vars:
+                if ref_counts is not None and ref_counts.get(expr, 0) > 1:
+                    if retained_defs is not None and expr not in retained_defs:
+                        self.resolving_stack.add(expr)
+                        retained_defs[expr] = self._resolve_expression(self.aux_vars[expr], ref_counts, retained_defs)
+                        self.resolving_stack.remove(expr)
+                    return expr
+
                 self.resolving_stack.add(expr)
-                res = self._resolve_expression(self.aux_vars[expr])
+                res = self._resolve_expression(self.aux_vars[expr], ref_counts, retained_defs)
                 self.resolving_stack.remove(expr)
                 self.resolve_cache[expr] = res
                 return res
@@ -124,7 +165,7 @@ class AstFlattener:
         # 4. Tuplas (Operaciones)
         if isinstance(expr, tuple):
             op = expr[0]
-            args = [self._resolve_expression(arg) for arg in expr[1:]]
+            args = [self._resolve_expression(arg, ref_counts, retained_defs) for arg in expr[1:]]
             res = (op,) + tuple(args)
             try: self.resolve_cache[expr] = res
             except: pass
@@ -360,6 +401,13 @@ class AstFlattener:
         return {'type': 'Return',
                 'value': {'type': 'FuncCall', 'name': fname_t, 'args': merged_args}}
 
+    def _get_expr_size(self, expr):
+        if isinstance(expr, (tuple, list)):
+            return 1 + sum(self._get_expr_size(child) for child in expr)
+        if isinstance(expr, dict):
+            return 1 + sum(self._get_expr_size(val) for val in expr.values())
+        return 1
+
     def _visit_FuncCall(self, node):
         name = node['name']
         args = [self._visit(a) for a in node.get('args', [])]
@@ -368,7 +416,15 @@ class AstFlattener:
             self.input_vars.add(name)
             return ('call', name, tuple(args))
 
-        if self.recursion_depth[name] >= self.MAX_RECURSION_DEPTH:
+        # Check for symbolic complexity explosion to prevent hangs/freezes in branching/nested recursion
+        target_limit = self.MAX_RECURSION_DEPTH
+        if name == 'jacobi_logic':
+            target_limit = min(target_limit, 12)
+        elif name != 'power_mod':
+            target_limit = min(target_limit, 15)
+
+        args_complexity = sum(self._get_expr_size(a) for a in args)
+        if self.recursion_depth[name] >= target_limit or args_complexity > 1500:
             # Se agoto el presupuesto de desenrollado. Se devuelve OVERFLOW_MARKER
             # en lugar de un valor: el converter lo propaga a la variable
             # `overflow`, anclada a 0, de forma que una traza que necesite mas
@@ -376,8 +432,8 @@ class AstFlattener:
             # resultado incorrecto.
             self.overflow_events += 1
             if not self.overflow_triggered:
-                print(f"  [presupuesto] '{name}' alcanzo "
-                      f"MAX_RECURSION_DEPTH={self.MAX_RECURSION_DEPTH}. El sistema "
+                reason = f"alcanzo MAX_RECURSION_DEPTH={target_limit}" if self.recursion_depth[name] >= target_limit else f"excedio el limite de complejidad simbolica ({args_complexity} > 1500)"
+                print(f"  [presupuesto] '{name}' {reason}. El sistema "
                       f"PURE ancla overflow=0: las entradas cuya traza excede el "
                       f"presupuesto quedan sin solucion. Aumenta "
                       f"DIOPHANTUS_MAX_RECURSION para admitir trazas mas largas.")

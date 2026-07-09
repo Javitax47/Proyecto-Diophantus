@@ -1,0 +1,2 @@
+input_val[t+1] := input_val
+result[t+1] := If(<=(countdown, 0), 7, If(<=(c1_countdown_countdown, 0), 7, If(<=(c1_countdown_c2_countdown_countdown, 0), 7, If(<=(c1_countdown_c2_countdown_c3_countdown_countdown, 0), 7, If(<=(c1_countdown_c2_countdown_c3_countdown_c4_countdown_countdown, 0), 7, If(<=(c1_countdown_c2_countdown_c3_countdown_c4_countdown_c5_countdown_countdown, 0), 7, __OVERFLOW__))))))

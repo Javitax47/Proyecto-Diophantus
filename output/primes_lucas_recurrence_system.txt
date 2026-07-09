@@ -1,1 +1,7 @@
-Sistema de recurrencia generado (Placeholder)
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Recurrencias de estado
+n(t+1) = n
+result(t+1) = 0

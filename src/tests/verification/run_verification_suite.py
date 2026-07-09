@@ -85,7 +85,7 @@ class Colors:
 def run_one(filename):
     """Devuelve ('PASS'|'FAIL'|'SKIP', salida_completa)."""
     path = os.path.join(_HERE, filename)
-    proc = subprocess.run([sys.executable, path], capture_output=True, text=True)
+    proc = subprocess.run([sys.executable, path], capture_output=True, text=True, encoding="utf-8")
     out = proc.stdout + proc.stderr
     if "[SKIP]" in out:
         return "SKIP", out

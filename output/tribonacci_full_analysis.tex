@@ -1,0 +1,245 @@
+
+\documentclass[10pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\geometry{a4paper, margin=0.8in}
+\usepackage{amssymb}
+\usepackage{breqn}
+\usepackage{booktabs}
+\usepackage{url}
+
+% Ajustes para permitir ecuaciones gigantes
+\allowdisplaybreaks
+\setlength{\jot}{8pt}
+
+\title{Análisis Matemático de Algoritmo \\ \large Generado por Project Diophantus}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section*{Resumen Ejecutivo}
+Este documento presenta la traducción completa de un algoritmo computacional a tres formas matemáticas distintas.
+Las ecuaciones resultantes, debido a la complejidad logarítmica del algoritmo original (Miller-Rabin), son extensas pero polinomialmente acotadas.
+\part{Función de Transición}
+\begin{align*}
+out[t+1] &= \parbox[t]{0.8\linewidth}{\raggedright $('if', ('>=', 0, 20), 'seed_a', ('if', ('>=', ('+', 0, 1), 20), 'seed_b', ('if', ('>=', ('+', ('+', 0, 1), 1), 20), 'seed_c', ('if', ('>=', ('+', ('+', ('+', 0, 1), 1), 1), 20), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'), ('if', ('>=', ('+', ('+', ('+', ('+', 0, 1), 1), 1), 1), 20), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('if', ('>=', ('+', ('+', ('+', ('+', ('+', 0, 1), 1), 1), 1), 1), 20), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('if', ('>=', ('+', ('+', ('+', ('+', ('+', ('+', 0, 1), 1), 1), 1), 1), 1), 20), ('+', ('+', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')))), ('if', ('>=', ('+', ('+', ('+', ('+', ('+', ('+', ('+', 0, 1), 1), 1), 1), 1), 1), 1), 20), ('+', ('+', ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')))), ('+', ('+', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))))), ('if', ('>=', ('+', ('+', ('+', ('+', ('+', ('+', ('+', ('+', 0, 1), 1), 1), 1), 1), 1), 1), 1), 20), ('+', ('+', ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('+', ('+', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))))), ('+', ('+', ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')))), ('+', ('+', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c'))), ('+', ('+', 'seed_c', ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')), ('+', ('+', 'seed_b', 'seed_c'), ('+', ('+', 'seed_a', 'seed_b'), 'seed_c')))))), '__OVERFLOW__')))))))))$} \\
+seed\_a[t+1] &= seed_a \\
+seed\_b[t+1] &= seed_b \\
+seed\_c[t+1] &= seed_c \\
+\end{align*}\part{Conversión a Polinomio}
+\subsection*{Ecuación Unificada P=0}
+\begin{align*}
+& (C_{0} - (0 + 1))^{2} + (C_{1} - (C_{0} + 1))^{2} + (C_{2} - (C_{1} + 1))^{2} \\
+& + (C_{3} - (C_{4} + seed_c))^{2} + (C_{4} - (seed_a + seed_b))^{2} \\
+& + (C_{5} - (C_{2} + 1))^{2} + (C_{6} - (C_{7} + C_{3}))^{2} + (C_{7} - (seed_b \\
+& + seed_c))^{2} + (C_{8} - (C_{5} + 1))^{2} + (C_{9} - (C_{10} + C_{6}))^{2} \\
+& + (C_{10} - (seed_c + C_{3}))^{2} + (C_{11} - (C_{8} + 1))^{2} \\
+& + (C_{12} - (C_{13} + C_{9}))^{2} + (C_{13} - (C_{3} + C_{6}))^{2} \\
+& + (C_{14} - (C_{11} + 1))^{2} + (C_{15} - (C_{16} + C_{12}))^{2} \\
+& + (C_{16} - (C_{6} + C_{9}))^{2} + (e_{0} \cdot (1 - e_{0}))^{2} \\
+& + (((0) - (20)) - (e_{0} \cdot (e_{1} \cdot e_{1} + e_{2} \cdot e_{2} \\
+& + e_{3} \cdot e_{3} + e_{4} \cdot e_{4}) - (1 - e_{0}) \cdot (1 \\
+& + e_{5} \cdot e_{5} + e_{6} \cdot e_{6} + e_{7} \cdot e_{7} \\
+& + e_{8} \cdot e_{8})))^{2} + (e_{10} \cdot (1 - e_{10}))^{2} \\
+& + (((C_{0}) - (20)) - (e_{10} \cdot (e_{11} \cdot e_{11} + e_{12} \cdot e_{12} \\
+& + e_{13} \cdot e_{13} + e_{14} \cdot e_{14}) - (1 - e_{10}) \cdot (1 \\
+& + e_{15} \cdot e_{15} + e_{16} \cdot e_{16} + e_{17} \cdot e_{17} \\
+& + e_{18} \cdot e_{18})))^{2} + (e_{20} \cdot (1 - e_{20}))^{2} \\
+& + (((C_{1}) - (20)) - (e_{20} \cdot (e_{21} \cdot e_{21} + e_{22} \cdot e_{22} \\
+& + e_{23} \cdot e_{23} + e_{24} \cdot e_{24}) - (1 - e_{20}) \cdot (1 \\
+& + e_{25} \cdot e_{25} + e_{26} \cdot e_{26} + e_{27} \cdot e_{27} \\
+& + e_{28} \cdot e_{28})))^{2} + (e_{30} \cdot (1 - e_{30}))^{2} \\
+& + (((C_{2}) - (20)) - (e_{30} \cdot (e_{31} \cdot e_{31} + e_{32} \cdot e_{32} \\
+& + e_{33} \cdot e_{33} + e_{34} \cdot e_{34}) - (1 - e_{30}) \cdot (1 \\
+& + e_{35} \cdot e_{35} + e_{36} \cdot e_{36} + e_{37} \cdot e_{37} \\
+& + e_{38} \cdot e_{38})))^{2} + (e_{40} \cdot (1 - e_{40}))^{2} \\
+& + (((C_{5}) - (20)) - (e_{40} \cdot (e_{41} \cdot e_{41} + e_{42} \cdot e_{42} \\
+& + e_{43} \cdot e_{43} + e_{44} \cdot e_{44}) - (1 - e_{40}) \cdot (1 \\
+& + e_{45} \cdot e_{45} + e_{46} \cdot e_{46} + e_{47} \cdot e_{47} \\
+& + e_{48} \cdot e_{48})))^{2} + (e_{50} \cdot (1 - e_{50}))^{2} \\
+& + (((C_{8}) - (20)) - (e_{50} \cdot (e_{51} \cdot e_{51} + e_{52} \cdot e_{52} \\
+& + e_{53} \cdot e_{53} + e_{54} \cdot e_{54}) - (1 - e_{50}) \cdot (1 \\
+& + e_{55} \cdot e_{55} + e_{56} \cdot e_{56} + e_{57} \cdot e_{57} \\
+& + e_{58} \cdot e_{58})))^{2} + (e_{60} \cdot (1 - e_{60}))^{2} \\
+& + (((C_{11}) - (20)) - (e_{60} \cdot (e_{61} \cdot e_{61} + e_{62} \cdot e_{62} \\
+& + e_{63} \cdot e_{63} + e_{64} \cdot e_{64}) - (1 - e_{60}) \cdot (1 \\
+& + e_{65} \cdot e_{65} + e_{66} \cdot e_{66} + e_{67} \cdot e_{67} \\
+& + e_{68} \cdot e_{68})))^{2} + (e_{70} \cdot (1 - e_{70}))^{2} \\
+& + (((C_{14}) - (20)) - (e_{70} \cdot (e_{71} \cdot e_{71} + e_{72} \cdot e_{72} \\
+& + e_{73} \cdot e_{73} + e_{74} \cdot e_{74}) - (1 - e_{70}) \cdot (1 \\
+& + e_{75} \cdot e_{75} + e_{76} \cdot e_{76} + e_{77} \cdot e_{77} \\
+& + e_{78} \cdot e_{78})))^{2} + (e_{81} - (C_{14} + 1))^{2} \\
+& + (e_{80} \cdot (1 - e_{80}))^{2} \\
+& + (((e_{81}) - (20)) - (e_{80} \cdot (e_{82} \cdot e_{82} + e_{83} \cdot e_{83} \\
+& + e_{84} \cdot e_{84} + e_{85} \cdot e_{85}) - (1 - e_{80}) \cdot (1 \\
+& + e_{86} \cdot e_{86} + e_{87} \cdot e_{87} + e_{88} \cdot e_{88} \\
+& + e_{89} \cdot e_{89})))^{2} + (e_{91} - (C_{9} + C_{12}))^{2} \\
+& + (e_{90} - (e_{91} + C_{15}))^{2} + (e_{79} - ((e_{80})  \cdot  (e_{90}) \\
+& + (1 - e_{80})  \cdot  (__OVERFLOW__)))^{2} + (e_{92} - ((e_{80}) \cdot (0) \\
+& + (1 - (e_{80})) \cdot (1)))^{2} + (e_{69} - ((e_{70})  \cdot  (C_{15}) \\
+& + (1 - e_{70})  \cdot  (e_{79})))^{2} + (e_{93} - ((e_{70}) \cdot (0) \\
+& + (1 - (e_{70})) \cdot (e_{92})))^{2} + (e_{59} - ((e_{60})  \cdot  (C_{12}) \\
+& + (1 - e_{60})  \cdot  (e_{69})))^{2} + (e_{94} - ((e_{60}) \cdot (0) \\
+& + (1 - (e_{60})) \cdot (e_{93})))^{2} + (e_{49} - ((e_{50})  \cdot  (C_{9}) \\
+& + (1 - e_{50})  \cdot  (e_{59})))^{2} + (e_{95} - ((e_{50}) \cdot (0) \\
+& + (1 - (e_{50})) \cdot (e_{94})))^{2} + (e_{39} - ((e_{40})  \cdot  (C_{6}) \\
+& + (1 - e_{40})  \cdot  (e_{49})))^{2} + (e_{96} - ((e_{40}) \cdot (0) \\
+& + (1 - (e_{40})) \cdot (e_{95})))^{2} + (e_{29} - ((e_{30})  \cdot  (C_{3}) \\
+& + (1 - e_{30})  \cdot  (e_{39})))^{2} + (e_{97} - ((e_{30}) \cdot (0) \\
+& + (1 - (e_{30})) \cdot (e_{96})))^{2} + (e_{19} - ((e_{20})  \cdot  (seed_c) \\
+& + (1 - e_{20})  \cdot  (e_{29})))^{2} + (e_{98} - ((e_{20}) \cdot (0) \\
+& + (1 - (e_{20})) \cdot (e_{97})))^{2} + (e_{9} - ((e_{10})  \cdot  (seed_b) \\
+& + (1 - e_{10})  \cdot  (e_{19})))^{2} + (e_{99} - ((e_{10}) \cdot (0) \\
+& + (1 - (e_{10})) \cdot (e_{98})))^{2} + (out[t+1] - ((e_{0})  \cdot  (seed_a) \\
+& + (1 - e_{0})  \cdot  (e_{9})))^{2} + (e_{100} - ((e_{0}) \cdot (0) \\
+& + (1 - (e_{0})) \cdot (e_{99})))^{2} + (seed_a[t+1] - (seed_a))^{2} \\
+& + (seed_b[t+1] - (seed_b))^{2} + (seed_c[t+1] - (seed_c))^{2} \\
+& + (overflow - (e_{100}))^{2} + (overflow)^{2} = 0
+\end{align*}\part{Fórmulas Generadoras}
+\begin{small}
+\begin{align*}
+G &= 1 - ((C_{0} - (0 + 1))^{2} + (C_{1} - (C_{0} + 1))^{2} + (C_{2} - (C_{1} + 1))^{2} \\
+& + (C_{3} - (C_{4} + seed_c))^{2} + (C_{4} - (seed_a + seed_b))^{2} \\
+& + (C_{5} - (C_{2} + 1))^{2} + (C_{6} - (C_{7} + C_{3}))^{2} + (C_{7} - (seed_b \\
+& + seed_c))^{2} + (C_{8} - (C_{5} + 1))^{2} + (C_{9} - (C_{10} + C_{6}))^{2} \\
+& + (C_{10} - (seed_c + C_{3}))^{2} + (C_{11} - (C_{8} + 1))^{2} \\
+& + (C_{12} - (C_{13} + C_{9}))^{2} + (C_{13} - (C_{3} + C_{6}))^{2} \\
+& + (C_{14} - (C_{11} + 1))^{2} + (C_{15} - (C_{16} + C_{12}))^{2} \\
+& + (C_{16} - (C_{6} + C_{9}))^{2} + (e_{0} \cdot (1 - e_{0}))^{2} \\
+& + (((0) - (20)) - (e_{0} \cdot (e_{1} \cdot e_{1} + e_{2} \cdot e_{2} \\
+& + e_{3} \cdot e_{3} + e_{4} \cdot e_{4}) - (1 - e_{0}) \cdot (1 \\
+& + e_{5} \cdot e_{5} + e_{6} \cdot e_{6} + e_{7} \cdot e_{7} \\
+& + e_{8} \cdot e_{8})))^{2} + (e_{10} \cdot (1 - e_{10}))^{2} \\
+& + (((C_{0}) - (20)) - (e_{10} \cdot (e_{11} \cdot e_{11} + e_{12} \cdot e_{12} \\
+& + e_{13} \cdot e_{13} + e_{14} \cdot e_{14}) - (1 - e_{10}) \cdot (1 \\
+& + e_{15} \cdot e_{15} + e_{16} \cdot e_{16} + e_{17} \cdot e_{17} \\
+& + e_{18} \cdot e_{18})))^{2} + (e_{20} \cdot (1 - e_{20}))^{2} \\
+& + (((C_{1}) - (20)) - (e_{20} \cdot (e_{21} \cdot e_{21} + e_{22} \cdot e_{22} \\
+& + e_{23} \cdot e_{23} + e_{24} \cdot e_{24}) - (1 - e_{20}) \cdot (1 \\
+& + e_{25} \cdot e_{25} + e_{26} \cdot e_{26} + e_{27} \cdot e_{27} \\
+& + e_{28} \cdot e_{28})))^{2} + (e_{30} \cdot (1 - e_{30}))^{2} \\
+& + (((C_{2}) - (20)) - (e_{30} \cdot (e_{31} \cdot e_{31} + e_{32} \cdot e_{32} \\
+& + e_{33} \cdot e_{33} + e_{34} \cdot e_{34}) - (1 - e_{30}) \cdot (1 \\
+& + e_{35} \cdot e_{35} + e_{36} \cdot e_{36} + e_{37} \cdot e_{37} \\
+& + e_{38} \cdot e_{38})))^{2} + (e_{40} \cdot (1 - e_{40}))^{2} \\
+& + (((C_{5}) - (20)) - (e_{40} \cdot (e_{41} \cdot e_{41} + e_{42} \cdot e_{42} \\
+& + e_{43} \cdot e_{43} + e_{44} \cdot e_{44}) - (1 - e_{40}) \cdot (1 \\
+& + e_{45} \cdot e_{45} + e_{46} \cdot e_{46} + e_{47} \cdot e_{47} \\
+& + e_{48} \cdot e_{48})))^{2} + (e_{50} \cdot (1 - e_{50}))^{2} \\
+& + (((C_{8}) - (20)) - (e_{50} \cdot (e_{51} \cdot e_{51} + e_{52} \cdot e_{52} \\
+& + e_{53} \cdot e_{53} + e_{54} \cdot e_{54}) - (1 - e_{50}) \cdot (1 \\
+& + e_{55} \cdot e_{55} + e_{56} \cdot e_{56} + e_{57} \cdot e_{57} \\
+& + e_{58} \cdot e_{58})))^{2} + (e_{60} \cdot (1 - e_{60}))^{2} \\
+& + (((C_{11}) - (20)) - (e_{60} \cdot (e_{61} \cdot e_{61} + e_{62} \cdot e_{62} \\
+& + e_{63} \cdot e_{63} + e_{64} \cdot e_{64}) - (1 - e_{60}) \cdot (1 \\
+& + e_{65} \cdot e_{65} + e_{66} \cdot e_{66} + e_{67} \cdot e_{67} \\
+& + e_{68} \cdot e_{68})))^{2} + (e_{70} \cdot (1 - e_{70}))^{2} \\
+& + (((C_{14}) - (20)) - (e_{70} \cdot (e_{71} \cdot e_{71} + e_{72} \cdot e_{72} \\
+& + e_{73} \cdot e_{73} + e_{74} \cdot e_{74}) - (1 - e_{70}) \cdot (1 \\
+& + e_{75} \cdot e_{75} + e_{76} \cdot e_{76} + e_{77} \cdot e_{77} \\
+& + e_{78} \cdot e_{78})))^{2} + (e_{81} - (C_{14} + 1))^{2} \\
+& + (e_{80} \cdot (1 - e_{80}))^{2} \\
+& + (((e_{81}) - (20)) - (e_{80} \cdot (e_{82} \cdot e_{82} + e_{83} \cdot e_{83} \\
+& + e_{84} \cdot e_{84} + e_{85} \cdot e_{85}) - (1 - e_{80}) \cdot (1 \\
+& + e_{86} \cdot e_{86} + e_{87} \cdot e_{87} + e_{88} \cdot e_{88} \\
+& + e_{89} \cdot e_{89})))^{2} + (e_{91} - (C_{9} + C_{12}))^{2} \\
+& + (e_{90} - (e_{91} + C_{15}))^{2} + (e_{79} - ((e_{80})  \cdot  (e_{90}) \\
+& + (1 - e_{80})  \cdot  (__OVERFLOW__)))^{2} + (e_{92} - ((e_{80}) \cdot (0) \\
+& + (1 - (e_{80})) \cdot (1)))^{2} + (e_{69} - ((e_{70})  \cdot  (C_{15}) \\
+& + (1 - e_{70})  \cdot  (e_{79})))^{2} + (e_{93} - ((e_{70}) \cdot (0) \\
+& + (1 - (e_{70})) \cdot (e_{92})))^{2} + (e_{59} - ((e_{60})  \cdot  (C_{12}) \\
+& + (1 - e_{60})  \cdot  (e_{69})))^{2} + (e_{94} - ((e_{60}) \cdot (0) \\
+& + (1 - (e_{60})) \cdot (e_{93})))^{2} + (e_{49} - ((e_{50})  \cdot  (C_{9}) \\
+& + (1 - e_{50})  \cdot  (e_{59})))^{2} + (e_{95} - ((e_{50}) \cdot (0) \\
+& + (1 - (e_{50})) \cdot (e_{94})))^{2} + (e_{39} - ((e_{40})  \cdot  (C_{6}) \\
+& + (1 - e_{40})  \cdot  (e_{49})))^{2} + (e_{96} - ((e_{40}) \cdot (0) \\
+& + (1 - (e_{40})) \cdot (e_{95})))^{2} + (e_{29} - ((e_{30})  \cdot  (C_{3}) \\
+& + (1 - e_{30})  \cdot  (e_{39})))^{2} + (e_{97} - ((e_{30}) \cdot (0) \\
+& + (1 - (e_{30})) \cdot (e_{96})))^{2} + (e_{19} - ((e_{20})  \cdot  (seed_c) \\
+& + (1 - e_{20})  \cdot  (e_{29})))^{2} + (e_{98} - ((e_{20}) \cdot (0) \\
+& + (1 - (e_{20})) \cdot (e_{97})))^{2} + (e_{9} - ((e_{10})  \cdot  (seed_b) \\
+& + (1 - e_{10})  \cdot  (e_{19})))^{2} + (e_{99} - ((e_{10}) \cdot (0) \\
+& + (1 - (e_{10})) \cdot (e_{98})))^{2} + (out[t+1] - ((e_{0})  \cdot  (seed_a) \\
+& + (1 - e_{0})  \cdot  (e_{9})))^{2} + (e_{100} - ((e_{0}) \cdot (0) \\
+& + (1 - (e_{0})) \cdot (e_{99})))^{2} + (seed_a[t+1] - (seed_a))^{2} \\
+& + (seed_b[t+1] - (seed_b))^{2} + (seed_c[t+1] - (seed_c))^{2} \\
+& + (overflow - (e_{100}))^{2} + (overflow)^{2}) \\
+\end{align*}
+\end{small}\part{Fórmulas Matemáticas (Estilo Willans)}
+\section{Representación Simbólica}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor \\
+\mathcal{D}_{sym} &= (\mathcal{C}_{0} - (0 + 1))^2 + (\mathcal{C}_{1} - (\mathcal{C}_{0} + 1))^2 + (\mathcal{C}_{2} - (\mathcal{C}_{1} + 1))^2 + \\
+&  (\mathcal{C}_{3} - (\mathcal{C}_{4} + \mathit{seed\_c}))^2 + (\mathcal{C}_{4} - (\mathit{seed\_a} + \mathit{seed\_b}))^2 + \\
+&  (\mathcal{C}_{5} - (\mathcal{C}_{2} + 1))^2 + (\mathcal{C}_{6} - (\mathcal{C}_{7} + \mathcal{C}_{3}))^2 + \\
+&  (\mathcal{C}_{7} - (\mathit{seed\_b} + \mathit{seed\_c}))^2 + (\mathcal{C}_{8} - (\mathcal{C}_{5} + 1))^2 + \\
+&  (\mathcal{C}_{9} - (\mathcal{C}_{10} + \mathcal{C}_{6}))^2 + (\mathcal{C}_{10} - (\mathit{seed\_c} + \mathcal{C}_{3}))^2 + \\
+&  (\mathcal{C}_{11} - (\mathcal{C}_{8} + 1))^2 + (\mathcal{C}_{12} - (\mathcal{C}_{13} + \mathcal{C}_{9}))^2 + \\
+&  (\mathcal{C}_{13} - (\mathcal{C}_{3} + \mathcal{C}_{6}))^2 + (\mathcal{C}_{14} - (\mathcal{C}_{11} + 1))^2 + \\
+&  (\mathcal{C}_{15} - (\mathcal{C}_{16} + \mathcal{C}_{12}))^2 + (\mathcal{C}_{16} - (\mathcal{C}_{6} + \mathcal{C}_{9}))^2 + \\
+&  (\epsilon_{0} \\mathit{cdot} (1 - \epsilon_{0}))^2 + (((0) - (20)) - (\epsilon_{0} \\mathit{cdot} (\epsilon_{1} \\mathit{cdot} \epsilon_{1} + \epsilon_{2} \\mathit{cdot} \epsilon_{2} + \epsilon_{3} \\mathit{cdot} \epsilon_{3} + \epsilon_{4} \\mathit{cdot} \epsilon_{4}) - (1 - \epsilon_{0}) \\mathit{cdot} (1 + \epsilon_{5} \\mathit{cdot} \epsilon_{5} + \epsilon_{6} \\mathit{cdot} \epsilon_{6} + \epsilon_{7} \\mathit{cdot} \epsilon_{7} + \epsilon_{8} \\mathit{cdot} \epsilon_{8})))^2 + \\
+&  (\epsilon_{10} \\mathit{cdot} (1 - \epsilon_{10}))^2 + (((\mathcal{C}_{0}) - (20)) - (\epsilon_{10} \\mathit{cdot} (\epsilon_{11} \\mathit{cdot} \epsilon_{11} + \epsilon_{12} \\mathit{cdot} \epsilon_{12} + \epsilon_{13} \\mathit{cdot} \epsilon_{13} + \epsilon_{14} \\mathit{cdot} \epsilon_{14}) - (1 - \epsilon_{10}) \\mathit{cdot} (1 + \epsilon_{15} \\mathit{cdot} \epsilon_{15} + \epsilon_{16} \\mathit{cdot} \epsilon_{16} + \epsilon_{17} \\mathit{cdot} \epsilon_{17} + \epsilon_{18} \\mathit{cdot} \epsilon_{18})))^2 + \\
+&  (\epsilon_{20} \\mathit{cdot} (1 - \epsilon_{20}))^2 + (((\mathcal{C}_{1}) - (20)) - (\epsilon_{20} \\mathit{cdot} (\epsilon_{21} \\mathit{cdot} \epsilon_{21} + \epsilon_{22} \\mathit{cdot} \epsilon_{22} + \epsilon_{23} \\mathit{cdot} \epsilon_{23} + \epsilon_{24} \\mathit{cdot} \epsilon_{24}) - (1 - \epsilon_{20}) \\mathit{cdot} (1 + \epsilon_{25} \\mathit{cdot} \epsilon_{25} + \epsilon_{26} \\mathit{cdot} \epsilon_{26} + \epsilon_{27} \\mathit{cdot} \epsilon_{27} + \epsilon_{28} \\mathit{cdot} \epsilon_{28})))^2 + \\
+&  (\epsilon_{30} \\mathit{cdot} (1 - \epsilon_{30}))^2 + (((\mathcal{C}_{2}) - (20)) - (\epsilon_{30} \\mathit{cdot} (\epsilon_{31} \\mathit{cdot} \epsilon_{31} + \epsilon_{32} \\mathit{cdot} \epsilon_{32} + \epsilon_{33} \\mathit{cdot} \epsilon_{33} + \epsilon_{34} \\mathit{cdot} \epsilon_{34}) - (1 - \epsilon_{30}) \\mathit{cdot} (1 + \epsilon_{35} \\mathit{cdot} \epsilon_{35} + \epsilon_{36} \\mathit{cdot} \epsilon_{36} + \epsilon_{37} \\mathit{cdot} \epsilon_{37} + \epsilon_{38} \\mathit{cdot} \epsilon_{38})))^2 + \\
+&  (\epsilon_{40} \\mathit{cdot} (1 - \epsilon_{40}))^2 + (((\mathcal{C}_{5}) - (20)) - (\epsilon_{40} \\mathit{cdot} (\epsilon_{41} \\mathit{cdot} \epsilon_{41} + \epsilon_{42} \\mathit{cdot} \epsilon_{42} + \epsilon_{43} \\mathit{cdot} \epsilon_{43} + \epsilon_{44} \\mathit{cdot} \epsilon_{44}) - (1 - \epsilon_{40}) \\mathit{cdot} (1 + \epsilon_{45} \\mathit{cdot} \epsilon_{45} + \epsilon_{46} \\mathit{cdot} \epsilon_{46} + \epsilon_{47} \\mathit{cdot} \epsilon_{47} + \epsilon_{48} \\mathit{cdot} \epsilon_{48})))^2 + \\
+&  (\epsilon_{50} \\mathit{cdot} (1 - \epsilon_{50}))^2 + (((\mathcal{C}_{8}) - (20)) - (\epsilon_{50} \\mathit{cdot} (\epsilon_{51} \\mathit{cdot} \epsilon_{51} + \epsilon_{52} \\mathit{cdot} \epsilon_{52} + \epsilon_{53} \\mathit{cdot} \epsilon_{53} + \epsilon_{54} \\mathit{cdot} \epsilon_{54}) - (1 - \epsilon_{50}) \\mathit{cdot} (1 + \epsilon_{55} \\mathit{cdot} \epsilon_{55} + \epsilon_{56} \\mathit{cdot} \epsilon_{56} + \epsilon_{57} \\mathit{cdot} \epsilon_{57} + \epsilon_{58} \\mathit{cdot} \epsilon_{58})))^2 + \\
+&  (\epsilon_{60} \\mathit{cdot} (1 - \epsilon_{60}))^2 + (((\mathcal{C}_{11}) - (20)) - (\epsilon_{60} \\mathit{cdot} (\epsilon_{61} \\mathit{cdot} \epsilon_{61} + \epsilon_{62} \\mathit{cdot} \epsilon_{62} + \epsilon_{63} \\mathit{cdot} \epsilon_{63} + \epsilon_{64} \\mathit{cdot} \epsilon_{64}) - (1 - \epsilon_{60}) \\mathit{cdot} (1 + \epsilon_{65} \\mathit{cdot} \epsilon_{65} + \epsilon_{66} \\mathit{cdot} \epsilon_{66} + \epsilon_{67} \\mathit{cdot} \epsilon_{67} + \epsilon_{68} \\mathit{cdot} \epsilon_{68})))^2 + \\
+&  (\epsilon_{70} \\mathit{cdot} (1 - \epsilon_{70}))^2 + (((\mathcal{C}_{14}) - (20)) - (\epsilon_{70} \\mathit{cdot} (\epsilon_{71} \\mathit{cdot} \epsilon_{71} + \epsilon_{72} \\mathit{cdot} \epsilon_{72} + \epsilon_{73} \\mathit{cdot} \epsilon_{73} + \epsilon_{74} \\mathit{cdot} \epsilon_{74}) - (1 - \epsilon_{70}) \\mathit{cdot} (1 + \epsilon_{75} \\mathit{cdot} \epsilon_{75} + \epsilon_{76} \\mathit{cdot} \epsilon_{76} + \epsilon_{77} \\mathit{cdot} \epsilon_{77} + \epsilon_{78} \\mathit{cdot} \epsilon_{78})))^2 + \\
+&  (\epsilon_{81} - (\mathcal{C}_{14} + 1))^2 + (\epsilon_{80} \\mathit{cdot} (1 - \epsilon_{80}))^2 + (((\epsilon_{81}) - (20)) - (\epsilon_{80} \\mathit{cdot} (\epsilon_{82} \\mathit{cdot} \epsilon_{82} + \epsilon_{83} \\mathit{cdot} \epsilon_{83} + \epsilon_{84} \\mathit{cdot} \epsilon_{84} + \epsilon_{85} \\mathit{cdot} \epsilon_{85}) - (1 - \epsilon_{80}) \\mathit{cdot} (1 + \epsilon_{86} \\mathit{cdot} \epsilon_{86} + \epsilon_{87} \\mathit{cdot} \epsilon_{87} + \epsilon_{88} \\mathit{cdot} \epsilon_{88} + \epsilon_{89} \\mathit{cdot} \epsilon_{89})))^2 + \\
+&  (\epsilon_{91} - (\mathcal{C}_{9} + \mathcal{C}_{12}))^2 + (\epsilon_{90} - (\epsilon_{91} + \mathcal{C}_{15}))^2 + \\
+&  (\epsilon_{79} - ((\epsilon_{80})  \\mathit{cdot}  (\epsilon_{90}) + (1 - \epsilon_{80})  \\mathit{cdot}  (\mathit{\_\_OVERFLOW\_\_})))^2 + \\
+&  (\epsilon_{92} - ((\epsilon_{80}) \\mathit{cdot} (0) + (1 - (\epsilon_{80})) \\mathit{cdot} (1)))^2 + \\
+&  (\epsilon_{69} - ((\epsilon_{70})  \\mathit{cdot}  (\mathcal{C}_{15}) + (1 - \epsilon_{70})  \\mathit{cdot}  (\epsilon_{79})))^2 + \\
+&  (\epsilon_{93} - ((\epsilon_{70}) \\mathit{cdot} (0) + (1 - (\epsilon_{70})) \\mathit{cdot} (\epsilon_{92})))^2 + \\
+&  (\epsilon_{59} - ((\epsilon_{60})  \\mathit{cdot}  (\mathcal{C}_{12}) + (1 - \epsilon_{60})  \\mathit{cdot}  (\epsilon_{69})))^2 + \\
+&  (\epsilon_{94} - ((\epsilon_{60}) \\mathit{cdot} (0) + (1 - (\epsilon_{60})) \\mathit{cdot} (\epsilon_{93})))^2 + \\
+&  (\epsilon_{49} - ((\epsilon_{50})  \\mathit{cdot}  (\mathcal{C}_{9}) + (1 - \epsilon_{50})  \\mathit{cdot}  (\epsilon_{59})))^2 + \\
+&  (\epsilon_{95} - ((\epsilon_{50}) \\mathit{cdot} (0) + (1 - (\epsilon_{50})) \\mathit{cdot} (\epsilon_{94})))^2 + \\
+&  (\epsilon_{39} - ((\epsilon_{40})  \\mathit{cdot}  (\mathcal{C}_{6}) + (1 - \epsilon_{40})  \\mathit{cdot}  (\epsilon_{49})))^2 + \\
+&  (\epsilon_{96} - ((\epsilon_{40}) \\mathit{cdot} (0) + (1 - (\epsilon_{40})) \\mathit{cdot} (\epsilon_{95})))^2 + \\
+&  (\epsilon_{29} - ((\epsilon_{30})  \\mathit{cdot}  (\mathcal{C}_{3}) + (1 - \epsilon_{30})  \\mathit{cdot}  (\epsilon_{39})))^2 + \\
+&  (\epsilon_{97} - ((\epsilon_{30}) \\mathit{cdot} (0) + (1 - (\epsilon_{30})) \\mathit{cdot} (\epsilon_{96})))^2 + \\
+&  (\epsilon_{19} - ((\epsilon_{20})  \\mathit{cdot}  (\mathit{seed\_c}) + (1 - \epsilon_{20})  \\mathit{cdot}  (\epsilon_{29})))^2 + \\
+&  (\epsilon_{98} - ((\epsilon_{20}) \\mathit{cdot} (0) + (1 - (\epsilon_{20})) \\mathit{cdot} (\epsilon_{97})))^2 + \\
+&  (\epsilon_{9} - ((\epsilon_{10})  \\mathit{cdot}  (\mathit{seed\_b}) + (1 - \epsilon_{10})  \\mathit{cdot}  (\epsilon_{19})))^2 + \\
+&  (\epsilon_{99} - ((\epsilon_{10}) \\mathit{cdot} (0) + (1 - (\epsilon_{10})) \\mathit{cdot} (\epsilon_{98})))^2 + \\
+&  (\mathit{out} - ((\epsilon_{0})  \\mathit{cdot}  (\mathit{seed\_a}) + (1 - \epsilon_{0})  \\mathit{cdot}  (\epsilon_{9})))^2 + \\
+&  (\epsilon_{100} - ((\epsilon_{0}) \\mathit{cdot} (0) + (1 - (\epsilon_{0})) \\mathit{cdot} (\epsilon_{99})))^2 + \\
+&  (\mathit{seed\_a} - (\mathit{seed\_a}))^2 + (\mathit{seed\_b} - (\mathit{seed\_b}))^2 + (\mathit{seed\_c} - (\mathit{seed\_c}))^2 + \\
+&  (\mathit{overflow} - (\epsilon_{100}))^2 + (\mathit{overflow})^2
+\end{dmath*}\newpage
+\section{Representación Operacional}
+\begin{dmath*}
+f(N) &= \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor \\
+\mathcal{D}(N, R, \mathbf{x}) &= \sum_{\mathbf{x} \in \mathbb{N}^{125}} \left( (x_{111} - (0 + 1))^2 + (x_{112} - (x_{111} + 1))^2 + (x_{123} - (x_{112} + 1))^2 + (x_{120} - (x_{113} + x_{4}))^2 + (x_{113} - (x_{5} + x_{3}))^2 + (x_{106} - (x_{123} + 1))^2 + (x_{121} - (x_{116} + x_{120}))^2 + (x_{116} - (x_{3} + x_{4}))^2 + (x_{109} - (x_{106} + 1))^2 + (x_{115} - (x_{60} + x_{121}))^2 + (x_{60} - (x_{4} + x_{120}))^2 + (x_{29} - (x_{109} + 1))^2 + (x_{66} - (x_{7} + x_{115}))^2 + (x_{7} - (x_{120} + x_{121}))^2 + (x_{67} - (x_{29} + 1))^2 + (x_{41} - (x_{61} + x_{66}))^2 + (x_{61} - (x_{121} + x_{115}))^2 + (x_{117} \x_{104} (1 - x_{117}))^2 + (((0) - (20)) - (x_{117} \x_{104} (x_{118} \x_{104} x_{118} + x_{119} \x_{104} x_{119} + x_{105} \x_{104} x_{105} + x_{114} \x_{104} x_{114}) - (1 - x_{117}) \x_{104} (1 + x_{122} \x_{104} x_{122} + x_{125} \x_{104} x_{125} + x_{108} \x_{104} x_{108} + x_{110} \x_{104} x_{110})))^2 + (x_{83} \x_{104} (1 - x_{83}))^2 + (((x_{111}) - (20)) - (x_{83} \x_{104} (x_{71} \x_{104} x_{71} + x_{80} \x_{104} x_{80} + x_{78} \x_{104} x_{78} + x_{46} \x_{104} x_{46}) - (1 - x_{83}) \x_{104} (1 + x_{25} \x_{104} x_{25} + x_{92} \x_{104} x_{92} + x_{55} \x_{104} x_{55} + x_{49} \x_{104} x_{49})))^2 + (x_{11} \x_{104} (1 - x_{11}))^2 + (((x_{112}) - (20)) - (x_{11} \x_{104} (x_{99} \x_{104} x_{99} + x_{19} \x_{104} x_{19} + x_{40} \x_{104} x_{40} + x_{18} \x_{104} x_{18}) - (1 - x_{11}) \x_{104} (1 + x_{34} \x_{104} x_{34} + x_{76} \x_{104} x_{76} + x_{22} \x_{104} x_{22} + x_{51} \x_{104} x_{51})))^2 + (x_{96} \x_{104} (1 - x_{96}))^2 + (((x_{123}) - (20)) - (x_{96} \x_{104} (x_{69} \x_{104} x_{69} + x_{97} \x_{104} x_{97} + x_{79} \x_{104} x_{79} + x_{39} \x_{104} x_{39}) - (1 - x_{96}) \x_{104} (1 + x_{98} \x_{104} x_{98} + x_{17} \x_{104} x_{17} + x_{90} \x_{104} x_{90} + x_{94} \x_{104} x_{94})))^2 + (x_{88} \x_{104} (1 - x_{88}))^2 + (((x_{106}) - (20)) - (x_{88} \x_{104} (x_{42} \x_{104} x_{42} + x_{23} \x_{104} x_{23} + x_{56} \x_{104} x_{56} + x_{63} \x_{104} x_{63}) - (1 - x_{88}) \x_{104} (1 + x_{58} \x_{104} x_{58} + x_{81} \x_{104} x_{81} + x_{75} \x_{104} x_{75} + x_{14} \x_{104} x_{14})))^2 + (x_{43} \x_{104} (1 - x_{43}))^2 + (((x_{109}) - (20)) - (x_{43} \x_{104} (x_{72} \x_{104} x_{72} + x_{84} \x_{104} x_{84} + x_{59} \x_{104} x_{59} + x_{38} \x_{104} x_{38}) - (1 - x_{43}) \x_{104} (1 + x_{89} \x_{104} x_{89} + x_{91} \x_{104} x_{91} + x_{32} \x_{104} x_{32} + x_{62} \x_{104} x_{62})))^2 + (x_{33} \x_{104} (1 - x_{33}))^2 + (((x_{29}) - (20)) - (x_{33} \x_{104} (x_{65} \x_{104} x_{65} + x_{35} \x_{104} x_{35} + x_{64} \x_{104} x_{64} + x_{26} \x_{104} x_{26}) - (1 - x_{33}) \x_{104} (1 + x_{95} \x_{104} x_{95} + x_{16} \x_{104} x_{16} + x_{57} \x_{104} x_{57} + x_{8} \x_{104} x_{8})))^2 + (x_{73} \x_{104} (1 - x_{73}))^2 + (((x_{67}) - (20)) - (x_{73} \x_{104} (x_{15} \x_{104} x_{15} + x_{50} \x_{104} x_{50} + x_{36} \x_{104} x_{36} + x_{45} \x_{104} x_{45}) - (1 - x_{73}) \x_{104} (1 + x_{54} \x_{104} x_{54} + x_{85} \x_{104} x_{85} + x_{87} \x_{104} x_{87} + x_{31} \x_{104} x_{31})))^2 + (x_{37} - (x_{67} + 1))^2 + (x_{27} \x_{104} (1 - x_{27}))^2 + (((x_{37}) - (20)) - (x_{27} \x_{104} (x_{30} \x_{104} x_{30} + x_{9} \x_{104} x_{9} + x_{44} \x_{104} x_{44} + x_{70} \x_{104} x_{70}) - (1 - x_{27}) \x_{104} (1 + x_{82} \x_{104} x_{82} + x_{68} \x_{104} x_{68} + x_{13} \x_{104} x_{13} + x_{100} \x_{104} x_{100})))^2 + (x_{102} - (x_{115} + x_{66}))^2 + (x_{10} - (x_{102} + x_{41}))^2 + (x_{28} - ((x_{27})  \x_{104}  (x_{10}) + (1 - x_{27})  \x_{104}  (x_{1})))^2 + (x_{20} - ((x_{27}) \x_{104} (0) + (1 - (x_{27})) \x_{104} (1)))^2 + (x_{21} - ((x_{73})  \x_{104}  (x_{41}) + (1 - x_{73})  \x_{104}  (x_{28})))^2 + (x_{93} - ((x_{73}) \x_{104} (0) + (1 - (x_{73})) \x_{104} (x_{20})))^2 + (x_{52} - ((x_{33})  \x_{104}  (x_{66}) + (1 - x_{33})  \x_{104}  (x_{21})))^2 + (x_{86} - ((x_{33}) \x_{104} (0) + (1 - (x_{33})) \x_{104} (x_{93})))^2 + (x_{77} - ((x_{43})  \x_{104}  (x_{115}) + (1 - x_{43})  \x_{104}  (x_{52})))^2 + (x_{74} - ((x_{43}) \x_{104} (0) + (1 - (x_{43})) \x_{104} (x_{86})))^2 + (x_{48} - ((x_{88})  \x_{104}  (x_{121}) + (1 - x_{88})  \x_{104}  (x_{77})))^2 + (x_{101} - ((x_{88}) \x_{104} (0) + (1 - (x_{88})) \x_{104} (x_{74})))^2 + (x_{24} - ((x_{96})  \x_{104}  (x_{120}) + (1 - x_{96})  \x_{104}  (x_{48})))^2 + (x_{12} - ((x_{96}) \x_{104} (0) + (1 - (x_{96})) \x_{104} (x_{101})))^2 + (x_{103} - ((x_{11})  \x_{104}  (x_{4}) + (1 - x_{11})  \x_{104}  (x_{24})))^2 + (x_{53} - ((x_{11}) \x_{104} (0) + (1 - (x_{11})) \x_{104} (x_{12})))^2 + (x_{124} - ((x_{83})  \x_{104}  (x_{3}) + (1 - x_{83})  \x_{104}  (x_{103})))^2 + (x_{47} - ((x_{83}) \x_{104} (0) + (1 - (x_{83})) \x_{104} (x_{53})))^2 + (x_{107} - ((x_{117})  \x_{104}  (x_{5}) + (1 - x_{117})  \x_{104}  (x_{124})))^2 + (x_{6} - ((x_{117}) \x_{104} (0) + (1 - (x_{117})) \x_{104} (x_{47})))^2 + (x_{5} - (x_{5}))^2 + (x_{3} - (x_{3}))^2 + (x_{4} - (x_{4}))^2 + (x_{2} - (x_{6}))^2 + (x_{2})^2 \right)
+\end{dmath*}
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{125}$ (variables internas anonimizadas).\\\part{Sistema Dinámico (Recurrencia Infinita)}
+\begin{align*}
+Transición de estado x(t+1) &= F(x(t)). Las C_n son subexpresiones \\
+\text{comunes reutilizadas; las P_f, relaciones de funciones recursivas.} \\
+\text{# Subexpresiones comunes} \\
+C_0 &= (0 + 1) \\
+C_1 &= (C_{0} + 1) \\
+C_2 &= (C_{1} + 1) \\
+C_3 &= (C_{4} + seed_c) \\
+C_4 &= (seed_a + seed_b) \\
+C_5 &= (C_{2} + 1) \\
+C_6 &= (C_{7} + C_{3}) \\
+C_7 &= (seed_b + seed_c) \\
+C_8 &= (C_{5} + 1) \\
+C_9 &= (C_{10} + C_{6}) \\
+C_10 &= (seed_c + C_{3}) \\
+C_11 &= (C_{8} + 1) \\
+C_12 &= (C_{13} + C_{9}) \\
+C_13 &= (C_{3} + C_{6}) \\
+C_14 &= (C_{11} + 1) \\
+C_15 &= (C_{16} + C_{12}) \\
+C_16 &= (C_{6} + C_{9}) \\
+\text{# Recurrencias de estado} \\
+out(t+1) &= If((0 >= 20), seed_a, If((C_{0} >= 20), seed_b, If((C_{1} >= 20), seed_c, If((C_{2} >= 20), C_{3}, If((C_{5} >= 20), C_{6}, If((C_{8} >= 20), C_{9}, If((C_{11} >= 20), C_{12}, If((C_{14} >= 20), C_{15}, If(((C_{14} + 1) >= 20), ((C_{9} + C_{12}) + C_{15}), __OVERFLOW__))))))))) \\
+seed_a(t+1) &= seed_a \\
+seed_b(t+1) &= seed_b \\
+seed_c(t+1) &= seed_c \\
+\end{align*}\end{document}

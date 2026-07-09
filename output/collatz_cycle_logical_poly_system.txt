@@ -1,37 +1,65 @@
---- DEFINICIONES ---
-e_0 - (If(n == original, 1, 0)) = 0
-e_2 - (If(steps > 0, 1, 0)) = 0
-e_5 - ((n % 2)) = 0
-e_4 - (If(e_5 == 0, 1, 0)) = 0
-e_7 - ((n / 2)) = 0
-e_8 - ((steps + 1)) = 0
-P_detect_cycle_recursive(detect_cycle_recursive, detect_cycle_recursive, e_7, original, e_8, e_6) = 0
-e_12 - ((3 * n)) = 0
-e_11 - ((e_12 + 1)) = 0
-e_10 - ((e_11 / 2)) = 0
-e_13 - ((steps + 2)) = 0
-P_detect_cycle_recursive(detect_cycle_recursive, detect_cycle_recursive, e_10, original, e_13, e_9) = 0
-e_3 - (If(e_4 != 0, e_6, e_9)) = 0
-e_1 - (If(e_2 != 0, 1, e_3)) = 0
-e_15 - (If(n == 1, 1, 0)) = 0
-e_17 - (If(steps > 150, 1, 0)) = 0
-e_20 - ((n % 2)) = 0
-e_19 - (If(e_20 == 0, 1, 0)) = 0
-e_22 - ((n / 2)) = 0
-e_23 - ((steps + 1)) = 0
-P_detect_cycle_recursive(detect_cycle_recursive, detect_cycle_recursive, e_22, original, e_23, e_21) = 0
-e_27 - ((3 * n)) = 0
-e_26 - ((e_27 + 1)) = 0
-e_25 - ((e_26 / 2)) = 0
-e_28 - ((steps + 2)) = 0
-P_detect_cycle_recursive(detect_cycle_recursive, detect_cycle_recursive, e_25, original, e_28, e_24) = 0
-e_18 - (If(e_19 != 0, e_21, e_24)) = 0
-e_16 - (If(e_17 != 0, 0, e_18)) = 0
-e_14 - (If(e_15 != 0, 0, e_16)) = 0
-RET - (If(e_0 != 0, e_1, e_14)) = 0
-e_29 - (If(n > 4, 1, 0)) = 0
-P_detect_cycle_recursive(detect_cycle_recursive, detect_cycle_recursive, n, n, 0, e_30) = 0
-RET - (If(e_29 != 0, e_30, 0)) = 0
---- SISTEMA ---
-is_cycle[t+1] - (0) = 0
+C_0 - (If(C_1 != 0, C_9, C_50)) = 0
+C_1 - (If(C_2 == start_n, 1, 0)) = 0
+C_2 - (If(C_3 != 0, C_5, C_6)) = 0
+C_3 - (If(C_4 == 0, 1, 0)) = 0
+C_4 - (URem(start_n, 2)) = 0
+C_5 - (UDiv(start_n, 2)) = 0
+C_6 - (UDiv(C_7, 2)) = 0
+C_7 - ((C_8 + 1)) = 0
+C_8 - ((3 * start_n)) = 0
+C_9 - (If(C_10 != 0, 1, C_14)) = 0
+C_10 - (If(UGT(C_11, 0), 1, 0)) = 0
+C_11 - (If(C_3 != 0, C_12, C_13)) = 0
+C_12 - ((0 + 1)) = 0
+C_13 - ((0 + 2)) = 0
+C_14 - (If(C_15 != 0, C_23, C_46)) = 0
+C_15 - (If(C_16 == start_n, 1, 0)) = 0
+C_16 - (If(C_17 != 0, C_19, C_20)) = 0
+C_17 - (If(C_18 == 0, 1, 0)) = 0
+C_18 - (URem(C_2, 2)) = 0
+C_19 - (UDiv(C_2, 2)) = 0
+C_20 - (UDiv(C_21, 2)) = 0
+C_21 - ((C_22 + 1)) = 0
+C_22 - ((3 * C_2)) = 0
+C_23 - (If(C_24 != 0, 1, C_28)) = 0
+C_24 - (If(UGT(C_25, 0), 1, 0)) = 0
+C_25 - (If(C_17 != 0, C_26, C_27)) = 0
+C_26 - ((C_11 + 1)) = 0
+C_27 - ((C_11 + 2)) = 0
+C_28 - (If(C_29 != 0, C_37, C_42)) = 0
+C_29 - (If(C_30 == start_n, 1, 0)) = 0
+C_30 - (If(C_31 != 0, C_33, C_34)) = 0
+C_31 - (If(C_32 == 0, 1, 0)) = 0
+C_32 - (URem(C_16, 2)) = 0
+C_33 - (UDiv(C_16, 2)) = 0
+C_34 - (UDiv(C_35, 2)) = 0
+C_35 - ((C_36 + 1)) = 0
+C_36 - ((3 * C_16)) = 0
+C_37 - (If(C_38 != 0, 1, 0)) = 0
+C_38 - (If(UGT(C_39, 0), 1, 0)) = 0
+C_39 - (If(C_31 != 0, C_40, C_41)) = 0
+C_40 - ((C_25 + 1)) = 0
+C_41 - ((C_25 + 2)) = 0
+C_42 - (If(C_43 != 0, 0, C_44)) = 0
+C_43 - (If(C_30 == 1, 1, 0)) = 0
+C_44 - (If(C_45 != 0, 0, 0)) = 0
+C_45 - (If(UGT(C_39, 150), 1, 0)) = 0
+C_46 - (If(C_47 != 0, 0, C_48)) = 0
+C_47 - (If(C_16 == 1, 1, 0)) = 0
+C_48 - (If(C_49 != 0, 0, C_28)) = 0
+C_49 - (If(UGT(C_25, 150), 1, 0)) = 0
+C_50 - (If(C_51 != 0, 0, C_52)) = 0
+C_51 - (If(C_2 == 1, 1, 0)) = 0
+C_52 - (If(C_53 != 0, 0, C_14)) = 0
+C_53 - (If(UGT(C_11, 150), 1, 0)) = 0
+e_0 - (If(UGT(start_n, 4), 1, 0)) = 0
+e_2 - (If(start_n == start_n, 1, 0)) = 0
+e_4 - (If(UGT(0, 0), 1, 0)) = 0
+e_3 - (If(e_4 != 0, 1, C_0)) = 0
+e_6 - (If(start_n == 1, 1, 0)) = 0
+e_8 - (If(UGT(0, 150), 1, 0)) = 0
+e_7 - (If(e_8 != 0, 0, C_0)) = 0
+e_5 - (If(e_6 != 0, 0, e_7)) = 0
+e_1 - (If(e_2 != 0, e_3, e_5)) = 0
+is_cycle[t+1] - (If(e_0 != 0, e_1, 0)) = 0
 start_n[t+1] - (start_n) = 0

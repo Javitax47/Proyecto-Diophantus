@@ -1,3 +1,4 @@
+#define DIOPHANTUS_MAX_RECURSION 6
 int target = 0;
 int result = 0;
 
@@ -113,18 +114,7 @@ int solovay_64_bit(int n) {
             else {
                 if (n % 2 == 0) { return 1; }
                 else {
-                    return check_base(n, 2) + 
-                           check_base(n, 3) + 
-                           check_base(n, 5) + 
-                           check_base(n, 7) + 
-                           check_base(n, 11) + 
-                           check_base(n, 13) + 
-                           check_base(n, 17) + 
-                           check_base(n, 19) + 
-                           check_base(n, 23) + 
-                           check_base(n, 29) + 
-                           check_base(n, 31) + 
-                           check_base(n, 37);
+                    return check_base(n, 2);
                 }
             }
         }

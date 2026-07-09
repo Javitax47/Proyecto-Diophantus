@@ -175,14 +175,83 @@ class Parser:
             return left
         return None
 
+class FlatMachine:
+    """
+    Evalua un sistema de ecuaciones planas `nombre[t+1] := expr` /
+    `AUX := expr` (la recursion ya viene desenrollada en tiempo de
+    compilacion, así que un solo paso t=0 -> t=1 basta). Reusa el
+    tokenizer/parser de arriba para las expresiones (`-(a, b)`, `If(...)`,
+    etc. son el mismo formato generico que ya entiende `Parser`).
+    """
+    def __init__(self):
+        self.defs = {}
+        self.state_vars = set()
+
+    def load(self, text):
+        parser = Parser()
+        for line in text.splitlines():
+            line = line.strip()
+            if not line or ':=' not in line: continue
+            lhs, rhs = line.split(':=', 1)
+            lhs = lhs.strip(); rhs = rhs.strip()
+            if lhs.endswith('[t+1]'):
+                name = lhs[:-len('[t+1]')]
+                self.state_vars.add(name)
+            else:
+                name = lhs
+            self.defs[name] = parser.parse(rhs)
+
+    def eval(self, name, inputs):
+        memo = dict(inputs)
+        return self._eval_name(name, memo, set())
+
+    def _eval_name(self, name, memo, stack):
+        if name in memo: return memo[name]
+        if name in stack: raise RecursionError(f"Ciclo detectado en '{name}'")
+        node = self.defs.get(name)
+        if node is None: return 0
+        stack.add(name)
+        val = self._eval_node(node, memo, stack)
+        stack.discard(name)
+        memo[name] = val
+        return val
+
+    def _eval_node(self, node, memo, stack):
+        if isinstance(node, int): return node
+        if isinstance(node, str): return self._eval_name(node.strip(), memo, stack)
+        op = node[0]; args = node[1:]
+        if op == 'If':
+            cond = self._eval_node(args[0], memo, stack)
+            return self._eval_node(args[1] if cond else args[2], memo, stack)
+        vals = [self._eval_node(a, memo, stack) for a in args]
+        if op == 'add': return vals[0] + vals[1]
+        if op == 'sub': return vals[0] - vals[1] if len(vals) == 2 else -vals[0]
+        if op == 'mul': return vals[0] * vals[1]
+        if op == 'div': return vals[0] // vals[1] if vals[1] != 0 else 0
+        if op == 'mod': return vals[0] % vals[1] if vals[1] != 0 else 0
+        if op == 'pow': return pow(vals[0], vals[1])
+        if op == 'eq': return 1 if vals[0] == vals[1] else 0
+        if op == 'neq': return 1 if vals[0] != vals[1] else 0
+        if op == 'lt': return 1 if vals[0] < vals[1] else 0
+        if op == 'gt': return 1 if vals[0] > vals[1] else 0
+        if op == 'lte': return 1 if vals[0] <= vals[1] else 0
+        if op == 'gte': return 1 if vals[0] >= vals[1] else 0
+        if op == 'and': return 1 if (vals[0] and vals[1]) else 0
+        if op == 'or': return 1 if (vals[0] or vals[1]) else 0
+        if op == 'neg': return -vals[0]
+        raise ValueError(f"Opcode desconocido en sistema plano: {op}")
+
+
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser(); p.add_argument('filepath'); p.add_argument('call_expr')
     args = p.parse_args()
 
-    vm = VM(); parser = Parser()
-    try:
-        with open(args.filepath, 'r', encoding='utf-8') as f: content = f.read()
+    with open(args.filepath, 'r', encoding='utf-8') as f: content = f.read()
+
+    if '--- [DEFINICIONES' in content:
+        # Formato legacy: funciones P_ invocables por nombre (call_expr = "func(args)").
+        vm = VM(); parser = Parser()
         blk = re.search(r'--- \[DEFINICIONES.*?---\n(.*?)\n---', content, re.DOTALL)
         if blk:
             for l in blk.group(1).split('\n'):
@@ -190,10 +259,30 @@ if __name__ == "__main__":
                 if m:
                     p_list = [x.strip() for x in m.group(2).split(',') if x.strip()]
                     vm.load_function(m.group(1), p_list, parser.parse(m.group(3)))
-    except: pass
 
-    m_c = re.match(r'(\w+)\((.*?)\)', args.call_expr)
-    if m_c:
-        func, s_args = m_c.groups()
-        f_args = [int(x) for x in s_args.split(',')] if s_args.strip() else []
-        print(f"Result: {vm.run(func, f_args)}")
+        m_c = re.match(r'(\w+)\((.*?)\)', args.call_expr)
+        if m_c:
+            func, s_args = m_c.groups()
+            f_args = [int(x) for x in s_args.split(',')] if s_args.strip() else []
+            print(f"Result: {vm.run(func, f_args)}")
+    else:
+        # Formato actual: sistema plano de ecuaciones de estado (un paso t=0 -> t=1).
+        # call_expr = "var1=val1,var2=val2=>var_salida"
+        m_c = re.match(r'(.*)=>\s*(\w+)\s*$', args.call_expr)
+        if not m_c:
+            print("[VM ERROR] call_expr invalido. Formato esperado: 'var=val,...=>salida'")
+            sys.exit(1)
+        assigns_str, out_var = m_c.groups()
+        inputs = {}
+        for part in assigns_str.split(','):
+            part = part.strip()
+            if not part: continue
+            k, v = part.split('=', 1)
+            inputs[k.strip()] = int(v.strip())
+
+        fm = FlatMachine(); fm.load(content)
+        try:
+            print(f"Result: {fm.eval(out_var.strip(), inputs)}")
+        except Exception as e:
+            print(f"[VM ERROR] {e}")
+            sys.exit(1)

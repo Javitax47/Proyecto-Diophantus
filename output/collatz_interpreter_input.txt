@@ -1,6 +1,27 @@
---- [DEFINICIONES DE FUNCIONES RECURSIVAS] ---
-P_collatz_trajectory(n, acc, RET) = If(==(n, 1), acc, If(>(acc, 200), neg(1), If(==(%(n, 2), 0), call(collatz_trajectory, /(n, 2), +(acc, 1)), call(collatz_trajectory, /(+(*(3, n), 1), 2), +(acc, 2)))))
---- [FIN DEFINICIONES] ---
-
-total_steps[t+1] := 0
+C_0 := If(C_1, C_3, C_4)
+C_1 := ==(C_2, 0)
+C_2 := %(start_n, 2)
+C_3 := /(start_n, 2)
+C_4 := /(C_5, 2)
+C_5 := +(C_6, 1)
+C_6 := *(3, start_n)
+C_7 := If(C_1, C_8, C_9)
+C_8 := +(0, 1)
+C_9 := +(0, 2)
+C_10 := If(C_11, C_13, C_14)
+C_11 := ==(C_12, 0)
+C_12 := %(C_0, 2)
+C_13 := /(C_0, 2)
+C_14 := /(C_15, 2)
+C_15 := +(C_16, 1)
+C_16 := *(3, C_0)
+C_17 := If(C_11, C_18, C_19)
+C_18 := +(C_7, 1)
+C_19 := +(C_7, 2)
+C_20 := ==(C_21, 0)
+C_21 := %(C_10, 2)
+C_22 := If(C_20, C_23, C_24)
+C_23 := +(C_17, 1)
+C_24 := +(C_17, 2)
+total_steps[t+1] := If(==(start_n, 1), 0, If(>(0, 200), neg(1), If(==(C_0, 1), C_7, If(>(C_7, 200), neg(1), If(==(C_10, 1), C_17, If(>(C_17, 200), neg(1), If(==(If(C_20, /(C_10, 2), /(+(*(3, C_10), 1), 2)), 1), C_22, If(>(C_22, 200), neg(1), __OVERFLOW__))))))))
 start_n[t+1] := start_n

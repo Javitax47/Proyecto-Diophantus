@@ -1,0 +1,42 @@
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Subexpresiones comunes
+C_0 = (0 + 1)
+C_1 = (C_{2} + C_{3})
+C_2 = (3 * seed_x)
+C_3 = (4 * seed_y)
+C_4 = (C_{0} + 1)
+C_5 = (C_{6} + C_{7})
+C_6 = (3 * C_{1})
+C_7 = (4 * C_{8})
+C_8 = (C_{9} + C_{10})
+C_9 = (2 * seed_x)
+C_10 = (3 * seed_y)
+C_11 = (C_{4} + 1)
+C_12 = (C_{13} + C_{14})
+C_13 = (3 * C_{5})
+C_14 = (4 * C_{15})
+C_15 = (C_{16} + C_{17})
+C_16 = (2 * C_{1})
+C_17 = (3 * C_{8})
+C_18 = (C_{11} + 1)
+C_19 = (C_{20} + C_{21})
+C_20 = (3 * C_{12})
+C_21 = (4 * C_{22})
+C_22 = (C_{23} + C_{24})
+C_23 = (2 * C_{5})
+C_24 = (3 * C_{15})
+C_25 = (C_{18} + 1)
+C_26 = (C_{27} + C_{28})
+C_27 = (3 * C_{19})
+C_28 = (4 * C_{29})
+C_29 = (C_{30} + C_{31})
+C_30 = (2 * C_{12})
+C_31 = (3 * C_{22})
+
+# Recurrencias de estado
+out(t+1) = If((0 >= 12), seed_x, If((C_{0} >= 12), C_{1}, If((C_{4} >= 12), C_{5}, If((C_{11} >= 12), C_{12}, If((C_{18} >= 12), C_{19}, If((C_{25} >= 12), C_{26}, If(((C_{25} + 1) >= 12), ((3 * C_{26}) + (4 * ((2 * C_{19}) + (3 * C_{29})))), __OVERFLOW__)))))))
+seed_x(t+1) = seed_x
+seed_y(t+1) = seed_y

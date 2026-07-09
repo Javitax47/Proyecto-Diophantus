@@ -1,10 +1,3 @@
-# ============================================================================
-# /!\ ARTEFACTO HEREDADO ERRONEO / MAL ETIQUETADO -- NO USAR COMO TEST DE PRIMALIDAD
-# NO es Baillie-PSW: Fermat DEBIL + Lucas de parametro fijo. Declara PRIMOS a compuestos (2465, 6601, 11305, 13981, 30889, 68101). El sello 'Definitive' es FALSO.
-# Auditado con contraejemplos en src/tests/verification/test_primality_audit.py
-# Implementacion CORRECTA y validada: src/analysis/primality.py (Baillie-PSW)
-# ============================================================================
-
 import sys
 
 
@@ -25,15 +18,15 @@ def d_0(degree, P, mod):
     if degree == 0: return 2
     if degree == 1: return P % mod
     v, w = 2, P % mod # v=D_0, w=D_1
-    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo, 
+    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo,
     # o saltando si inicializamos con el resultado del MSB).
     # La forma canónica robusta:
     for bit in bin(degree)[2:]:
         v2 = (v * v - 2) % mod
         vw = (v * w - P) % mod
-        if bit == '0': 
+        if bit == '0':
             v, w = v2, vw
-        else:          
+        else:
             v, w = vw, (w * w - 2) % mod
     return v
 
@@ -60,15 +53,15 @@ def d_1(degree, P, mod):
     if degree == 0: return 2
     if degree == 1: return P % mod
     v, w = 2, P % mod # v=D_0, w=D_1
-    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo, 
+    # Ladder desde bit 2 (incluyendo el MSB explícito si queremos iterar todo,
     # o saltando si inicializamos con el resultado del MSB).
     # La forma canónica robusta:
     for bit in bin(degree)[2:]:
         v2 = (v * v - 2) % mod
         vw = (v * w - P) % mod
-        if bit == '0': 
+        if bit == '0':
             v, w = v2, vw
-        else:          
+        else:
             v, w = vw, (w * w - 2) % mod
     return v
 

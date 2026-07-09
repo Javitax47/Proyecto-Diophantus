@@ -1,1 +1,7 @@
-Sistema de recurrencia generado (Placeholder)
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Recurrencias de estado
+is_valid(t+1) = If((&(^(((check_serial * 1664525) + 1013904223), 3405691582), 4294901760) == 3735879680), 1, 0)
+serial_key(t+1) = serial_key

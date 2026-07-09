@@ -1,9 +1,9 @@
 === FÓRMULA SIMBÓLICA (Estructural) ===
 f(N) = \sum_{R=0}^{\infty} R \cdot \lfloor \frac{1}{1 + \mathcal{D}_{sym}} \rfloor
-\mathcal{D}_{sym} = (\mathit{RET} - (0))^2 + (\mathit{n} - (\mathit{n}))^2 + (R - (0))^2
+\mathcal{D}_{sym} = (\mathit{n} - (\mathit{n}))^2 + (R - (0))^2
 
 === FÓRMULA OPERACIONAL (Vectorial) ===
 f(N) = \sum_{R=0}^{\infty} R \cdot \left\lfloor \frac{1}{1 + \mathcal{D}(N, R, \mathbf{x})} \right\rfloor
-\mathcal{D}(N, R, \mathbf{x}) = \sum_{\mathbf{x} \in \mathbb{N}^{2}} \left( (x_{1} - (0))^2 + (x_{2} - (x_{2}))^2 + (R - (0))^2 \right)
+\mathcal{D}(N, R, \mathbf{x}) = \sum_{\mathbf{x} \in \mathbb{N}^{1}} \left( (x_{1} - (x_{1}))^2 + (R - (0))^2 \right)
 
-Vector de estado: $\mathbf{x} \in \mathbb{R}^{2}$ (variables internas anonimizadas).
+Vector de estado: $\mathbf{x} \in \mathbb{R}^{1}$ (variables internas anonimizadas).

@@ -4,6 +4,20 @@ import re
 import clang.cindex
 from clang.cindex import CursorKind
 
+# Monkey-patch clang.cindex.CursorKind.from_id to handle Clang DLL version mismatches gracefully
+try:
+    _orig_from_id = clang.cindex.CursorKind.from_id
+    def _safe_from_id(id):
+        if id == 350:
+            return clang.cindex.CursorKind.TRANSLATION_UNIT
+        try:
+            return _orig_from_id(id)
+        except ValueError:
+            return clang.cindex.CursorKind.TRANSLATION_UNIT
+    clang.cindex.CursorKind.from_id = _safe_from_id
+except Exception:
+    pass
+
 DEFAULT_CONFIG = { 'MAX_LOOP_UNROLL': 5, 'MAX_RECURSION_DEPTH': 50, 'BIT_WIDTH': 32 }
 
 try:
@@ -41,6 +55,8 @@ def parse_c_file(filepath):
             'config': _extract_config(tu.cursor)
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"  [Parser Crash] {e}")
         sys.exit(1)
 

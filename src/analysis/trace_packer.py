@@ -26,7 +26,12 @@ dominancia de digitos) que convierte esto en un sistema diofantico cerrado es el
 Nivel 3; aqui dejamos validada la codificacion/decodificacion, que es el insumo.
 """
 
-from math import gcd, lcm
+from math import gcd
+try:
+    from math import lcm
+except ImportError:
+    def lcm(a, b):
+        return abs(a * b) // gcd(a, b) if a and b else 0
 from functools import reduce
 
 

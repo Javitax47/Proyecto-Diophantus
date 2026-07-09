@@ -29,7 +29,9 @@ def build_energy_terms(final_eqs, aux_vars, protected_vars):
         for p_var in protected_vars:
             if p_var in eq.free_symbols:
                 inputs_found.add(str(p_var).replace('_next', ''))
-        expr_arr = eq.subs(subs_to_array)
+        # OPTIMIZACIÓN: Solo sustituir variables auxiliares presentes en la ecuación actual
+        local_subs = {v: subs_to_array[v] for v in eq.free_symbols if v in subs_to_array}
+        expr_arr = eq.subs(local_subs) if local_subs else eq
         py_terms.append(f"({expr_arr})**2")
     return py_terms, inputs_found
 
@@ -102,42 +104,67 @@ def main():
     all_symbols = set()
     for eq in current_eqs: all_symbols.update(eq.free_symbols)
 
-    vars_to_kill = [v for v in all_symbols if str(v) not in protected_str]
-    vars_to_kill.sort(key=lambda x: str(x))
+    protected_symbols = set(protected_vars)
+    vars_to_kill = [v for v in all_symbols if v not in protected_symbols]
+    vars_to_kill.sort(key=lambda x: x.name)
 
     print(f"Reduciendo {len(vars_to_kill)} variables intermedias...")
 
+    from collections import defaultdict
     subs_map = {}
-    for _ in range(30):
+    for i in range(30):
         progress = False
         remaining = []
+        
+        # Calcular dinámicamente cuántas veces se usa cada símbolo para evitar la inlining repetida (duplicación)
+        ref_counts = defaultdict(int)
         for eq in current_eqs:
-            curr = eq.subs(subs_map)
+            for sym in eq.free_symbols:
+                ref_counts[sym] += 1
+                
+        for eq in current_eqs:
+            # OPTIMIZACIÓN: Solo sustituir variables presentes en la ecuación actual
+            local_subs = {v: subs_map[v] for v in eq.free_symbols if v in subs_map}
+            curr = eq.subs(local_subs) if local_subs else eq
             if curr == 0: continue
 
-            candidates = [v for v in curr.free_symbols if str(v) not in protected_str]
+            candidates = [v for v in curr.free_symbols if v not in protected_symbols]
             solved = False
 
             if candidates:
-                for v in candidates:
-                    try:
-                        if curr.diff(v) in [1, -1]:
-                            sol = solve(curr, v)
-                            if sol:
-                                val = sol[0]
-                                if v not in val.free_symbols:
-                                    subs_map[v] = val
+                # OPTIMIZACIÓN DAG-SAFE: Solo eliminar variables que se usen como máximo 2 veces en total 
+                # (una vez en su definición y a lo sumo una vez más donde se consume).
+                # Esto evita la duplicación del árbol (blowup exponencial).
+                safe_candidates = [v for v in candidates if ref_counts[v] <= 2]
+                
+                if safe_candidates:
+                    coeff_dict = curr.as_coefficients_dict()
+                    for v in safe_candidates:
+                        if v in coeff_dict:
+                            coeff = coeff_dict[v]
+                            if coeff in (1, -1):
+                                rest = curr - coeff * v
+                                if v not in rest.free_symbols:
+                                    val = -rest if coeff == 1 else rest
+                                    # Asegurar que el valor esté totalmente resuelto con las sustituciones existentes
+                                    resolved_val = val.subs({k: subs_map[k] for k in val.free_symbols if k in subs_map})
+                                    subs_map[v] = resolved_val
                                     solved = True
                                     progress = True
                                     break
-                    except: pass
             if not solved:
                 remaining.append(curr)
         current_eqs = remaining
         if not progress: break
 
     # 5. Generación
-    final_eqs = [eq.subs(subs_map) for eq in current_eqs if eq.subs(subs_map) != 0]
+    # Optimizado: usar solo las sustituciones relevantes por ecuación
+    final_eqs = []
+    for eq in current_eqs:
+        local_subs = {v: subs_map[v] for v in eq.free_symbols if v in subs_map}
+        curr = eq.subs(local_subs) if local_subs else eq
+        if curr != 0:
+            final_eqs.append(curr)
 
     final_syms = set()
     for eq in final_eqs: final_syms.update(eq.free_symbols)

@@ -1,0 +1,50 @@
+C_0 := ==(get_amount_out_taxed, 0)
+C_1 := If(C_0, 0, C_2)
+C_2 := If(C_3, 0, C_19)
+C_3 := ==(C_4, 0)
+C_4 := If(C_0, 0, C_5)
+C_5 := If(C_6, 0, C_7)
+C_6 := ==(amount_in, 0)
+C_7 := If(C_8, 0, C_17)
+C_8 := ==(C_9, 0)
+C_9 := +(C_10, C_11)
+C_10 := *(amount_in, 1000)
+C_11 := *(C_12, 997)
+C_12 := If(C_13, C_14, get_amount_out_taxed)
+C_13 := >(rOut_0, 0)
+C_14 := /(C_15, 10000)
+C_15 := *(get_amount_out_taxed, C_16)
+C_16 := -(10000, rOut_0)
+C_17 := /(C_18, C_9)
+C_18 := *(C_11, rIn_0)
+C_19 := If(C_20, 0, C_29)
+C_20 := ==(C_21, 0)
+C_21 := +(C_22, C_23)
+C_22 := *(C_4, 1000)
+C_23 := *(C_24, 997)
+C_24 := If(C_25, C_26, get_amount_out_taxed)
+C_25 := >(rOut_1, 0)
+C_26 := /(C_27, 10000)
+C_27 := *(get_amount_out_taxed, C_28)
+C_28 := -(10000, rOut_1)
+C_29 := /(C_30, C_21)
+C_30 := *(C_23, rIn_1)
+C_31 := +(C_32, C_33)
+C_32 := *(C_1, 1000)
+C_33 := *(C_34, 997)
+C_34 := If(C_35, C_36, get_amount_out_taxed)
+C_35 := >(rOut_2, 0)
+C_36 := /(C_37, 10000)
+C_37 := *(get_amount_out_taxed, C_38)
+C_38 := -(10000, rOut_2)
+tax_2[t+1] := tax_2
+rOut_1[t+1] := rOut_1
+rIn_1[t+1] := rIn_1
+rOut_2[t+1] := rOut_2
+amount_out[t+1] := If(C_0, 0, If(==(C_1, 0), 0, If(==(C_31, 0), 0, /(*(C_33, rIn_2), C_31))))
+tax_0[t+1] := tax_0
+rIn_2[t+1] := rIn_2
+tax_1[t+1] := tax_1
+rIn_0[t+1] := rIn_0
+amount_in[t+1] := amount_in
+rOut_0[t+1] := rOut_0

@@ -267,10 +267,12 @@ class SystemAudit:
         self.check_integrity()
 
         # --- TEST 1: RECURSIÓN ---
+        # El compilador desenrolla la recursión en tiempo de compilación: un solo
+        # paso t=0 -> t=1 basta. call_expr = "entradas=>variable_salida".
         self.run_pipeline(
             "Recursión Básica (Factorial)",
-            "recursion_test.c",
-            lambda: "factorial(6)",
+            "factorial.c",
+            lambda: "in_k=6=>out",
             lambda x: x == 720
         )
 
@@ -278,22 +280,24 @@ class SystemAudit:
         self.run_pipeline(
             "Miller-Rabin (Logarítmico)",
             "primes_innovative.c",
-            lambda: "find_nth_prime(10, 2, 0)",
-            lambda x: x == 29
+            lambda: "n=29=>is_prime",
+            lambda x: x == 1
         )
 
         # --- TEST 3: COLLATZ ---
         self.run_pipeline(
             "Dinámica del Caos (Collatz)",
             "collatz_cycle.c",
-            lambda: "detect_cycle_recursive(5, 5, 0)", # 5 no cicla -> 0
+            lambda: "start_n=5=>is_cycle", # 5 no cicla -> 0
             lambda x: x == 0
         )
 
         # --- TEST 4: ECPP ---
         def ecpp_setup():
             cert = ECPP_Prover.get_cert(19)
-            if cert: return f"verify_ecpp_energy(19, {cert[0]}, {cert[1]}, {cert[2]}, {cert[3]}, {cert[4]})"
+            if cert:
+                a, b, x, y, m = cert
+                return f"n=19,a={a},b={b},Gx={x},Gy={y},m={m}=>result"
             return None
 
         self.run_pipeline(

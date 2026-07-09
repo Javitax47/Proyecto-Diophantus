@@ -1,0 +1,7 @@
+=== SISTEMA DE RECURRENCIA ===
+Transición de estado x(t+1) = F(x(t)). Las C_n son subexpresiones
+comunes reutilizadas; las P_f, relaciones de funciones recursivas.
+
+# Recurrencias de estado
+input_val(t+1) = input_val
+result(t+1) = If((countdown <= 0), 7, If((c1_countdown_countdown <= 0), 7, If((c1_countdown_c2_countdown_countdown <= 0), 7, If((c1_countdown_c2_countdown_c3_countdown_countdown <= 0), 7, If((c1_countdown_c2_countdown_c3_countdown_c4_countdown_countdown <= 0), 7, If((c1_countdown_c2_countdown_c3_countdown_c4_countdown_c5_countdown_countdown <= 0), 7, __OVERFLOW__))))))

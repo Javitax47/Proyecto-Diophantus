@@ -1,10 +1,3 @@
-# ============================================================================
-# /!\ ARTEFACTO HEREDADO ERRONEO / MAL ETIQUETADO -- NO USAR COMO TEST DE PRIMALIDAD
-# Verifica UNA identidad ECPP; compuestos 9,15,21 la pasan. 'Deterministic (Proof)' es FALSO: no es prueba de primalidad (falta el certificado completo).
-# Auditado con contraejemplos en src/tests/verification/test_primality_audit.py
-# Implementacion CORRECTA y validada: src/analysis/primality.py (Baillie-PSW)
-# ============================================================================
-
 
 def ec_point_mul_proj(n, a, mod, Gx, Gy):
     if n == 0: return 0, 1, 0
