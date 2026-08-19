@@ -588,7 +588,11 @@ def L_prime_shared(n, over_N=True):
     partes += [c.build() for c in contexts.values()]
     partes += [
         L_floor_div(W, P, Q, over_N=over_N),
-        L_congruent(B, Q, u),
+        # ORDEN IMPORTANTE: Q - B - u*k = 0 (no B - Q - ...), porque Q >> B y asi el
+        # multiplicador k queda >= 0. Con el orden inverso k es NEGATIVO y el
+        # sistema deja de estar sobre N — lo que invalidaria el modo over_N y
+        # cualquier construccion que exija variables no negativas.
+        L_congruent(Q, B, u),
         ineq(u - B - 1),
         L_floor_div(A, B, m, over_N=over_N),
         L_divides(n, m + 1),

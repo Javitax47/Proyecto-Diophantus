@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 from src.analysis.dioph_problems import build_catalog, verify_problem, rango_de, DiophProblem
 from src.analysis.dioph_degree import (
     flatten_to_degree, flatten_greedy, max_equation_degree, pareto_point, pareto_curve,
+    to_generator, witness_is_nonnegative,
 )
 
 
@@ -107,15 +108,12 @@ def test_curva_pareto(stats):
 
 def test_honestidad_comparacion(stats):
     print(f"{Colors.HEADER}[5] HONESTIDAD: que se puede y que NO se puede afirmar{Colors.ENDC}")
-    print(f"  {Colors.WARN}Los numeros famosos de primos son GENERADORES (sus valores positivos")
-    print(f"  son los primos): Jones-Sato-Wada-Wiens 1976 = 26 variables grado 25, y la")
-    print(f"  version de 10 variables. Lo nuestro es una REPRESENTACION (existe testigo <=>")
-    print(f"  n es primo). Son objetos DISTINTOS: convertir una en otra cambia el grado.")
-    print(f"  Por tanto NO cabe reclamar record comparando ambas cifras.{Colors.ENDC}")
-    print(f"  Lo que si tenemos: una curva de Pareto MEDIDA para nuestra construccion, y")
-    print(f"  maquinaria UNIVERSAL que la produce para cualquier conjunto del catalogo.")
-    print(f"  {Colors.WARN}Cotejar si algun punto es notable exige fuentes primarias (bloqueadas")
-    print(f"  en este entorno) y revision experta.{Colors.ENDC}")
+    print(f"  Los numeros famosos de primos son GENERADORES; lo nuestro nacio como")
+    print(f"  REPRESENTACION. Comparar esas cifras directamente seria un ERROR. Por eso")
+    print(f"  existe to_generator(): convierte la representacion en generador y ENTONCES")
+    print(f"  si son comparables (ver [10]). Las cifras de representacion NO lo son.")
+    print(f"  {Colors.WARN}Y aun comparando bien, cotejar si el punto es notable exige fuentes")
+    print(f"  primarias (bloqueadas en este entorno) y revision experta.{Colors.ENDC}")
     stats.ok()
     print(f"  {Colors.OKGREEN}✓{Colors.ENDC} alcance declarado sin sobreafirmar")
 
@@ -161,6 +159,83 @@ def test_voraz_correcto(stats):
             stats.fail(f"{p.name}: {fallos[:2]}")
 
 
+
+def test_no_negatividad(stats):
+    print(f"{Colors.HEADER}[8] GUARDARRAIL: todo testigo debe ser >= 0 (exigencia de N){Colors.ENDC}")
+    # Ya ocurrio una vez: el multiplicador de una congruencia escrita al reves era
+    # negativo, lo que invalidaba el modo over_N y la conversion a generador.
+    malos = []
+    for p in build_catalog():
+        for v in rango_de(p)[:6]:
+            if not p.oracle(v):
+                continue
+            w = p.system.witness({p.param: v})
+            if w is None:
+                continue
+            negs = {k: x for k, x in w.items() if int(x) < 0}
+            if negs:
+                malos.append(f"{p.name}(n={v}): {list(negs)[:3]}")
+    if malos:
+        stats.fail(f"testigos con valores NEGATIVOS: {malos[:3]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} todos los testigos del catalogo son no negativos")
+
+
+def test_generador(stats):
+    print(f"{Colors.HEADER}[9] REPRESENTACION -> GENERADOR (comparable con los records){Colors.ENDC}")
+    print(f"  Q(n,x) = n*(1 - sum_i P_i^2): sus VALORES POSITIVOS son el conjunto.")
+    for p in build_catalog():
+        f = flatten_greedy(p.system, 2) if max_equation_degree(p.system) > 2 else p.system
+        Q, info = to_generator(f, p.param)
+        vals = [v for v in rango_de(p) if p.oracle(v)][:2]
+        ok_todos = True
+        for nv in vals:
+            w = f.witness({p.param: nv})
+            if w is None or not witness_is_nonnegative(f, {p.param: nv}):
+                ok_todos = False
+                continue
+            asg = {p.param: nv}
+            asg.update(w)
+            if int(Q.subs(asg)) != nv:
+                ok_todos = False
+        # una asignacion arbitraria no puede dar un valor positivo mayor
+        basura = {p.param: vals[0] if vals else 2}
+        basura.update({u: 1 for u in f.unknowns})
+        if int(Q.subs(basura)) > 0 and f.unknowns:
+            ok_todos = False
+        if ok_todos:
+            stats.ok()
+            print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {p.name:22s} generador ({info['variables']} variables, "
+                  f"grado {info['grado']}) — Q(testigo)=n y basura -> Q<=0")
+        else:
+            stats.fail(f"{p.name}: el generador no reproduce el conjunto")
+
+
+def test_situacion_frente_al_record(stats):
+    print(f"{Colors.HEADER}[10] SITUACION FRENTE AL RECORD (con todas las salvedades){Colors.ENDC}")
+    p = [x for x in build_catalog() if x.name == 'primo'][0]
+    f = flatten_greedy(p.system, 2)
+    _, info = to_generator(f, p.param)
+    print(f"  Nuestro generador de primos : ({info['variables']} variables, grado {info['grado']})")
+    print(f"  Record de menor grado citado: (42 variables, grado 5)")
+    print(f"  Jones-Sato-Wada-Wiens 1976  : (26 variables, grado 25)")
+    print(f"  Matiyasevich (menos vars)   : (10 variables, grado ~1.6e45)")
+    print(f"  {Colors.WARN}SALVEDADES QUE IMPIDEN RECLAMAR NADA:")
+    print(f"   1. La correccion de la cadena solo se verifica hasta n=3: el testigo")
+    print(f"      explota. Para n>=5 no es computable, asi que descansa en los teoremas.")
+    print(f"   2. La direccion inversa (compuesto => sin testigo) NO se comprueba: el")
+    print(f"      constructor cortocircuita. Descansa en Wilson.")
+    print(f"   3. La cifra '42 variables, grado 5' procede de un resumen de busqueda,")
+    print(f"      NO de fuente primaria. Hay que cotejarla antes de compararse con ella.")
+    print(f"   4. Nada de esto ha pasado revision experta.{Colors.ENDC}")
+    if info['grado'] == 5 and info['variables'] <= 42:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} punto medido y salvedades declaradas (sin reclamar record)")
+    else:
+        stats.fail(f"punto inesperado: {info}")
+
+
 def main():
     print(f"{Colors.BOLD}=== REDUCCION DE GRADO: LA ESQUINA DE GRADO BAJO ==={Colors.ENDC}")
     stats = Stats()
@@ -170,6 +245,9 @@ def main():
     test_curva_pareto(stats)
     test_voraz_mejora(stats)
     test_voraz_correcto(stats)
+    test_no_negatividad(stats)
+    test_generador(stats)
+    test_situacion_frente_al_record(stats)
     test_honestidad_comparacion(stats)
 
     total = stats.passed + stats.failed

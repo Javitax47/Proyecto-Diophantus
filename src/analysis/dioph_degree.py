@@ -267,3 +267,52 @@ def pareto_curve(system, targets=(2, 3, 4)):
             continue
         puntos.append((f"aplanado<={t}", pareto_point(flatten_to_degree(system, t))))
     return puntos
+
+
+# ---------------------------------------------------------------------------
+#   REPRESENTACION -> GENERADOR (para comparar con los records publicados)
+# ---------------------------------------------------------------------------
+
+def to_generator(system, param):
+    """Convierte una REPRESENTACION en un POLINOMIO GENERADOR.
+
+        Q(param, x) = param * (1 - sum_i P_i(param,x)^2)
+
+    Propiedad: sobre variables NO NEGATIVAS, los VALORES POSITIVOS de Q son
+    exactamente los elementos del conjunto representado.
+      * si todas las P_i se anulan -> Q = param  (positivo si param > 0);
+      * si alguna no se anula      -> sum P_i^2 >= 1 -> Q <= 0.
+
+    POR QUE IMPORTA: los records publicados de primos (Jones-Sato-Wada-Wiens,
+    Matiyasevich) son GENERADORES, no representaciones. Sin esta conversion las
+    cifras no son comparables. Con ella si lo son.
+
+    GRADO: 1 + 2*max_i deg(P_i). Por eso interesa aplanar a grado 2 por ecuacion:
+    da un generador de grado 5, que es la esquina de grado minimo conocida.
+
+    REQUISITO CRITICO: las incognitas deben poder tomarse >= 0. Si el testigo
+    produce algun valor negativo, la construccion NO es valida sobre N.
+    """
+    d = max_equation_degree(system)
+    suma = sum(sympy.expand(e ** 2) for e in system.eqs)
+    Q = sympy.expand(param * (1 - suma))
+    return Q, {
+        "variables": len(system.unknowns) + 1,
+        "grado": 1 + 2 * d,
+        "grado_por_ecuacion": d,
+    }
+
+
+def witness_is_nonnegative(system, param_vals):
+    """True si el testigo existe y TODOS sus valores son >= 0.
+
+    Guardarraíl: la conversion a generador sobre N exige no-negatividad. Un solo
+    valor negativo la invalida (ya ocurrio una vez: el multiplicador de una
+    congruencia escrita en el orden equivocado).
+    """
+    if system.witness is None:
+        return False
+    w = system.witness(param_vals)
+    if w is None:
+        return False
+    return all(int(v) >= 0 for v in w.values())

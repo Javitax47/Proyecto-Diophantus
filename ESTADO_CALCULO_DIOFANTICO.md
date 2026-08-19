@@ -57,7 +57,32 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 | `L_prime` (Wilson, aditivo) | 38 | Wilson en [2,250) |
 | `L_prime_shared` (compartido) | **29** | ídem |
 
-### 3.2 Curva de Pareto del catálogo — (incógnitas, grado combinado)
+### 3.2 Como GENERADOR (lo comparable con los récords publicados)
+
+`to_generator()` convierte una representación en un polinomio generador
+`Q(n,x) = n·(1 − ΣPᵢ²)`, cuyos **valores positivos** son el conjunto. Grado = 1 + 2·max deg(Pᵢ).
+**Sin esta conversión las cifras NO son comparables con la literatura.**
+
+| | Variables | Grado |
+|---|---|---|
+| **Nuestro generador de primos** | **41** | **5** |
+| Récord de menor grado *(citado, sin cotejar)* | 42 | 5 |
+| Jones–Sato–Wada–Wiens 1976 | 26 | 25 |
+| Matiyasevich (menos variables) | 10 | ~1,6×10⁴⁵ |
+
+**SALVEDADES — leer antes de decir nada a nadie:**
+1. La corrección de la cadena solo se verifica **hasta n=3** (el testigo explota); para n≥5 no es
+   computable, así que descansa en los teoremas citados.
+2. La dirección inversa (compuesto ⟹ sin testigo) **no se comprueba**: el constructor
+   cortocircuita. Descansa en Wilson.
+3. La cifra «42 variables, grado 5» procede de un **resumen de búsqueda, no de fuente primaria**.
+4. **Nada de esto ha pasado revisión experta.**
+
+**Defecto encontrado y corregido por el camino:** el multiplicador de una congruencia escrita en
+el orden inverso era **negativo**, lo que invalidaba el modo ℕ y toda la construcción del
+generador. Hay ahora un guardarraíl (`witness_is_nonnegative`) y un test que lo vigila.
+
+### 3.3 Curva de Pareto del catálogo — (incógnitas, grado combinado)
 
 | Conjunto | Original | Aplanado ingenuo | **Aplanado voraz** |
 |---|---|---|---|
