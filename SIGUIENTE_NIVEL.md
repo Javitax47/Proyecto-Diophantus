@@ -368,3 +368,78 @@ los primos" siguen fuera de alcance**. Lo que pasa a ser alcanzable:
 
 **Prioridad de arranque:** Paradigma C (récord de primos) por su marcador claro y su potencial de
 romper una marca de medio siglo, y Paradigma B (obstrucciones) por su relación valor/esfuerzo.
+
+---
+
+# 8. El récord, con el marco correcto: una FRONTERA DE PARETO
+
+Investigación posterior corrigió un supuesto que teníamos mal, y conviene dejarlo escrito.
+
+## 8.1 "Llegar a 9" no es llegar a un sitio mejor
+
+Los pares **(incógnitas, grado)** universales de Jones (1982) forman una **frontera de Pareto**,
+no un ranking. Extremos confirmados por fuente:
+
+| Incógnitas | Grado |
+|---|---|
+| 58 | **4** ← mínimo grado |
+| … | … |
+| **9** | **1,638 × 10⁴⁵** ← mínimo incógnitas |
+
+> *"There is a trade-off between the two measures: one may reduce the degree by introducing
+> auxiliary unknowns, and vice versa eliminate unknowns at the cost of increasing the degree."*
+
+Consecuencia directa para este proyecto: **bajar a 9 incógnitas costaría grado ~10⁴⁵**. Nuestra
+representación actual de los primos (29 incógnitas, **grado 8**) no está "por debajo" de las 9:
+está en **otro punto de la frontera**, el de grado bajo. No son comparables como mejor/peor.
+
+*Aviso de confianza: solo los extremos (58,4) y (9, 1.638e45) están confirmados por fuente; la
+tabla intermedia procede de un resumen de búsqueda y debe cotejarse con el original de Jones.*
+
+## 8.2 Las dos ramas del récord de primos
+
+- **Jones–Sato–Wada–Wiens 1976** — 26 variables, grado 25: codificación **ad hoc** de la
+  primalidad (Wilson + bloques de Pell, 14 ecuaciones fusionadas por suma de cuadrados). Grado
+  minúsculo *porque* es artesanal.
+- **Matiyasevich 1977** — 10 variables (9 incógnitas + parámetro): la **maquinaria genérica**
+  especializada. Grado astronómico *porque* es genérica.
+
+**No se pueden tener ambas.**
+
+## 8.3 El motor real: el Teorema de Combinación de Relaciones
+
+> *Para todo q > 0 existe un polinomio M_q tal que, para A₁…A_q, R, S, T con S ≠ 0:*
+> *S|T ∧ R>0 ∧ A₁…A_q son cuadrados  ⟺  ∃n ≥ 0 : M_q(A₁…A_q, S, T, R, n) = 0.*
+
+Convierte un número **arbitrario** de condiciones "ser cuadrado" + una divisibilidad + una
+desigualdad en **una sola ecuación al coste de UNA incógnita**. Es la única pieza que reduce el
+conteo; todo el resto del pipeline existe para poner el problema en esa forma. Su precio está
+escondido en el grado de M_q, y de ahí el 10⁴⁵.
+
+## 8.4 Por qué Pell y no la función β de Gödel
+
+La β empaqueta una sucesión arbitraria en 2 incógnitas, pero **cada lectura** del elemento i-ésimo
+es un resto y gasta una incógnita cociente. Pell es estrictamente más barato:
+
+- **P3** (y_k ≡ k mod a−1) recupera el **índice sin gastar incógnita**;
+- **P1/P2** convierten "estar en la posición k" en una **divisibilidad**, no en un resto.
+
+La β es el dispositivo didáctico; **Pell es el optimizado**. Implementado y verificado en
+`src/analysis/dioph_pell.py` (P1–P5 + crecimiento de Julia Robinson, 14.752 casos, 0 fallos).
+
+## 8.5 El dominio es parámetro de primera clase
+
+El teorema de las 9 incógnitas es **sobre ℕ**. Traducir a ℤ mecánicamente usa sumas de 3–4
+cuadrados y **multiplica por 3** (9 sobre ℕ → 27 sobre ℤ). Sun (2021) logró 11 sobre ℤ
+**rehaciendo la prueba nativamente**. Conclusión de diseño: compilar directamente al dominio
+objetivo, nunca traducir al final.
+
+## 8.6 Las dos islas del repositorio
+
+Hallazgo de la inspección: el proyecto tiene dos subsistemas maduros y **sin un solo import
+entre ellos** — el colapso de trazas (β, dominancia de dígitos) y el cálculo diofántico. La
+hipótesis de que son la misma técnica quedó **confirmada como matemática y refutada como código**:
+`check_beta_trajectory` *ejecuta* un bucle `for i in range(T)`, es decir el cuantificador acotado
+se evalúa en vez de eliminarse. Y el descarte del β-collapse en `encodings.py` se basa en que el
+testigo no encoge — argumento sobre **velocidad**, irrelevante cuando lo que importa es el
+**número** de incógnitas. El puente entre ambas islas sigue sin construirse.

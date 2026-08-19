@@ -37,13 +37,21 @@ from src.analysis.dioph_lemmas import (
 class DiophProblem:
     """Un conjunto S dado por (representacion diofantica, oraculo independiente)."""
 
-    def __init__(self, name, param, system, oracle, referencia="", search_bound=None):
+    def __init__(self, name, param, system, oracle, referencia="", search_bound=None,
+                 soundness="exhaustivo"):
         self.name = name
         self.param = param          # simbolo del parametro (la entrada)
         self.system = system        # Dioph que representa la pertenencia
         self.oracle = oracle        # callable(int) -> bool  (verdad de terreno)
         self.referencia = referencia
         self.search_bound = search_bound   # cota para la busqueda exhaustiva
+        # MODO DE SOUNDNESS (honestidad, no cosmetica):
+        #  'exhaustivo' -> la direccion inversa (no pertenece => no hay testigo) se
+        #                  COMPRUEBA por busqueda exhaustiva acotada.
+        #  'teorema'    -> NO se comprueba: el constructor de testigos cortocircuita
+        #                  consultando el oraculo, luego esa direccion seria CIRCULAR.
+        #                  Descansa en el teorema citado en `referencia`.
+        self.soundness = soundness
 
     def cost(self):
         return self.system.cost()
@@ -60,11 +68,12 @@ class DiophProblem:
 # ---------------------------------------------------------------------------
 
 def verify_problem(prob, valores, exhaustivo=True):
-    """Verifica una representacion en AMBAS direcciones sobre `valores`.
+    """Verifica una representacion sobre `valores`. Mismo codigo para todos.
 
-    Devuelve (ok, incidencias). Mismo codigo para todos los problemas.
-      - pertenece  -> el testigo se construye y ANULA el sistema;
-      - no pertenece -> no hay testigo (si hay cota, busqueda exhaustiva).
+    COMPLETITUD (siempre): pertenece -> el testigo se construye y ANULA el sistema.
+    SOUNDNESS: solo se COMPRUEBA si prob.soundness == 'exhaustivo' (busqueda
+    exhaustiva acotada). Si es 'teorema', el constructor cortocircuita con el
+    oraculo y comprobarla seria CIRCULAR: se declara y descansa en la referencia.
     """
     n = prob.param
     fallos = []
@@ -75,7 +84,8 @@ def verify_problem(prob, valores, exhaustivo=True):
             fallos.append(f"{v} pertenece pero el testigo no anula el sistema")
         if not esperado and ok:
             fallos.append(f"{v} NO pertenece pero se construyo testigo valido")
-        if (not esperado) and exhaustivo and prob.search_bound is not None:
+        if (not esperado) and exhaustivo and prob.soundness == "exhaustivo" \
+                and prob.search_bound is not None:
             hallado = prob.system.search_witness({n: v}, prob.search_bound)
             if hallado is not None:
                 fallos.append(f"{v} NO pertenece pero la busqueda hallo testigo espurio")
@@ -211,7 +221,8 @@ def _p_power_of_two():
     return DiophProblem(
         "potencia de 2", n, sysm,
         lambda v: v >= 2 and (v & (v - 1)) == 0,
-        "n = 2^k via exponenciacion de Pell")
+        "n = 2^k via exponenciacion de Pell (Matiyasevich/Robinson)",
+        soundness="teorema")
 
 
 def _p_prime():
@@ -219,7 +230,8 @@ def _p_prime():
     return DiophProblem(
         "primo", n, L_prime_shared(n, over_N=True),
         lambda v: bool(sympy.isprime(v)),
-        "Wilson + factorial + binomial + Pell (cadena completa)")
+        "Wilson + factorial + binomial + Pell (cadena completa)",
+        soundness="teorema")
 
 
 # Rango verificable por problema: en 'primo' el testigo explota (n=5 exige 4!,

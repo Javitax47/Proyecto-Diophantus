@@ -37,20 +37,26 @@ class Stats:
 
 
 def test_catalogo_universal(stats):
-    print(f"{Colors.HEADER}[1] UN SOLO verificador para TODO el catalogo (ambas direcciones){Colors.ENDC}")
+    print(f"{Colors.HEADER}[1] UN SOLO verificador para TODO el catalogo (modo declarado por problema){Colors.ENDC}")
     print(f"  {'conjunto':26s} {'incog':>5s} {'grado':>5s}   veredicto")
     for prob in build_catalog():
         ok, fallos = verify_problem(prob, rango_de(prob), exhaustivo=True)
+        modo = ("ambas direcciones" if prob.soundness == "exhaustivo"
+                else "completitud (soundness POR TEOREMA: el testigo cortocircuita)")
         if ok:
             stats.ok()
-            print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {prob.name:24s} {prob.cost():5d} {prob.degree():5d}   "
-                  f"pertenencia <=> testigo")
+            print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {prob.name:24s} {prob.cost():5d} {prob.degree():5d}   {modo}")
         else:
             stats.fail(f"{prob.name}: {fallos[:2]}")
 
 
 def test_oraculo_independiente(stats):
     print(f"{Colors.HEADER}[2] SOUNDNESS del metodo: el oraculo NO deriva de la representacion{Colors.ENDC}")
+    from src.analysis.dioph_problems import build_catalog as _bc
+    circ = [p.name for p in _bc() if p.soundness == "teorema"]
+    print(f"  {Colors.WARN}Aviso declarado: en {circ} el constructor de testigos consulta")
+    print(f"  el oraculo para cortocircuitar, luego su direccion inversa NO se comprueba")
+    print(f"  aqui (seria circular); descansa en el teorema citado.{Colors.ENDC}")
     # Si el oraculo se dedujera del sistema, la verificacion seria circular.
     # Comprobamos que los oraculos son criterios externos e independientes.
     import sympy
