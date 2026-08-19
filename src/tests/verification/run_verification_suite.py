@@ -63,6 +63,7 @@ TESTS = [
     ("test_dioph_pell.py",             "Arsenal de Pell: propiedades P1-P5 que explotan los records"),
     ("test_dioph_calculus.py",        "Calculo de construcciones diofanticas: lemas certificados y coste (record)"),
     ("test_dioph_problems.py",         "Catalogo UNIVERSAL: un verificador para cualquier conjunto diofantico"),
+    ("test_dioph_degree.py",           "Reduccion de grado: aplanado universal (esquina de grado bajo)"),
     ("test_discovery_campaign.py",    "Campaña de descubrimiento: barrido de familias paramétricas (certificado)"),
     ("test_product.py",               "Producto monetizable: verifier + recheck independiente + metering + atlas"),
     ("test_qubo.py",                  "Exportador a QUBO (sistema diofántico -> optimización binaria / annealing)"),
