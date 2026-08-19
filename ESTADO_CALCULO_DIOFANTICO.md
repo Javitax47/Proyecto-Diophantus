@@ -57,7 +57,7 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 | `L_binomial` | 21 | **27** | 209 casos |
 | `L_factorial` | 36 | **46** | n=1..7 |
 | `L_prime` (Wilson, aditivo) | 38 | **50** | Wilson en [2,250) |
-| `L_prime_shared` (compartido) | 29 | **30** | ídem |
+| `L_prime_shared` (compartido) | 29 | **31** | ídem |
 
 La fila crítica es `L_nonneg_N`. El criterio correcto sobre ℕ **no** es «una desigualdad es
 gratis»: es que **un polinomio con todos los coeficientes ≥ 0 es ≥ 0 automáticamente**, porque
@@ -108,7 +108,7 @@ son expresiones), y se resuelven con el desplazamiento de origen de §3.2b.
 |---|---|---|
 | Antes (lo que se publicó) | 29 | **No** — Z3 halla testigo para 4, 9, 15, 25 |
 | Corrección ingenua (1 holgura por condición) | 53 | Sí |
-| **Diseño final** | **30** | Sí |
+| **Diseño final** | **31** | Sí |
 
 ### 3.2b El marcador, después de corregir **y** de cerrar la esquina
 
@@ -118,7 +118,7 @@ son expresiones), y se resuelven con el desplazamiento de origen de §3.2b.
 | compuesto, suma de 2 cuadrados | (2, 4) | (3, 5) |
 | Fibonacci | (2, 16) | (12, 5) |
 | potencia de 2 | (7, 8) | (14, 5) |
-| **primo** | **(30, 8)** | **(40, 5)** |
+| **primo** | **(31, 8)** | **(40, 5)** |
 
 Frente a los récords publicados de generadores de primos:
 
@@ -129,11 +129,8 @@ Frente a los récords publicados de generadores de primos:
 | Jones–Sato–Wada–Wiens 1976 | 26 | 25 |
 | Matiyasevich (menos variables) | 10 | ~1,6×10⁴⁵ |
 
-**Trayectoria completa de esta esquina.** Todas las cifras posteriores a la corrección salen de
-sistemas cuya **completitud** está verificada con testigo real y valores no negativos. El
-**veredicto SMT del sistema final para los primos estaba en curso al cerrar esta sesión**: el
-catálogo entero pasa, y los pasos intermedios pasaron, pero la comprobación del punto (30, 8)
-sobre ocho compuestos no había terminado. *Hasta que termine, la cifra (40, 5) es provisional.*
+**Trayectoria completa de esta esquina.** Completitud verificada con testigo real y todos los
+valores no negativos; soundness comprobada por SMT (§3.2d).
 
 | Paso | Repr. | Generador | Qué cambió |
 |---|---|---|---|
@@ -145,7 +142,15 @@ sobre ocho compuestos no había terminado. *Hasta que termine, la cifra (40, 5) 
 | **base de Pell compartida** | 35 | **(44, 5)** | una sola `a` para los tres exponentes |
 | desplazamiento de origen + implicación | 32 | (41, 5) | `E=Ev+1`, `T=Tv+1`: 3 holguras menos |
 | `a` = suma de cotas (igualdad) | 31 | (40, 5) | la holgura de la base sobra |
-| eliminación de `Q` por sustitución | **30** | **(40, 5)** | la congruencia va dentro de `Q = B + u·c` |
+| ~~eliminación de `Q`~~ | ~~30~~ | (40, 5) | **descartada**: −1 en la repr., 0 en el generador, y dispara el coste SMT |
+
+**Una optimización descartada a propósito.** Sustituir `Q` por su forma general `B + u·c`
+ahorra una incógnita en la representación y **ninguna** en el generador —el aplanado la vuelve
+a gastar, porque `P·u·c` es un producto de tres incógnitas—. A cambio, la comprobación de
+soundness pasó de **~84 s a más de 28 minutos sin concluir**. Se revierte: *la verificabilidad
+vale más que una incógnita que no se traduce en nada.* Es un criterio de diseño, no un accidente:
+en este proyecto el SMT es el único instrumento que detecta los errores que importan, y una
+optimización que lo ciega es una mala optimización aunque el número baje.
 
 **La lección de ingeniería, que vale para cualquier problema:** la reparametrización
 `a := a' + cota` es óptima en la representación y **pésima en el generador**. `a` aparece al
@@ -153,6 +158,31 @@ cuadrado en la ecuación de Pell, y elevar al cuadrado una suma de seis símbolo
 de monomios de grado 4 que luego hay que nombrar uno a uno. Imponer la misma cota con una
 **ecuación lineal aparte** cuesta una incógnita y ahorra once. *Dónde se paga el coste importa
 tanto como cuánto se paga.*
+
+### 3.2d Veredicto SMT del sistema final (lo que respalda la cifra)
+
+Ocho compuestos — 4, 9, 15, 21, 25, 27, 33, 35 — contra el sistema de primos (31 incógnitas):
+
+| Comprobación | Resultado | Coste |
+|---|---|---|
+| **`a = 0` y `a = 1`, SIN COTA** (la firma exacta del defecto) | **`unsat` en las 16 consultas** | instantáneo |
+| barrido en la caja [0, 20] | `unsat` en los 8 | 0 s |
+| escalada completa [0,200] → [0,20] | `unsat` en los 8 | ~213 s |
+
+**Por qué la primera fila vale más que las otras dos.** Es una consulta **global**: no dice
+«no hay solución pequeña», dice «no hay solución con la base de Pell degenerada», que es
+exactamente el fallo que se coló en agosto. *Un guardarraíl debe apuntar al defecto, no a su
+vecindario.* Las cajas cubren además configuraciones degeneradas no anticipadas, pero solo
+dentro de la caja.
+
+**Dónde deja de concluir Z3** (medido, no estimado): caja 20 → los 8 en 0 s; caja 50 → 7 de 8;
+caja 100 → 5 de 8. La aritmética entera no lineal es indecidible y `unknown` **no es evidencia
+de nada**; por eso la suite usa la firma + caja 20, y la escalada larga queda para ejecución
+manual.
+
+**Lo que esto NO demuestra.** Que ningún compuesto tenga testigo *en general*. Eso sigue
+descansando en Wilson y en los teoremas de la cadena. Lo demostrado es: (a) la firma del defecto
+conocido está excluida globalmente, y (b) no hay soluciones espurias pequeñas en ocho compuestos.
 
 ### 3.2c Estado del cotejo del récord (paso 1, parcialmente bloqueado)
 
@@ -168,6 +198,13 @@ tanto como cuánto se paga.*
 bloquea `arxiv.org`, `drops.dagstuhl.de`, `t5k.org`, `mathworld.wolfram.com` e `isa-afp.org`;
 solo la búsqueda web (que devuelve resúmenes) atraviesa. La cifra (42, 5) sigue, por tanto,
 **sin cotejar contra el papel**.
+
+*Segundo intento, con la skill `arxiv-search`:* tampoco. Al directorio sincronizado de la skill
+le faltaba su script (`arxiv_search.py`; solo estaban `SKILL.md` y `metadata.json`) — se
+reconstruyó y el paquete `arxiv` se instaló sin problema desde PyPI —, pero
+`export.arxiv.org` devuelve **403 Forbidden en el proxy de egreso**: es una denegación de
+política de la organización, no un fallo técnico, y no se debe rodear. **En cuanto el host esté
+permitido, la skill funciona y este cotejo es lo primero que hay que hacer.**
 
 **Consistencia interna que sí se puede comprobar.** (42, 5) equivale a una *representación* de
 grado 2 en 41 incógnitas, porque el generador es `1 + 2·2 = 5` y `41 + 1 = 42`. Del mismo modo,
@@ -245,7 +282,7 @@ varias veces, una sola incógnita sirve a todas.
   esquina es **número de variables**.
 - **Punto actual: (40, 5). Récord citado: (42, 5).** Dos variables por debajo. Con las salvedades
   de §3.2c y §7 — que son las que impiden llamarlo récord.
-- **Qué queda del gasto** (30 incógnitas de la representación): 8 valores de la cadena
+- **Qué queda del gasto** (31 incógnitas de la representación): 8 valores de la cadena
   (m, Eᵥ, A, Tᵥ, W, P, B) + 1 base de Pell + 9 por exponente (x, y, t × 3) + 5 multiplicadores
   de relación + 3 holguras de desigualdad + 2 restos de división + 1 multiplicador. El aplanado
   añade 9: tres ecuaciones de Pell (grado 4) y cuatro congruencias de Davis (grado 3).

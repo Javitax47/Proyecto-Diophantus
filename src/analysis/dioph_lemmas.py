@@ -771,13 +771,14 @@ def L_prime_shared(n, over_N=True):
 
     m = fresh("wm")
     Ev, A, B = fresh("se"), fresh("sa"), fresh("sb")
-    Tv, W, P = fresh("st"), fresh("sw"), fresh("sp")
-    # ELIMINACION DE Q. Q = floor(W/P) solo se usa para exigir Q == B (mod u).
-    # En vez de darle una incognita propia y una congruencia aparte, se SUSTITUYE
-    # Q por su forma general `B + u*cq`: la congruencia deja de necesitar ecuacion
-    # y Q deja de necesitar incognita. Se ahorra una.
-    cq = fresh("c")
-    Q = B_placeholder = None         # (Q se define abajo, cuando B ya existe)
+    Tv, W, P, Q = fresh("st"), fresh("sw"), fresh("sp"), fresh("sq")
+    # NOTA: se probo ELIMINAR Q sustituyendola por su forma general `B + u*cq`
+    # (la congruencia Q == B (mod u) queda dentro y Q deja de ser incognita).
+    # Ahorra 1 incognita en la REPRESENTACION y CERO en el generador -- el
+    # aplanado la vuelve a gastar, porque `P*u*cq` es un producto de tres
+    # incognitas. Y a cambio dispara el coste para Z3: la comprobacion de
+    # soundness paso de ~84 s a mas de 28 min sin concluir. Se descarta: la
+    # verificabilidad vale mas que una incognita que no se traduce en nada.
     nn = n - 1                       # Wilson usa (n-1)!
 
     # DESPLAZAMIENTO DE ORIGEN (coste 0, ahorra holguras).
@@ -794,8 +795,6 @@ def L_prime_shared(n, over_N=True):
     R = E + 1                        # = Ev + 2. ELIMINACION: R no necesita ser
                                      # incognita, es una EXPRESION. Segundo
                                      # mecanismo, complementario a la comparticion.
-
-    Q = B + u * cq                   # forma general de un entero == B (mod u)
 
     # SEMILLA DEL POOL: se impone `n >= 2` ANTES que nada para que `n >= 1`
     # (exponente n de la primera relacion) quede IMPLICADA y no gaste holgura.
@@ -816,9 +815,7 @@ def L_prime_shared(n, over_N=True):
         L_value(Tv, lambda v: 2 ** int(R.subs(v)) - 1),
         L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(R.subs(v))),
         L_value(P, lambda v: int(u.subs(v)) ** (int(n.subs(v)) - 1)),
-        L_value(cq, lambda v: (int(W.subs(v)) // int(P.subs(v))
-                               - int(sympy.binomial(int(R.subs(v)), int(n.subs(v)) - 1)))
-                              // int(u.subs(v))),
+        L_value(Q, lambda v: int(W.subs(v)) // int(P.subs(v))),
         L_value(B, lambda v: int(sympy.binomial(int(R.subs(v)), int(n.subs(v)) - 1))),
     ]
     # ORDEN: los contextos se construyen primero para que registren sus cotas en
@@ -827,10 +824,11 @@ def L_prime_shared(n, over_N=True):
     sistemas_ctx = [c.build() for c in contexts.values()]
     partes += [base.build()] + sistemas_ctx
     partes += [
-        # Q = B + u*cq ya lleva la congruencia dentro: no hace falta L_congruent.
-        # (El orden Q - B - u*k, y no al reves, era esencial cuando si la habia:
-        # como Q >> B, el multiplicador solo queda >= 0 en ese sentido.)
         L_floor_div(W, P, Q, over_N=over_N),
+        # ORDEN IMPORTANTE: Q - B - u*k = 0 (no B - Q - ...), porque Q >> B y asi
+        # el multiplicador k queda >= 0. Con el orden inverso k es NEGATIVO y el
+        # sistema deja de estar sobre N.
+        L_congruent(Q, B, u),
         ineq(u - B - 1),
         L_floor_div(A, B, m, over_N=over_N),
         L_divides(n, m + 1),

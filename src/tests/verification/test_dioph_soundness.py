@@ -32,6 +32,7 @@ from src.analysis.dioph_calculus import Dioph
 from src.analysis.dioph_lemmas import L_exponential, L_composite, L_nonneg_N, fresh
 from src.analysis.dioph_soundness import (
     Z3_DISPONIBLE, sympy_to_z3, solve, soundness_report, uniqueness_report, resumen,
+    refuta_configuracion,
 )
 
 
@@ -103,33 +104,63 @@ def test_catalogo_sound(stats):
 
 
 def test_regresion_primos(stats):
-    """[3] REGRESION del defecto encontrado: ningun compuesto debe admitir solucion.
+    """[3] REGRESION del defecto: la FIRMA del fallo debe estar excluida.
 
-    Historia: `L_nonneg_N` devolvia un sistema VACIO, asi que en modo N las
-    condiciones laterales (c < M, a > c, a-1 > k) no imponian NADA. Con a in {0,1}
-    la ecuacion de Pell degenera y (x,y) = (1,0) la resuelve, de modo que Z3
-    encontraba testigo para 4, 9, 15 y 25. Este test vigila que no vuelva.
+    Historia: `L_nonneg_N` declaraba coste 0 para cualquier expresion, asi que en
+    modo N las condiciones laterales (c < M, a > c, a-1 > k) no imponian NADA. Con
+    a in {0,1} la ecuacion de Pell degenera --(x,y) = (1,0) la resuelve para
+    cualquier a-- y Z3 encontraba testigo para n = 4, 9, 15 y 25.
+
+    DOS GUARDARRAILES, y el primero es el que vale:
+
+      (A) La FIRMA, sin cota: "existe solucion con a = 0?" y con a = 1. Es una
+          consulta GLOBAL (ninguna caja), instantanea, y apunta exactamente al
+          fallo. Un guardarrail debe apuntar al defecto, no a su vecindario.
+      (B) Un barrido en la caja [0,20], que ademas cubre configuraciones
+          degeneradas que no habiamos anticipado.
+
+    Sobre por que no se barre mas lejos: medido en este sistema, cota 20 concluye
+    en 0 s, cota 50 deja 1 de 8 sin concluir y cota 100 deja 3 de 8. La escalada
+    completa (200 -> 20) si concluye en los ocho, pero tarda ~213 s; queda para
+    ejecucion manual, no para la suite. 'unknown' nunca cuenta como exito.
     """
-    print(f"\n{Colors.HEADER}[3] REGRESION: compuestos sin solucion en el sistema de primos{Colors.ENDC}")
+    print(f"\n{Colors.HEADER}[3] REGRESION: la firma del defecto sigue excluida{Colors.ENDC}")
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
     prob = [p for p in build_catalog() if p.name == "primo"][0]
-    compuestos = [4, 9, 15, 25]
-    # Sin el intento global: en un sistema de 36 incognitas y grado 8 Z3 no
-    # concluye y solo quema tiempo. Las cajas pequenas bastan para esta regresion,
-    # porque las soluciones espurias del defecto tenian TODAS valores diminutos
-    # (a in {0,1}, y = 0, s = 0). El estado reportado dice la cota usada.
+    compuestos = [4, 9, 15, 21, 25, 27, 33, 35]
+    base = [u for u in prob.system.unknowns if str(u).startswith("ca")]
+    fallos = []
+
+    # (A) la firma exacta: base de Pell degenerada. Sin cota.
+    if not base:
+        fallos.append("no se localizo la incognita de la base de Pell")
+    for v in compuestos:
+        for deg in (0, 1):
+            r = refuta_configuracion(prob.system, {prob.param: v}, {base[0]: deg},
+                                     timeout_ms=8000, rlimit=2_000_000)
+            if r["estado"] != "unsat":
+                fallos.append(f"n={v} con a={deg}: {r['estado']} (se exige unsat)")
+    print(f"  {Colors.OKGREEN}A{Colors.ENDC} a in {{0,1}} refutado SIN COTA en "
+          f"{len(compuestos)} compuestos x 2 = {2*len(compuestos)} consultas")
+
+    # (B) barrido en caja pequena
     ok, filas, defectos = soundness_report(prob, compuestos, timeout_ms=8000,
-                                          rlimit=4_000_000, intentar_sin_cota=False,
-                                          cotas_de_reserva=(200, 20))
-    for v, _, est in filas:
-        color = Colors.OKGREEN if est == "unsat" else (Colors.FAIL if est == "sat" else Colors.WARN)
-        print(f"  {color}n={v:<4} {est}{Colors.ENDC}")
-    if ok:
-        print(f"  (recordatorio: 'unknown' no es evidencia a favor; solo 'unsat' demuestra)")
-        stats.ok()
+                                           rlimit=2_000_000, intentar_sin_cota=False,
+                                           cotas_de_reserva=(20,))
+    estados = resumen(filas)
+    print(f"  {Colors.OKGREEN}B{Colors.ENDC} barrido en [0,20]: {estados}")
+    if any(f[-1] == "sat" for f in filas):
+        fallos.extend(defectos)
+    if any(f[-1] not in ("unsat", "unsat<=20") for f in filas):
+        fallos.append(f"algun compuesto no concluyo en la caja: {estados}")
+
+    if fallos:
+        for f in fallos[:4]:
+            print(f"  {Colors.FAIL}{f}{Colors.ENDC}")
+        stats.fail(fallos[0])
     else:
-        stats.fail("el sistema de primos SIGUE admitiendo compuestos: " + defectos[0])
+        stats.ok()
 
 
 def test_unicidad_exponencial(stats):

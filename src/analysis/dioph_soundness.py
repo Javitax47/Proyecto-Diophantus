@@ -102,15 +102,19 @@ def sympy_to_z3(expr, varmap):
 # ---------------------------------------------------------------------------
 
 def solve(system, param_vals, over_N=True, bound=None, timeout_ms=10000,
-          extra=None, rlimit=20_000_000):
+          extra=None, rlimit=20_000_000, fijar=None):
     """Pregunta a Z3 si `system` tiene solucion con los parametros fijados.
 
     over_N   : anade x >= 0 para toda incognita (el dominio en que vive todo
                este calculo; el generador n*(1-sum P^2) lo EXIGE).
     bound    : si no es None, anade x <= bound. Debilita el 'unsat' a
                'unsat dentro de la caja'. Se refleja en el informe.
-    extra    : lista de expresiones sympy que deben anularse ADEMAS (para
-               unicidad se usa su negacion, ver `uniqueness_report`).
+    extra    : lista de expresiones sympy que deben ser DISTINTAS de cero (para
+               unicidad se usa la diferencia con el valor esperado).
+    fijar    : dict {simbolo: valor} que CLAVA incognitas. Sirve para preguntar
+               por una configuracion concreta ("y existe solucion con a = 0?"),
+               que es la forma exacta de vigilar un defecto conocido: mucho mas
+               barata y mas precisa que barrer una caja.
 
     Devuelve dict {estado, modelo, acotado}. Nunca lanza por 'unknown'.
     """
@@ -142,6 +146,10 @@ def solve(system, param_vals, over_N=True, bound=None, timeout_ms=10000,
         return {"estado": "no_traducible", "modelo": str(exc),
                 "acotado": bound is not None}
 
+    for sym, val in (fijar or {}).items():
+        if sym not in varmap:
+            varmap[sym] = z3.Int(str(sym))
+        solver.add(varmap[sym] == int(val))
     for s in system.unknowns:
         if s not in varmap:                    # incognita que no aparece: irrelevante
             continue
@@ -251,3 +259,25 @@ def resumen(filas):
         est = f[-1]
         out[est] = out.get(est, 0) + 1
     return out
+
+
+# ---------------------------------------------------------------------------
+#   PREGUNTA 3: la CONFIGURACION del defecto conocido sigue excluida?
+# ---------------------------------------------------------------------------
+
+def refuta_configuracion(system, param_vals, fijar, timeout_ms=10000,
+                         rlimit=20_000_000, over_N=True):
+    """El sistema debe ser INSATISFACIBLE al clavar `fijar`.
+
+    Por que esto y no una caja: el defecto que motivo este modulo tenia una
+    FIRMA concreta -- la base de Pell degeneraba con a in {0,1}, y entonces
+    (x,y) = (1,0) resolvia la ecuacion para cualquier a. Preguntar "hay solucion
+    con a = 0?" es una consulta SIN COTA, instantanea y exactamente dirigida al
+    fallo; barrer [0,B] es caro, no concluye siempre, y aun asi solo cubre la
+    caja. Un guardarrail debe apuntar al defecto, no a su vecindario.
+
+    Devuelve el estado ('unsat' es lo que se quiere; 'sat' es el defecto vivo).
+    """
+    r = solve(system, param_vals, over_N=over_N, bound=None,
+              timeout_ms=timeout_ms, rlimit=rlimit, fijar=fijar)
+    return r
