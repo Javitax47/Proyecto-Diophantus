@@ -112,8 +112,10 @@ def test_honestidad_comparacion(stats):
     print(f"  REPRESENTACION. Comparar esas cifras directamente seria un ERROR. Por eso")
     print(f"  existe to_generator(): convierte la representacion en generador y ENTONCES")
     print(f"  si son comparables (ver [10]). Las cifras de representacion NO lo son.")
-    print(f"  {Colors.WARN}Y aun comparando bien, cotejar si el punto es notable exige fuentes")
-    print(f"  primarias (bloqueadas en este entorno) y revision experta.{Colors.ENDC}")
+    print(f"  {Colors.WARN}El (42,5) YA esta cotejado (JSWW 1976, ver test_dioph_jsww), y")
+    print(f"  resulta ser su polinomio (1) pasado por la sustitucion de Skolem: nadie")
+    print(f"  lo optimizo. Lo que sigue faltando es verificar la cadena mas alla de")
+    print(f"  n=3 y una revision experta.{Colors.ENDC}")
     stats.ok()
     print(f"  {Colors.OKGREEN}✓{Colors.ENDC} alcance declarado sin sobreafirmar")
 
@@ -241,8 +243,9 @@ def test_situacion_frente_al_record(stats):
     print(f"      explota. Para n>=5 no es computable, asi que descansa en los teoremas.")
     print(f"   2. La soundness se comprueba ahora por SMT, pero solo en los valores")
     print(f"      del rango y con los estados que Z3 concluye ('unknown' no prueba nada).")
-    print(f"   3. La cifra '42 variables, grado 5' procede de un resumen de busqueda,")
-    print(f"      NO de fuente primaria (arxiv/t5k/MathWorld bloqueados por egreso).")
+    print(f"   3. (RESUELTA) El (42,5) esta cotejado en fuente primaria: Jones-Sato-Wada-")
+    print(f"      Wiens, Amer. Math. Monthly 83:6 (1976) 449-464, p. 450. Es su propio")
+    print(f"      polinomio (1) pasado por la sustitucion de Skolem -- ver test_dioph_jsww.")
     print(f"   4. Nada de esto ha pasado revision experta.{Colors.ENDC}")
     # El test NO exige estar por debajo de 42: exige que la cifra sea la MEDIDA y
     # que las salvedades esten impresas. Un test que solo pase cuando el numero

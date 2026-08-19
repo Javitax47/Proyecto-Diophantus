@@ -316,3 +316,164 @@ def witness_is_nonnegative(system, param_vals):
     if w is None:
         return False
     return all(int(v) >= 0 for v in w.values())
+
+
+# ---------------------------------------------------------------------------
+#   SUSTITUCION DE SKOLEM: aplanar el ARBOL, no los monomios
+# ---------------------------------------------------------------------------
+
+def flatten_tree(system, target=2, name=None):
+    """Baja el grado nombrando SUBEXPRESIONES, no monomios expandidos.
+
+    POR QUE EXISTE (y por que `flatten_greedy` se queda corto). El voraz empieza
+    por `sympy.expand`, y expandir DESTRUYE la estructura factorizada. En el
+    polinomio de Jones-Sato-Wada-Wiens, el termino
+
+        ((a + u^2(u^2-a))^2 - 1)(n + 4dy)^2 + 1 - (x+cu)^2
+
+    expandido es una nube de monomios de grado 12, cada uno de los cuales hay que
+    nombrar. Sin expandir bastan seis nombres: u^2, u^2(u^2-a), (a+...)^2, dy,
+    (n+4dy)^2, cu. Eso es lo que JSWW llaman "the Skolem substitution method",
+    y es la razon de que a ellos les cueste 16 incognitas y al voraz 30.
+
+    Medido sobre el sistema de JSWW (ver src/analysis/dioph_jsww.py), que es el
+    unico patron de la literatura contra el que podemos medirnos sin depender de
+    que nuestra propia cadena sea correcta.
+
+    ESQUEMA (para `target = 2`, el caso que da generadores de grado 5):
+      * `_lineal(e)` devuelve una expresion de grado <= 1 igual a `e`,
+        introduciendo definiciones donde haga falta;
+      * una suma es lineal si sus sumandos lo son;
+      * un producto se pliega por pares, nombrando cada producto parcial;
+      * una potencia se hace por CUADRADOS REPETIDOS: coste log2(n), no n;
+      * cada subexpresion se MEMOIZA por su forma canonica, de modo que `u^2`
+        nombrado una vez sirve a todas las ecuaciones. Ahi esta el ahorro.
+
+    Cada incognita nueva viene con su ECUACION DEFINITORIA, luego no anade
+    soluciones: el sistema resultante es equisatisfacible y el testigo se extiende
+    evaluando las definiciones en orden de creacion.
+    """
+    if target < 2:
+        raise ValueError("target debe ser >= 2 (grado 1 no permite productos)")
+
+    gens = list(system.params) + list(system.unknowns)
+    memo = {}                  # srepr(expr) -> simbolo que la representa
+    defs = []                  # (simbolo, expresion) en ORDEN de creacion
+    nuevas = []
+
+    def grado(e):
+        e = sympy.expand(e)
+        if e.is_number:
+            return 0
+        try:
+            return sympy.Poly(e, *(gens + nuevas)).total_degree()
+        except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+            return 99
+
+    def nombrar(e):
+        """Devuelve un simbolo w con la definicion `w = e` (memoizada)."""
+        clave = sympy.srepr(sympy.expand(e))
+        if clave in memo:
+            return memo[clave]
+        w = _fresh_flat()
+        memo[clave] = w
+        nuevas.append(w)
+        defs.append((w, e))
+        return w
+
+    def _lineal(e):
+        """Expresion de grado <= 1 igual a `e`."""
+        e = sympy.sympify(e)
+        if grado(e) <= 1:
+            return e
+        if e.is_Add:
+            return sympy.Add(*[_lineal(t) for t in e.args])
+        if e.is_Mul:
+            coef, resto = e.as_coeff_Mul()
+            factores = list(resto.args) if resto.is_Mul else [resto]
+            partes = [_lineal(f) for f in factores]
+            acc = partes[0]
+            for sig in partes[1:]:
+                acc = nombrar(sympy.expand(acc * sig))
+            return coef * acc
+        if e.is_Pow:
+            base, exp = e.args
+            if not (exp.is_Integer and int(exp) >= 0):
+                return nombrar(e)
+            k = int(exp)
+            bl = _lineal(base)
+            if k == 0:
+                return sympy.Integer(1)
+            # cuadrados repetidos: k=4 cuesta 2 nombres, no 3
+            resultado, actual, potencia = None, bl, 1
+            while True:
+                if k & potencia:
+                    resultado = actual if resultado is None else nombrar(
+                        sympy.expand(resultado * actual))
+                if potencia * 2 > k:
+                    break
+                actual = nombrar(sympy.expand(actual * actual))
+                potencia *= 2
+            return resultado
+        return nombrar(e)
+
+    def _termino(e):
+        """Expresion de grado <= target igual a `e` (nivel superior)."""
+        e = sympy.sympify(e)
+        if grado(e) <= target:
+            return e
+        if e.is_Add:
+            return sympy.Add(*[_termino(t) for t in e.args])
+        if e.is_Mul:
+            coef, resto = e.as_coeff_Mul()
+            factores = list(resto.args) if resto.is_Mul else [resto]
+            partes = [_lineal(f) for f in factores]
+            # se pliega hasta que queden `target` factores lineales
+            while len(partes) > target:
+                partes = [nombrar(sympy.expand(partes[0] * partes[1]))] + partes[2:]
+            return coef * sympy.Mul(*partes)
+        if e.is_Pow:
+            base, exp = e.args
+            if exp.is_Integer and int(exp) >= 0 and int(exp) <= target:
+                return _lineal(base) ** int(exp)
+            return _lineal(e)
+        return _lineal(e)
+
+    nuevas_eqs = [sympy.expand(_termino(e)) for e in system.eqs]
+    nuevas_eqs += [sympy.expand(w - d) for w, d in defs]
+
+    orden = list(defs)
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        asign = dict(param_vals); asign.update(base)
+        out = dict(base)
+        for sym, expr in orden:
+            val = int(sympy.expand(expr).subs(asign))
+            asign[sym] = val
+            out[sym] = val
+        return out
+
+    return Dioph(params=list(system.params),
+                 unknowns=list(system.unknowns) + [w for w, _ in orden],
+                 eqs=nuevas_eqs, witness=w_ext,
+                 name=name or f"{system.name} (Skolem, grado<={target})")
+
+
+def flatten_best(system, target=2, name=None):
+    """Aplica los dos aplanados y devuelve el que gasta menos incognitas.
+
+    No hay un ganador universal, y conviene no fingir que lo hay:
+      * `flatten_greedy` gana cuando el sistema llega YA EXPANDIDO (que es como
+        lo construye `dioph_lemmas`), porque entonces no queda arbol que explotar;
+      * `flatten_tree` gana cuando se conserva la forma factorizada (el sistema de
+        JSWW, por ejemplo: +27 frente a +30).
+    Medirlos y quedarse con el mejor cuesta el doble de tiempo y cero riesgo.
+    """
+    a = flatten_greedy(system, target, name)
+    b = flatten_tree(system, target, name)
+    return a if a.cost() <= b.cost() else b

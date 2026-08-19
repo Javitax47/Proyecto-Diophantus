@@ -125,7 +125,7 @@ Frente a los récords publicados de generadores de primos:
 | | Variables | Grado |
 |---|---|---|
 | **Nuestro generador (sound)** | **40** | **5** |
-| Récord de menor grado *(citado, sin cotejar)* | 42 | 5 |
+| Récord de menor grado — **JSWW 1976, cotejado en fuente primaria** | 42 | 5 |
 | Jones–Sato–Wada–Wiens 1976 | 26 | 25 |
 | Matiyasevich (menos variables) | 10 | ~1,6×10⁴⁵ |
 
@@ -184,27 +184,54 @@ manual.
 descansando en Wilson y en los teoremas de la cadena. Lo demostrado es: (a) la firma del defecto
 conocido está excluida globalmente, y (b) no hay soluciones espurias pequeñas en ocho compuestos.
 
-### 3.2c Estado del cotejo del récord (paso 1, parcialmente bloqueado)
+### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
-| Dato | Fuente alcanzada | Estado |
+Con el egreso a arXiv abierto, el (42, 5) queda cotejado. **Jones–Sato–Wada–Wiens,
+«Diophantine representation of the set of prime numbers», *Amer. Math. Monthly* 83:6 (1976)
+449–464, p. 450**, textual:
+
+> *"Our construction here yields a polynomial in 19 variables and degree 29. **It also yields a
+> polynomial in 42 variables and degree 5.** [...] All that is necessary to reduce the degree to 5
+> is **the Skolem substitution method**. However, this procedure increases the number of variables
+> (**to 42 when applied to (1)**). **We do not know whether there is a prime representing
+> polynomial of degree < 5.**"*
+
+Tres consecuencias, y ninguna es cómoda:
+
+1. **El (42, 5) es real y está bien citado.** No era un recuerdo mal transcrito de un resumen.
+2. **No es una construcción aparte: es su propio polinomio (1) —26 variables, grado 25— pasado
+   por la sustitución de Skolem.** Es decir, exactamente la operación que hace nuestro aplanado.
+   Nadie lo optimizó: es «lo que sale al aplicárselo a (1)». Bajar de 42 es, por tanto, menos
+   sorprendente de lo que la palabra *récord* sugiere.
+3. **Grado < 5 sigue abierto según los propios autores.** Nuestro argumento estructural
+   (`deg Q = 1 + 2·max deg Pᵢ`, y un sistema lineal daría un conjunto semilineal) acota **esta**
+   construcción, no todas. No contradice a JSWW: dice menos.
+
+Y una cuarta, la que más duele. Su sistema está escrito explícitamente, así que se transcribe
+entero (`src/analysis/dioph_jsww.py`) y **se comprueba que reproduce (26, 25)**. Eso da un patrón
+de medida externo que **no depende de que nuestra cadena de Wilson sea correcta**: aplicar
+nuestro aplanado a *su* sistema y comparar con su 42.
+
+| Aplanado a grado 2 sobre el sistema de JSWW | Incógnitas añadidas | Generador |
 |---|---|---|
-| Generador de primos de menor grado: **(42 variables, grado 5)** | resúmenes de búsqueda que citan el *Prime Glossary* (t5k.org) | **corroborado a nivel secundario**; PDF no accesible |
-| Generador con menos variables: **(10, ~1,6×10⁴⁵)** | ídem | ídem |
-| **JSWW 1976: (26, 25)** | citado en varias fuentes independientes | consistente |
-| **Par universal de Jones 1982: (58, 4) sobre ℕ**, y **(9, 1,638×10⁴⁵)** | Jones, *Universal Diophantine Equation*, JSL 47 (1982) 549–571 | referencia bibliográfica confirmada |
-| Sigue siendo el **menor grado conocido** en 2025 | Bayer–David, *A Formal Proof of Complexity Bounds on Diophantine Equations* (ITP 2025) y *Diophantine Equations over ℤ* (arXiv 2506.20909): dan el **primer par universal no trivial sobre ℤ**, 11 incógnitas, y una nueva pareja (32, 12); (58, 4) sigue en pie sobre ℕ | corroborado |
+| voraz, sobre la forma expandida | +30 | (56, 5) |
+| Skolem por árbol, sobre la forma expandida | +41 | (67, 5) |
+| Skolem por árbol, **sobre la forma factorizada** | **+27** | (53, 5) |
+| **JSWW 1976, a mano** | **+16** | **(42, 5)** |
 
-**Lo que NO se pudo hacer:** abrir ninguna fuente primaria. La política de egreso del entorno
-bloquea `arxiv.org`, `drops.dagstuhl.de`, `t5k.org`, `mathworld.wolfram.com` e `isa-afp.org`;
-solo la búsqueda web (que devuelve resúmenes) atraviesa. La cifra (42, 5) sigue, por tanto,
-**sin cotejar contra el papel**.
+**Vamos 11 incógnitas por detrás de lo que ellos hicieron a mano en 1976.** Nuestro generador de
+primos queda por debajo de 42 **por partir de una representación mucho más barata** (31 incógnitas
+y grado 4, frente a sus 25 y grado 12), **no por aplanar mejor**. El aplanado es hoy la pieza
+floja, y ahora la brecha es un número medido en un test, no una impresión.
 
-*Segundo intento, con la skill `arxiv-search`:* tampoco. Al directorio sincronizado de la skill
-le faltaba su script (`arxiv_search.py`; solo estaban `SKILL.md` y `metadata.json`) — se
-reconstruyó y el paquete `arxiv` se instaló sin problema desde PyPI —, pero
-`export.arxiv.org` devuelve **403 Forbidden en el proxy de egreso**: es una denegación de
-política de la organización, no un fallo técnico, y no se debe rodear. **En cuanto el host esté
-permitido, la skill funciona y este cotejo es lo primero que hay que hacer.**
+*Detalle que cambia el resultado:* expandir destruye el árbol. `flatten_tree` sobre la forma
+factorizada gasta 27; sobre la misma expresión expandida, 41. Como `dioph_lemmas` construye
+todo con `sympy.expand`, hoy el voraz gana en nuestros sistemas y el de árbol en los de fuera.
+
+**Otras cifras del mismo paper**, ya cotejadas: (19, 29), y el Teorema 2, un polinomio en **12
+variables** de grado enorme. El de **10 variables** es de Matiyasevich 1977, y Pąk–Kaliszyk
+(ITP 2022, formalización en Mizar) lo llaman *"today the smallest known"* — confirmado en fuente
+primaria; su propio polinomio formalizado tiene **grado > 6000**.
 
 **Consistencia interna que sí se puede comprobar.** (42, 5) equivale a una *representación* de
 grado 2 en 41 incógnitas, porque el generador es `1 + 2·2 = 5` y `41 + 1 = 42`. Del mismo modo,
@@ -309,8 +336,7 @@ se evalúa en vez de eliminarse. Construir ese puente es trabajo pendiente.
 
 - **No se ha batido ningún récord, y decir lo contrario sería repetir la historia.** El punto
   medido es (40, 5) frente al (42, 5) *citado*. Para que eso fuera un récord harían falta tres
-  cosas que NO tenemos: (a) el (42, 5) cotejado contra fuente primaria — el entorno bloquea el
-  acceso; (b) la corrección de la cadena verificada más allá de n=3, donde el testigo deja de ser
+  cosas que NO tenemos: (a) ~~el (42, 5) cotejado contra fuente primaria~~ **hecho** (§3.2c); (b) la corrección de la cadena verificada más allá de n=3, donde el testigo deja de ser
   computable; (c) revisión experta. Mientras falte cualquiera de las tres, es **un punto medido
   en nuestra curva**, no un resultado.
 - **Y un aviso concreto:** en agosto este documento decía (41, 5) y era un sistema **insound**
