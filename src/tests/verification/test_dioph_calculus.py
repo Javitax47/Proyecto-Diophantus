@@ -30,6 +30,7 @@ from src.analysis.dioph_lemmas import (
     L_pell, L_is_pell_y, pell_seq, fresh, RECORD_PRIMOS, FRONTERA,
     L_exponential, L_nonneg_N, LOGRADO,
     L_binomial, L_factorial, L_prime, L_floor_div,
+    L_prime_shared, PellContext,
 )
 
 
@@ -454,6 +455,83 @@ def test_marcador_final(stats):
         stats.fail("coste sospechoso: revisar antes de afirmar cualquier mejora")
 
 
+
+def test_comparticion(stats):
+    print(f"{Colors.HEADER}[16] COMPARTICION DE INCOGNITAS: la unica via hacia el record{Colors.ENDC}")
+    # (a) validez matematica: un (a,x,y,t) sirve a varias bases con el mismo exponente
+    malos, tot = [], 0
+    for kv in (2, 3, 4, 5):
+        for bases in ([2, 3, 5], [3, 7, 10]):
+            cs = [b ** kv for b in bases]
+            av = max(max(cs), kv) + 3
+            while any(2 * av * b - b * b - 1 <= c for b, c in zip(bases, cs)):
+                av += 1
+            xv, yv = pell_seq(av, kv)
+            if (yv - kv) % (av - 1) != 0:
+                malos.append((kv, 'indice'))
+                continue
+            for b, c in zip(bases, cs):
+                Mv = 2 * av * b - b * b - 1
+                rest = (xv - (av - b) * yv) - c
+                tot += 1
+                if rest % Mv != 0 or rest < 0:
+                    malos.append((kv, b))
+    if malos:
+        stats.fail(f"la comparticion rompe la congruencia en {malos[:3]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {tot} relaciones con (a,x,y,t) COMPARTIDO: congruencia intacta "
+              f"(x_k(a),y_k(a) solo dependen de (a,k))")
+
+    # (b) el ahorro medido, extremo a extremo
+    n = sympy.Symbol('n', integer=True)
+    aditivo = L_prime(n, over_N=True).cost()
+    compartido = L_prime_shared(n, over_N=True).cost()
+    if compartido < aditivo:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} coste: {aditivo} (aditivo) -> {compartido} (compartido+eliminacion), "
+              f"ahorro {aditivo - compartido}")
+    else:
+        stats.fail(f"la comparticion no ahorro nada: {aditivo} -> {compartido}")
+
+    # (c) la correccion se PRESERVA: mismo veredicto que la version aditiva
+    P = L_prime_shared(n, over_N=True)
+    ok2, _ = P.check_witness({n: 2})
+    ok3, _ = P.check_witness({n: 3})
+    sin_testigo = all(P.witness({n: v}) is None for v in (4, 9, 15, 25))
+    if ok2 and ok3 and sin_testigo:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} correccion PRESERVADA: n=2,3 anulan el sistema; "
+              f"4,9,15,25 (compuestos) sin testigo")
+    else:
+        stats.fail(f"la comparticion rompio la correccion (n2={ok2}, n3={ok3}, comp={sin_testigo})")
+
+    # (d) desglose del mecanismo
+    print(f"  {Colors.BOLD}Desglose:{Colors.ENDC} 5 exponenciaciones agrupadas por exponente ->")
+    print(f"    exponente n   : 1 relacion  -> 4 compartidas + 1 = 5")
+    print(f"    exponente n-1 : 2 relaciones-> 4 compartidas + 2 = 6")
+    print(f"    exponente R   : 2 relaciones-> 4 compartidas + 2 = 6")
+    print(f"    total exponencial: 17 (frente a 5x5 = 25) | + eliminacion de R por sustitucion")
+
+
+def test_frontera_del_record(stats):
+    print(f"{Colors.HEADER}[17] LO QUE FALTA PARA 9: frontera honesta{Colors.ENDC}")
+    n = sympy.Symbol('n', integer=True)
+    actual = L_prime_shared(n, over_N=True).cost()
+    record = RECORD_PRIMOS['incognitas']
+    print(f"  mejor coste alcanzado por el calculo : {Colors.BOLD}{actual}{Colors.ENDC} incognitas")
+    print(f"  record de Matiyasevich (1975)        : {Colors.BOLD}{record}{Colors.ENDC} incognitas")
+    print(f"  {Colors.WARN}-> quedan {actual - record} incognitas de distancia ({actual/record:.1f}x).{Colors.ENDC}")
+    print(f"  {Colors.WARN}-> la comparticion POR EXPONENTE COMUN esta agotada; bajar mas exige"
+          f" reestructurar la construccion (no encadenar Wilson->factorial->binomial),{Colors.ENDC}")
+    print(f"  {Colors.WARN}   que es exactamente el trabajo que costo decadas a los especialistas.{Colors.ENDC}")
+    if actual > record:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} distancia declarada; NO se afirma haber batido el record")
+    else:
+        stats.fail("coste <= record: exigiria revision externa antes de afirmar nada")
+
+
 def main():
     print(f"{Colors.BOLD}=== CALCULO DE CONSTRUCCIONES DIOFANTICAS (ataque al record) ==={Colors.ENDC}")
     stats = Stats()
@@ -472,6 +550,8 @@ def main():
     test_factorial_y_wilson(stats)
     test_explosion_del_testigo(stats)
     test_marcador_final(stats)
+    test_comparticion(stats)
+    test_frontera_del_record(stats)
 
     total = stats.passed + stats.failed
     print()

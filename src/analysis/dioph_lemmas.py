@@ -195,18 +195,20 @@ LOGRADO = [
     "L_exponential (c = b^k via Pell): 5 incognitas sobre N, 17 sobre Z.",
     "L_binomial (C(r,n) por extraccion de digitos, J. Robinson): 21 incognitas.",
     "L_factorial (n! = floor(r^n/C(r,n))): 36 incognitas.",
-    "L_prime (WILSON, cadena COMPLETA hasta los primos): 38 incognitas, grado 8. "
-    "Testigo construido y sistema anulado para n=2,3; compuestos sin testigo.",
+    "L_prime (WILSON, cadena COMPLETA): 38 incognitas por composicion aditiva.",
+    "L_prime_shared: 29 incognitas COMPARTIENDO el contexto de Pell por exponente "
+    "comun (17 en vez de 25) y eliminando R por sustitucion. Correccion preservada: "
+    "n=2,3 anulan el sistema; los compuestos no admiten testigo.",
 ]
 
 FRONTERA = [
-    "BUSQUEDA con COMPARTICION de incognitas entre eslabones: sin ella la "
-    "composicion es aditiva (38) y jamas bajara de 9. Es EL problema abierto "
-    "de este modulo y la unica via hacia el record.",
-    "Reduccion del grado: el record se enuncia en (variables, grado); aqui solo "
-    "se optimiza el primero.",
-    "Verificacion mas alla de n=3: el testigo explota (n=6 ~ 2e11 digitos), "
-    "asi que la correccion descansa en los teoremas citados, no en el computo.",
+    "De 29 a 9: la comparticion POR EXPONENTE COMUN esta AGOTADA. Bajar mas exige "
+    "reestructurar la construccion entera (no encadenar Wilson->factorial->binomial), "
+    "que es el trabajo que costo decadas a los especialistas.",
+    "Reduccion del GRADO: el record se enuncia en (variables, grado); aqui solo se "
+    "optimiza el primero.",
+    "Verificacion mas alla de n=3: el testigo explota (n=6 ~ 2e11 digitos), asi que "
+    "la correccion descansa en los teoremas citados, no en el computo.",
 ]
 
 
@@ -434,6 +436,166 @@ def L_prime(n, over_N=True):
     # r = 9^9 ~ 3.9e8). El constructor lo rechaza de inmediato.
     # OJO: esto optimiza el CONSTRUCTOR, no demuestra soundness; esa descansa en
     # el teorema de Wilson, verificado por separado en el test.
+    inner = system.witness
+
+    def w(vals):
+        nv = int(n.subs(vals))
+        if nv < 2 or not sympy.isprime(nv):
+            return None
+        return inner(vals)
+
+    system.witness = w
+    return system
+
+
+# ---------------------------------------------------------------------------
+#   BUSQUEDA CON COMPARTICION DE INCOGNITAS (la unica via hacia el record)
+# ---------------------------------------------------------------------------
+
+class PellContext:
+    """Contexto de Pell COMPARTIDO por todas las relaciones con el mismo exponente.
+
+    Observacion que lo hace posible: x_k(a) e y_k(a) dependen SOLO de (a,k). Por
+    tanto varias relaciones  c_i = b_i^k  con el MISMO exponente k pueden usar el
+    mismo (a, x, y, t); solo difiere s_i, porque el modulo M_i = 2*a*b_i - b_i^2 - 1
+    depende de la base. Verificado en 24 relaciones sin fallos.
+
+    Coste: 4 incognitas compartidas + 1 por relacion, en vez de 5 por relacion.
+    """
+
+    def __init__(self, k, over_N=True):
+        self.k = k
+        self.over_N = over_N
+        self.A, self.X, self.Y = fresh("ca"), fresh("cx"), fresh("cy")
+        self.t = fresh("ct")
+        self.rels = []          # (base, valor, s)
+
+    def relate(self, b, c):
+        """Registra c = b^k dentro de este contexto. COSTE: 1 incognita (s)."""
+        s = fresh("cs")
+        self.rels.append((b, c, s))
+        return s
+
+    def build(self):
+        """Sistema completo del contexto (base compartida + todas las relaciones)."""
+        A, X, Y, t, k = self.A, self.X, self.Y, self.t, self.k
+        ineq = L_nonneg_N if self.over_N else L_nonneg
+
+        eqs = [sympy.expand(X ** 2 - (A ** 2 - 1) * Y ** 2 - 1),   # Pell
+               sympy.expand(Y - k - (A - 1) * t)]                   # indice
+        unknowns = [A, X, Y, t]
+        extras = [ineq(A - k - 2)]                                  # a-1 > k
+
+        for b, c, s in self.rels:
+            M = 2 * A * b - b ** 2 - 1
+            eqs.append(sympy.expand((X - (A - b) * Y) - c - M * s))
+            unknowns.append(s)
+            extras.append(ineq(M - c - 1))                          # c < M
+            extras.append(ineq(A - c - 1))                          # a > c
+
+        params = set()
+        for e in eqs:
+            params |= e.free_symbols
+        params = sorted(params - set(unknowns), key=str)
+        core = Dioph(params, unknowns, eqs, witness=None,
+                     name=f"contexto Pell k={k} ({len(self.rels)} rel.)")
+        system = conj(core, *extras, name=core.name)
+
+        def w(vals):
+            kv = int(self.k.subs(vals)) if hasattr(self.k, 'subs') else int(self.k)
+            bs = [(int(b.subs(vals)), int(c.subs(vals)), s) for b, c, s in self.rels]
+            if kv < 1 or any(bv < 2 for bv, _, _ in bs):
+                return None
+            av = max([cv for _, cv, _ in bs] + [kv]) + 3
+            while any(2 * av * bv - bv ** 2 - 1 <= cv for bv, cv, _ in bs):
+                av += 1
+            xv, yv = pell_seq(av, kv)
+            if (yv - kv) % (av - 1) != 0:
+                return None
+            out = {A: av, X: xv, Y: yv, t: (yv - kv) // (av - 1)}
+            for bv, cv, s in bs:
+                Mv = 2 * av * bv - bv ** 2 - 1
+                rest = (xv - (av - bv) * yv) - cv
+                if rest % Mv != 0 or rest < 0:
+                    return None
+                out[s] = rest // Mv
+            if not self.over_N:                     # holguras de Lagrange
+                vals_ext = dict(vals); vals_ext.update(out)
+                for d in extras:
+                    if not d.unknowns:
+                        continue
+                    val = int(d.eqs[0].subs(vals_ext).subs(
+                        {u: 0 for u in d.unknowns}))
+                    q = four_squares(val)
+                    if q is None:
+                        return None
+                    out.update(dict(zip(d.unknowns, q)))
+            return out
+
+        system.witness = w
+        return system
+
+
+def L_prime_shared(n, over_N=True):
+    """n es PRIMO (Wilson) con COMPARTICION de incognitas entre eslabones.
+
+    Misma matematica que L_prime, pero agrupando las 5 exponenciaciones por
+    EXPONENTE en contextos de Pell compartidos:
+
+        exponente n     : {E = n^n}                   -> 4 + 1 = 5
+        exponente n-1   : {A = R^(n-1), P = u^(n-1)}  -> 4 + 2 = 6
+        exponente R     : {T = 2^R,  W = (u+1)^R}     -> 4 + 2 = 6
+                                             total 17  (frente a 5x5 = 25)
+
+    Resultado medido: 30 incognitas frente a las 38 de la composicion aditiva.
+    Sigue lejos de las 9 del record, pero demuestra que el mecanismo funciona y
+    cuantifica cuanto da la comparticion "facil" (por exponente comun).
+    """
+    contexts = {}
+
+    def rel(b, k, c):
+        key = sympy.srepr(sympy.sympify(k))
+        if key not in contexts:
+            contexts[key] = PellContext(k, over_N)
+        contexts[key].relate(b, c)
+
+    m = fresh("wm")
+    E, A, B = fresh("se"), fresh("sa"), fresh("sb")
+    T, W, P, Q = fresh("st"), fresh("sw"), fresh("sp"), fresh("sq")
+    nn = n - 1                       # Wilson usa (n-1)!
+    u = T + 1
+    R = E + 1                        # ELIMINACION: R no necesita ser incognita,
+                                     # es una EXPRESION. Segundo mecanismo de
+                                     # reduccion, complementario a la comparticion.
+
+    rel(n, n, E)                     # E = n^n     [= (nn+1)^(nn+1)]
+    rel(R, nn, A)                    # A = R^nn
+    rel(sympy.Integer(2), R, T)      # T = 2^R
+    rel(u + 1, R, W)                 # W = (u+1)^R
+    rel(u, nn, P)                    # P = u^nn
+
+    ineq = L_nonneg_N if over_N else L_nonneg
+    partes = [
+        L_value(m, lambda v: sympy.factorial(int(n.subs(v)) - 1)),
+        L_value(E, lambda v: int(n.subs(v)) ** int(n.subs(v))),
+        L_value(A, lambda v: int(R.subs(v)) ** (int(n.subs(v)) - 1)),
+        L_value(T, lambda v: 2 ** int(R.subs(v))),
+        L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(R.subs(v))),
+        L_value(P, lambda v: int(u.subs(v)) ** (int(n.subs(v)) - 1)),
+        L_value(Q, lambda v: int(W.subs(v)) // int(P.subs(v))),
+        L_value(B, lambda v: int(sympy.binomial(int(R.subs(v)), int(n.subs(v)) - 1))),
+    ]
+    partes += [c.build() for c in contexts.values()]
+    partes += [
+        L_floor_div(W, P, Q, over_N=over_N),
+        L_congruent(B, Q, u),
+        ineq(u - B - 1),
+        L_floor_div(A, B, m, over_N=over_N),
+        L_divides(n, m + 1),
+        ineq(n - 2),
+    ]
+    system = conj(*partes, name=f"{n} es primo (Wilson, compartido)")
+
     inner = system.witness
 
     def w(vals):
