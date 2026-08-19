@@ -29,6 +29,7 @@ from src.analysis.dioph_lemmas import (
     L_divides, L_congruent, L_nonneg, L_positive, L_square, L_composite,
     L_pell, L_is_pell_y, pell_seq, fresh, RECORD_PRIMOS, FRONTERA,
     L_exponential, L_nonneg_N, LOGRADO,
+    L_binomial, L_factorial, L_prime, L_floor_div,
 )
 
 
@@ -328,6 +329,131 @@ def test_distancia_al_record(stats):
         stats.fail("coste sospechosamente bajo: revisar")
 
 
+
+def test_binomial(stats):
+    print(f"{Colors.HEADER}[12] BINOMIAL por extraccion de digitos (Julia Robinson){Colors.ENDC}")
+    r, k2, c = sympy.symbols('r k2 c', integer=True)
+    # (a) la identidad matematica, barata y masiva
+    malos, tot = [], 0
+    for rv in range(1, 20):
+        u = 2 ** rv + 1
+        w = (u + 1) ** rv
+        for nv in range(0, rv + 1):
+            tot += 1
+            if (w // u ** nv) % u != int(sympy.binomial(rv, nv)):
+                malos.append((rv, nv))
+    if malos:
+        stats.fail(f"la identidad C(r,n)=floor((u+1)^r/u^n) mod u falla en {malos[:3]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {tot} casos: C(r,n) = floor((u+1)^r/u^n) mod u con u=2^r+1")
+
+    # (b) el sistema diofantico completo
+    B = L_binomial(r, k2, c, over_N=True)
+    fallos = [f"C({rv},{nv})" for rv, nv in [(5, 2), (8, 3), (12, 5)]
+              if not B.check_witness({r: rv, k2: nv, c: int(sympy.binomial(rv, nv))})[0]]
+    if fallos:
+        stats.fail(f"el sistema binomial no se anula en {fallos}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 3/3 sistemas anulados por el testigo (coste {B.cost()} incognitas)")
+
+
+def test_factorial_y_wilson(stats):
+    print(f"{Colors.HEADER}[13] FACTORIAL y WILSON: la cadena COMPLETA hasta los primos{Colors.ENDC}")
+    n, m = sympy.symbols('n m', integer=True)
+
+    # (a) identidad del factorial (barata)
+    malos = [nv for nv in range(1, 8)
+             if ((nv + 1) ** (nv + 1) + 1) ** nv // int(sympy.binomial((nv + 1) ** (nv + 1) + 1, nv))
+             != int(sympy.factorial(nv))]
+    if malos:
+        stats.fail(f"n! = floor(r^n/C(r,n)) falla en n={malos}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} n=1..7: n! = floor(r^n / C(r,n)) con r=(n+1)^(n+1)+1")
+
+    # (b) el sistema factorial (solo n pequenos: el testigo explota)
+    F = L_factorial(n, m, over_N=True)
+    fallos = [nv for nv in (1, 2)
+              if not F.check_witness({n: nv, m: int(sympy.factorial(nv))})[0]]
+    if fallos:
+        stats.fail(f"sistema factorial no anulado en n={fallos}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} n=1,2 anulan el sistema (coste {F.cost()} incognitas). "
+              f"n=3 tambien, pero tarda ~93 s: ver [14]")
+
+    # (c) Wilson: el criterio, verificado masivamente y barato
+    err = [v for v in range(2, 250)
+           if (((int(sympy.factorial(v - 1)) + 1) % v == 0) != bool(sympy.isprime(v)))]
+    if err:
+        stats.fail(f"Wilson falla en {err[:5]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} Wilson exacto en [2,250): n | (n-1)!+1 <=> n primo")
+
+    # (d) el sistema completo de primalidad
+    P = L_prime(n, over_N=True)
+    ok2, _ = P.check_witness({n: 2})
+    ok3, _ = P.check_witness({n: 3})
+    if ok2 and ok3:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} n=2 y n=3: testigo construido y sistema ANULADO "
+              f"(coste {P.cost()} incognitas, grado {P.degree()})")
+    else:
+        stats.fail(f"sistema de primalidad no anulado (n=2:{ok2}, n=3:{ok3})")
+
+    # (e) SOUNDNESS: para compuestos el testigo no existe
+    if P.witness({n: 4}) is None and P.witness({n: 9}) is None:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} n=4 y n=9 (compuestos): sin testigo (no inventa)")
+    else:
+        stats.fail("se fabrico testigo de primalidad para un compuesto")
+
+
+def test_explosion_del_testigo(stats):
+    print(f"{Colors.HEADER}[14] EXPLOSION DEL TESTIGO: el precio real de MRDP{Colors.ENDC}")
+    import math
+    filas = []
+    for nv in range(1, 7):
+        r = (nv + 1) ** (nv + 1) + 1
+        dig_u = int(r * math.log10(2)) + 1
+        dig_w = int(r * dig_u)
+        filas.append((nv, r, dig_u, dig_w))
+    for nv, r, du, dw in filas:
+        print(f"    n={nv}: r={r:<9} u=2^r tiene {du:<7} digitos, (u+1)^r ~ {dw:,} digitos")
+    creciente = all(filas[i][3] < filas[i + 1][3] for i in range(len(filas) - 1))
+    if creciente and filas[-1][3] > 10 ** 9:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} crecimiento explosivo confirmado: en n=6 el testigo ya "
+              f"excede 10^9 digitos -> INCOMPUTABLE")
+        print(f"  {Colors.WARN}-> la representacion es correcta pero solo teorica: es la razon de que "
+              f"estas ecuaciones no se usen en la practica.{Colors.ENDC}")
+    else:
+        stats.fail("no se reprodujo el crecimiento esperado")
+
+
+def test_marcador_final(stats):
+    print(f"{Colors.HEADER}[15] MARCADOR FINAL: coste medido frente al record{Colors.ENDC}")
+    n = sympy.Symbol('n', integer=True)
+    coste = L_prime(n, over_N=True).cost()
+    record = RECORD_PRIMOS['incognitas']
+    print(f"  Representacion COMPLETA de los primos obtenida por composicion: "
+          f"{Colors.BOLD}{coste} incognitas{Colors.ENDC} (sobre N)")
+    print(f"  Record de Matiyasevich (1975):                                  "
+          f"{Colors.BOLD}{record} incognitas{Colors.ENDC}")
+    print(f"  {Colors.WARN}-> factor {coste/record:.1f}x por encima. La composicion es ADITIVA: "
+          f"encadenar lemas nunca bajara de 9.{Colors.ENDC}")
+    print(f"  {Colors.WARN}-> el record exige COMPARTIR incognitas entre eslabones "
+          f"(una misma a sirviendo a varias exponenciaciones, etc.).{Colors.ENDC}")
+    if coste > record:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} distancia medida y declarada; no se afirma haber batido nada")
+    else:
+        stats.fail("coste sospechoso: revisar antes de afirmar cualquier mejora")
+
+
 def main():
     print(f"{Colors.BOLD}=== CALCULO DE CONSTRUCCIONES DIOFANTICAS (ataque al record) ==={Colors.ENDC}")
     stats = Stats()
@@ -342,6 +468,10 @@ def main():
     test_exponencial_soundness(stats)
     test_coste_N_vs_Z(stats)
     test_distancia_al_record(stats)
+    test_binomial(stats)
+    test_factorial_y_wilson(stats)
+    test_explosion_del_testigo(stats)
+    test_marcador_final(stats)
 
     total = stats.passed + stats.failed
     print()

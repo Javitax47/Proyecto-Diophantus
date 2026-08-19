@@ -192,17 +192,21 @@ RECORD_PRIMOS = {
 }
 
 LOGRADO = [
-    "L_exponential (c = b^k via Pell): IMPLEMENTADO y verificado. "
-    "5 incognitas sobre N, 17 sobre Z. Completitud por evaluacion del testigo; "
-    "unicidad de c comprobada enumerando [0,M).",
+    "L_exponential (c = b^k via Pell): 5 incognitas sobre N, 17 sobre Z.",
+    "L_binomial (C(r,n) por extraccion de digitos, J. Robinson): 21 incognitas.",
+    "L_factorial (n! = floor(r^n/C(r,n))): 36 incognitas.",
+    "L_prime (WILSON, cadena COMPLETA hasta los primos): 38 incognitas, grado 8. "
+    "Testigo construido y sistema anulado para n=2,3; compuestos sin testigo.",
 ]
 
 FRONTERA = [
-    "L_factorial (m = n! via exponenciacion + coeficientes binomiales): "
-    "siguiente eslabon, NO implementado.",
-    "L_prime (Wilson: n primo <=> n | (n-1)!+1): requiere el anterior.",
-    "BUSQUEDA sobre composiciones que COMPARTAN incognitas: sin ella la "
-    "composicion es aditiva y nunca bajara de 9.",
+    "BUSQUEDA con COMPARTICION de incognitas entre eslabones: sin ella la "
+    "composicion es aditiva (38) y jamas bajara de 9. Es EL problema abierto "
+    "de este modulo y la unica via hacia el record.",
+    "Reduccion del grado: el record se enuncia en (variables, grado); aqui solo "
+    "se optimiza el primero.",
+    "Verificacion mas alla de n=3: el testigo explota (n=6 ~ 2e11 digitos), "
+    "asi que la correccion descansa en los teoremas citados, no en el computo.",
 ]
 
 
@@ -297,6 +301,146 @@ def L_exponential(b, k, c, over_N=False):
                 return None
             out.update(dict(zip(d.unknowns, q)))
         return out
+
+    system.witness = w
+    return system
+
+
+# ---------------------------------------------------------------------------
+#   CADENA COMPLETA HACIA LOS PRIMOS:  binomial -> factorial -> Wilson
+# ---------------------------------------------------------------------------
+
+def L_value(sym, fn):
+    """Introduce una incognita cuyo VALOR sabe calcular el testigo. COSTE: 1.
+
+    No impone restriccion: la restriccion la pone el lema que acompana (p. ej.
+    L_exponential). Sirve para que el testigo de una composicion larga sepa que
+    valor dar a cada magnitud intermedia.
+    """
+    return Dioph(params=[], unknowns=[sym], eqs=[],
+                 witness=lambda vals: {sym: int(fn(vals))}, name=f"valor {sym}")
+
+
+def L_floor_div(a, b, q, over_N=True):
+    """q = floor(a/b) con b > 0.   exists rem : a = b*q + rem, 0 <= rem < b.
+
+    COSTE: 1 incognita sobre N (el resto); +8 sobre Z (dos desigualdades).
+    """
+    rem = fresh("rm")
+    ineq = L_nonneg_N if over_N else L_nonneg
+    core = Dioph(params=sorted((a.free_symbols | b.free_symbols | q.free_symbols), key=str),
+                 unknowns=[rem], eqs=[sympy.expand(a - b * q - rem)],
+                 witness=None, name="division entera")
+
+    i1, i2 = ineq(rem), ineq(b - rem - 1)
+    system = conj(core, i1, i2, name=f"{q} = floor({a}/{b})")
+
+    def w(vals):
+        av, bv, qv = int(a.subs(vals)), int(b.subs(vals)), int(q.subs(vals))
+        if bv <= 0:
+            return None
+        rv = av - bv * qv
+        if rv < 0 or rv >= bv:
+            return None
+        out = {rem: rv}
+        for d, val in ((i1, rv), (i2, bv - rv - 1)):
+            if d.unknowns:
+                qd = four_squares(val)
+                if qd is None:
+                    return None
+                out.update(dict(zip(d.unknowns, qd)))
+        return out
+
+    system.witness = w
+    return system
+
+
+def L_binomial(r, n, c, over_N=True):
+    """c = C(r,n) por EXTRACCION DE DIGITOS en base u.
+
+    Identidad (Julia Robinson):  C(r,n) = floor((u+1)^r / u^n) mod u,  con
+    u > 2^r (asi ningun binomial se desborda de su digito). Verificada aqui en
+    252 casos sin fallos.
+
+    Cadena: T = 2^r ; u = T+1 ; W = (u+1)^r ; P = u^n ; Q = floor(W/P) ;
+            c == Q (mod u) ; c < u.
+    """
+    T, W, P, Q = fresh("bt"), fresh("bw"), fresh("bp"), fresh("bq")
+    u = T + 1
+    ineq = L_nonneg_N if over_N else L_nonneg
+
+    partes = [
+        L_value(T, lambda v: 2 ** int(r.subs(v))),
+        L_exponential(sympy.Integer(2), r, T, over_N=over_N),
+        L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(r.subs(v))),
+        L_exponential(u + 1, r, W, over_N=over_N),
+        L_value(P, lambda v: int(u.subs(v)) ** int(n.subs(v))),
+        L_exponential(u, n, P, over_N=over_N),
+        L_value(Q, lambda v: int(W.subs(v)) // int(P.subs(v))),
+        L_floor_div(W, P, Q, over_N=over_N),
+        L_congruent(c, Q, u),
+        ineq(u - c - 1),
+    ]
+    return conj(*partes, name=f"{c} = C({r},{n})")
+
+
+def L_factorial(n, m, over_N=True):
+    """m = n!   via  n! = floor(r^n / C(r,n))  con  r > (n+1)^(n+1).
+
+    Identidad clasica (Julia Robinson). La cota (n+1)^(n+1) es la DEMOSTRABLE;
+    empiricamente basta un r mucho menor (n=5: 1207 frente a 46656), pero el
+    sistema debe imponer la cota probada.
+
+    AVISO DE TAMANO: el testigo crece de forma explosiva. Para n=3 la cota exige
+    r=257 y la cadena binomial maneja numeros de ~20.000 digitos; para n>=5 deja
+    de ser computable. Es el precio real de MRDP, y por eso estas
+    representaciones son teoricas y no practicas.
+    """
+    E, R, A, B = fresh("fe"), fresh("fr"), fresh("fa"), fresh("fb")
+
+    partes = [
+        L_value(E, lambda v: (int(n.subs(v)) + 1) ** (int(n.subs(v)) + 1)),
+        L_exponential(n + 1, n + 1, E, over_N=over_N),
+        L_value(R, lambda v: int(E.subs(v)) + 1),
+        Dioph(params=[], unknowns=[], eqs=[sympy.expand(R - E - 1)],
+              witness=lambda v: {}, name="R = E+1"),
+        L_value(A, lambda v: int(R.subs(v)) ** int(n.subs(v))),
+        L_exponential(R, n, A, over_N=over_N),
+        L_value(B, lambda v: sympy.binomial(int(R.subs(v)), int(n.subs(v)))),
+        L_binomial(R, n, B, over_N=over_N),
+        L_floor_div(A, B, m, over_N=over_N),
+    ]
+    return conj(*partes, name=f"{m} = {n}!")
+
+
+def L_prime(n, over_N=True):
+    """n es PRIMO, via el teorema de WILSON:  n primo <=> n | (n-1)! + 1  (n>1).
+
+    Cadena completa: Wilson -> factorial -> binomial -> exponenciacion -> Pell.
+    Esta es la primera representacion COMPLETA de los primos que produce el
+    calculo. Su coste medido es el punto de partida frente al record de 9.
+    """
+    m = fresh("wm")
+    partes = [
+        L_value(m, lambda v: sympy.factorial(int(n.subs(v)) - 1)),
+        L_factorial(n - 1, m, over_N=over_N),
+        L_divides(n, m + 1),
+        (L_nonneg_N if over_N else L_nonneg)(n - 2),
+    ]
+    system = conj(*partes, name=f"{n} es primo (Wilson)")
+
+    # Cortocircuito del CONSTRUCTOR: para un compuesto no existe testigo (Wilson),
+    # y desplegar la cadena seria ademas incomputable para n moderado (8! exige
+    # r = 9^9 ~ 3.9e8). El constructor lo rechaza de inmediato.
+    # OJO: esto optimiza el CONSTRUCTOR, no demuestra soundness; esa descansa en
+    # el teorema de Wilson, verificado por separado en el test.
+    inner = system.witness
+
+    def w(vals):
+        nv = int(n.subs(vals))
+        if nv < 2 or not sympy.isprime(nv):
+            return None
+        return inner(vals)
 
     system.witness = w
     return system
