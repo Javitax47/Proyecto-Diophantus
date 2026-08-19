@@ -252,3 +252,119 @@ en quien la produjo.**
 - Terminación: [Syndicate: ranking + invariante con realimentación bidireccional](https://arxiv.org/abs/2404.05951) · [Zhu & Kincaid, *On Ranking Function Synthesis and Termination for Polynomial Programs*](https://people.mpi-sws.org/~joel/publications/ranking_polynomial_programs20.pdf)
 - CHC: [Golem](https://link.springer.com/article/10.1007/s10703-025-00470-9) · [CHC-COMP](https://arxiv.org/pdf/2404.14923) · [SeaHorn](https://seahorn.github.io/papers/cav15.pdf) · [Hornix: LLVM IR ↔ CHC](https://link.springer.com/chapter/10.1007/978-3-032-22749-2_28)
 - Equivalencia y clones: [*Semantic Code Clone Detection: Are We There Yet?* (2026)](https://arxiv.org/abs/2606.25272) · [Alive2: bounded translation validation for LLVM](https://dl.acm.org/doi/10.1145/3453483.3454030) · [Equivalencia semántica entre versiones de proyectos C a gran escala](https://dl.acm.org/doi/10.1145/3801958)
+
+---
+
+# 7. Cambio de paradigma: cómo abrir la puerta a primos, Collatz y problemas de ese tipo
+
+Las secciones §1–§4 amplían el motor dentro de su paradigma. Esta sección cuestiona el paradigma
+mismo. El motor pregunta hoy:
+
+> *"¿Existe un polinomio Q de grado ≤ d, **en las coordenadas dadas**, con Q(T(x)) = λ·Q(x) **exactamente**?"*
+
+Hay tres supuestos ocultos ahí —**el diccionario** (polinomios), **las coordenadas** (las que
+venían) y **la modalidad** (identidad exacta)— y cada uno es una puerta.
+
+## 7.1 Paradigma A — Aprender el diccionario y las coordenadas (Koopman)
+
+**Observación de fondo:** la ecuación `Q(T(x)) = λ·Q(x)` que resuelve `discovery_engine.py` **es
+la ecuación de autofunciones del operador de Koopman**, restringida a polinomios. El motor calcula
+autofunciones de Koopman sin llamarlas así. Eso conecta el proyecto con una teoría madura (EDMD,
+deepDMD, aprendizaje de diccionarios) cuya palanca central es precisamente **qué observables se
+admiten**.
+
+**Consecuencia para Collatz.** Es un teorema clásico que la aplicación de Collatz sobre los
+enteros 2-ádicos es **conjugada al shift**: con la codificación de paridad Q∞ de Lagarias se
+cumple `Q∞ ∘ T = σ ∘ Q∞`, y el vector de paridad `V_k(n)` determina `n` módulo `2^k`
+biyectivamente. Es decir: en el diccionario de **funciones de paridad y residuos mod 2^k** —que
+no son polinomios sobre ℤ, y por eso el motor actual es ciego a ellas— **Collatz sí tiene
+estructura exacta y descubrible**.
+
+El premio no es resolver la conjetura: lo que ese descubrimiento revela es que Collatz es
+conjugado a un **shift de Bernoulli**, o sea tan aleatorio como una moneda. *La estructura de
+Collatz, hallada del todo, es que no tiene estructura.* Eso **explica** por qué resiste, que es un
+resultado distinto y legítimo.
+
+- **Coste:** bajo. Ampliar el diccionario del `discovery_engine` a observables aritméticos.
+- **Objetivo de validación:** redescubrir la conjugación Q∞ de Lagarias.
+
+## 7.2 Paradigma B — Convertir el silencio en resultado: certificados de obstrucción
+
+Cuando el buscador SOS no halla certificado devuelve `None` y ahí acaba. Pero cuando un SDP de
+grado `d` es **infactible**, la dualidad entrega un **certificado dual de infactibilidad**: una
+*prueba* de que no existe certificado de esa forma. Es la misma computación con el valor
+epistémico invertido.
+
+| Hoy | Con obstrucciones |
+|---|---|
+| "No encontré nada" (sin información) | "**Demostré que no existe** certificado SOS de grado ≤ d" |
+
+Convierte el mayor defecto del motor —enmudecer ante lo difícil— en su producto. Hay literatura
+activa en ese género (p. ej. *2-Adic Obstructions to Presburger-Definable Characterizations of
+Collatz Cycles*, 2026). Saber qué métodos **no** pueden funcionar orienta cuáles sí, es finito y
+comprobable, y nadie lo hace de forma sistemática.
+
+- **Coste:** muy bajo (emitir el certificado dual en lugar de `None`).
+- **Es la mejor relación valor/esfuerzo de toda la propuesta.**
+
+## 7.3 Paradigma C — Para los primos: buscar en el espacio de CONSTRUCCIONES
+
+**El objetivo correcto no es "obtener una ecuación" (MRDP ya garantiza que existe), sino batir un
+récord con marcador.**
+
+| Hito | Variables |
+|---|---|
+| Matiyasevich 1971 | 24 (grado 37) |
+| Matiyasevich–Robinson | 13 incógnitas |
+| Matiyasevich 1975 / Jones | 9 incógnitas |
+| Sun (rango en ℤ) | ν ≤ 11 |
+| **Récord actual (menor conocido)** | **10 variables** = 9 incógnitas + el parámetro |
+
+El récord **no se obtuvo compilando**, sino **componiendo reducciones** (exponenciación → Pell,
+etc.). De ahí el paradigma:
+
+1. Construir una **biblioteca certificada de lemas de codificación diofántica**, cada uno
+   verificado una sola vez y con su **coste en variables** declarado.
+2. **Buscar sobre composiciones** de esos lemas minimizando el número total de incógnitas.
+
+Lo que lo hace viable: **la corrección es por construcción** (cada lema está verificado) y **el
+coste es computable exactamente**. Objetivo barato + verificación exacta es justo el perfil que
+hizo funcionar a FunSearch/AlphaEvolve, el único paradigma con historial de matemática nueva
+aceptada. Y al ser un **récord y no una conjetura**, el progreso parcial es publicable.
+
+*Honestidad:* que el espacio de composiciones sea lo bastante rico como para batir 48 años de
+trabajo de especialistas está por ver. Lo que esta línea garantiza es que el objetivo queda
+**bien planteado y con marcador**, que es más de lo que tenía antes.
+
+## 7.4 Paradigma D — De álgebra exacta a medida certificada
+
+Extiende §1. Combinado con el Paradigma A es lo único que apunta al mismo objeto que Tao: él
+estudia la **medida invariante** del paseo aleatorio de Syracuse sobre residuos, y la jerarquía
+momento-SOS es la contraparte algebraica de la teoría de la medida. Diccionario aritmético
+(residuos) + restricciones de momentos sobre medidas invariantes = mirar donde Tao miró.
+
+*Honestidad:* el propio Tao afirma que reforzar su resultado a una constante absoluta es
+"probablemente casi tan difícil como la conjetura completa". Esto es programa de investigación,
+no tarea de implementación.
+
+## 7.5 El principio general
+
+> El alcance del motor es exactamente **la clase de problemas cuya respuesta admite un certificado
+> corto en un sistema de prueba fijo**. Solo se ensancha de dos formas: **ampliando el sistema**
+> (diccionario, coordenadas, medidas) o **cambiando lo que se pide** (cotas, obstrucciones y
+> récords en lugar de teoremas).
+
+Bajo cualquiera de los cuatro paradigmas, **las conjeturas de Collatz y la "ecuación relevante de
+los primos" siguen fuera de alcance**. Lo que pasa a ser alcanzable:
+
+| Objetivo | Antes | Con el cambio de paradigma |
+|---|---|---|
+| Collatz (conjetura) | ❌ | ❌ (sigue fuera) |
+| Collatz: conjugación 2-ádica | ❌ | ✅ objetivo de validación verificable (Paradigma A) |
+| Collatz: obstrucciones | ❌ | ✅ resultados negativos publicables (Paradigma B) |
+| Primos: ecuación "relevante" | ❌ | ❌ (cerrado por MRDP) |
+| **Primos: récord de variables** | ❌ | ✅ **bien planteado, con marcador** (Paradigma C) |
+| Caos: cotas certificadas | ❌ | ✅ (§1) |
+
+**Prioridad de arranque:** Paradigma C (récord de primos) por su marcador claro y su potencial de
+romper una marca de medio siglo, y Paradigma B (obstrucciones) por su relación valor/esfuerzo.
