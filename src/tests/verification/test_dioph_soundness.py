@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.analysis.dioph_problems import build_catalog, rango_de
 from src.analysis.dioph_calculus import Dioph
-from src.analysis.dioph_lemmas import L_exponential, L_composite, fresh
+from src.analysis.dioph_lemmas import L_exponential, L_composite, L_nonneg_N, fresh
 from src.analysis.dioph_soundness import (
     Z3_DISPONIBLE, sympy_to_z3, solve, soundness_report, uniqueness_report, resumen,
 )
@@ -184,6 +184,61 @@ def test_unknown_no_es_prueba(stats):
         stats.fail(f"estados inesperados: 12->{sat['estado']} 13->{unsat['estado']}")
 
 
+def test_criterio_gratis(stats):
+    """[6] El criterio "gratis sobre N" debe ser CIERTO, no comodo.
+
+    `L_nonneg_N` declara coste 0 cuando todos los coeficientes del polinomio son
+    >= 0. Aqui se comprueba a la inversa: para cada expresion que el lema declara
+    gratis, se evalua en un rango de asignaciones NO NEGATIVAS y se exige que
+    nunca salga negativa. Es el guardarrail del defecto que costo esta sesion:
+    declarar gratis lo que no lo era anulaba condiciones laterales enteras.
+    """
+    print(f"\n{Colors.HEADER}[6] El criterio 'gratis sobre N' no miente{Colors.ENDC}")
+    x, y = sympy.symbols('x y', integer=True, nonnegative=True)
+    casos = [x, x + 1, 2*x + 3*y, x*y, x**2 + y, sympy.Integer(5),
+             x - 1, x - y, 2*x - 3, x*y - 1, sympy.Integer(-2)]
+    malos = []
+    gratis = 0
+    for e in casos:
+        d = L_nonneg_N(e)
+        if d.cost() != 0 or d.eqs:
+            continue                       # cuesta holgura: no afirma nada
+        gratis += 1
+        for xv in range(0, 8):
+            for yv in range(0, 8):
+                if int(sympy.expand(e).subs({x: xv, y: yv})) < 0:
+                    malos.append((e, xv, yv))
+    if malos:
+        stats.fail(f"declarado gratis pero NEGATIVO: {malos[:3]}")
+    else:
+        print(f"  {Colors.OKGREEN}OK{Colors.ENDC} {gratis} expresiones declaradas gratis, "
+              f"ninguna negativa en 64 asignaciones de N")
+        stats.ok()
+
+
+def test_base_pell_compartida(stats):
+    """[7] Compartir la base `a` entre exponentes distintos no rompe nada.
+
+    Es el mecanismo que mas incognitas ahorro (44 -> ... en la esquina de grado
+    bajo). Compartir es exactamente donde se cuelan los errores: si un contexto
+    necesita una `a` mayor que la que fija la base, el testigo deja de existir.
+    Se comprueba que la cadena completa sigue construyendo testigo valido.
+    """
+    print(f"\n{Colors.HEADER}[7] Base de Pell compartida entre exponentes distintos{Colors.ENDC}")
+    prob = [p for p in build_catalog() if p.name == "primo"][0]
+    ok = True
+    for v in (2, 3):
+        vale, _ = prob.system.check_witness({prob.param: v})
+        print(f"  n={v}: testigo {'valido' if vale else 'INVALIDO'}")
+        ok = ok and vale
+    if ok:
+        print(f"  (la base fija a = suma de cotas; cada contexto exige a >= su cota,")
+        print(f"   y la suma domina a cada sumando porque sobre N todas son >= 0)")
+        stats.ok()
+    else:
+        stats.fail("la base compartida deja algun contexto sin testigo")
+
+
 def main():
     print(f"{Colors.BOLD}=== SOUNDNESS POR SMT: LA DIRECCION QUE FALTABA ==={Colors.ENDC}")
     if not Z3_DISPONIBLE:
@@ -195,6 +250,8 @@ def main():
     test_regresion_primos(stats)
     test_unicidad_exponencial(stats)
     test_unknown_no_es_prueba(stats)
+    test_criterio_gratis(stats)
+    test_base_pell_compartida(stats)
 
     total = stats.passed + stats.failed
     print()

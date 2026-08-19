@@ -217,34 +217,36 @@ FRONTERA = [
 # ---------------------------------------------------------------------------
 
 def L_nonneg_N(e):
-    """e >= 0 cuando las incognitas recorren N.   COSTE: 1 (holgura).
+    """e >= 0 cuando las incognitas recorren N.   COSTE: 0 o 1.
 
-    ATENCION - ESTO COSTABA 0 Y ERA UN DEFECTO DE SOUNDNESS.
-    Sobre N la no-negatividad es gratis para una INCOGNITA SUELTA (el dominio ya
-    la impone), pero NO para una EXPRESION como `2*a*b - b^2 - 1 - c - 1`. La
-    version anterior devolvia un sistema VACIO: no imponia nada, de modo que las
+    ATENCION - ESTO COSTABA SIEMPRE 0 Y ERA UN DEFECTO DE SOUNDNESS.
+    Sobre N la no-negatividad es gratis para una VARIABLE SUELTA (el dominio ya
+    la impone), pero NO para una expresion cualquiera como `2ab - b^2 - 1 - c - 1`.
+    La version original devolvia un sistema VACIO en ambos casos, de modo que las
     condiciones laterales del lema exponencial quedaban silenciosamente anuladas
     en modo N -- justo el modo que usa el generador. Z3 encontro por ello
     soluciones espurias para n = 4, 9, 15, 25 (ver dioph_soundness.py).
 
-    La forma correcta cuesta UNA incognita:   e >= 0  <=>  exists u>=0 : e - u = 0.
-    Sigue siendo mucho mas barata que sobre Z (4, por Lagrange), que es la brecha
+    CRITERIO CORRECTO Y GENERAL: sobre N todas las variables son >= 0, luego
+    **un polinomio con todos sus coeficientes >= 0 es >= 0 automaticamente**.
+    Ese es el caso gratis, y contiene como casos particulares la variable suelta,
+    las constantes no negativas y sumas como `T + 1` o `E + 2`. En cualquier otro
+    caso hace falta una holgura:   e >= 0  <=>  exists u>=0 : e - u = 0.
+
+    Sigue siendo mucho mas barato que sobre Z (4, por Lagrange), que es la brecha
     real entre records segun el rango de las incognitas.
     """
     e = sympy.expand(e)
     if e.is_number:
-        # Condicion decidible en tiempo de construccion: no gasta nada.
         if int(e) >= 0:
             return Dioph(params=[], unknowns=[], eqs=[], witness=lambda vals: {},
                          name=f"{e} >= 0 (cierto: gratis)")
         return Dioph(params=[], unknowns=[], eqs=[sympy.Integer(1)],
                      witness=lambda vals: None, name=f"{e} >= 0 (FALSO: insatisfacible)")
-    if isinstance(e, sympy.Symbol):
-        # UNICO caso realmente gratis sobre N: una variable suelta. El dominio ya
-        # la hace >= 0, no hay nada que imponer. (Era la intuicion correcta detras
-        # del defecto; el error fue aplicarla tambien a expresiones compuestas.)
-        return Dioph(params=[e], unknowns=[], eqs=[], witness=lambda vals: {},
-                     name=f"{e} >= 0 (variable suelta sobre N: gratis)")
+    if _coeficientes_no_negativos(e):
+        return Dioph(params=sorted(e.free_symbols, key=str), unknowns=[], eqs=[],
+                     witness=lambda vals: {},
+                     name=f"{e} >= 0 (coeficientes >= 0 sobre N: gratis)")
     u = fresh("u")
     def w(vals):
         ev = int(e.subs(vals))
@@ -252,6 +254,21 @@ def L_nonneg_N(e):
     return Dioph(params=sorted(e.free_symbols, key=str), unknowns=[u],
                  eqs=[sympy.expand(e - u)], witness=w,
                  name=f"{e} >= 0 (sobre N: 1 holgura)")
+
+
+def _coeficientes_no_negativos(e):
+    """True si todo monomio de `e` tiene coeficiente >= 0 (incluida la constante).
+
+    Sobre N eso basta para concluir e >= 0 sin gastar nada. Si la expresion no es
+    polinomica se devuelve False: preferimos pagar de mas a afirmar de mas.
+    """
+    try:
+        syms = sorted(e.free_symbols, key=str)
+        poly = sympy.Poly(e, *syms)
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+        return False
+    return all(c >= 0 for c in poly.coeffs()) and poly.as_expr().subs(
+        {sy: 0 for sy in syms}) >= 0
 
 
 class NonnegPool:
@@ -270,14 +287,33 @@ class NonnegPool:
     def __init__(self, over_N=True):
         self.over_N = over_N
         self._cache = {}
+        self._por_resto = {}     # parte no constante -> menor constante ya impuesta
 
     def __call__(self, e):
         e = sympy.expand(e)
+        base = L_nonneg_N if self.over_N else L_nonneg
         clave = sympy.srepr(e)
-        if clave not in self._cache:
-            base = L_nonneg_N if self.over_N else L_nonneg
-            self._cache[clave] = base(e)
-        return self._cache[clave]
+        if clave in self._cache:
+            return self._cache[clave]
+        # IMPLICACION POR CONSTANTE. Si ya se impuso `resto + c0 >= 0` y ahora se
+        # pide `resto + c >= 0` con c >= c0, la nueva se sigue de la anterior y no
+        # cuesta nada. Es el caso real de `n - 1 >= 0` cuando `n - 2 >= 0` ya esta
+        # impuesto. Solo compara expresiones que difieren en una CONSTANTE ENTERA:
+        # es una implicacion decidible, no una heuristica.
+        const, resto = e.as_coeff_Add()
+        k_resto = sympy.srepr(resto)
+        anterior = self._por_resto.get(k_resto)
+        if anterior is not None and anterior <= const:
+            vacio = Dioph(params=sorted(e.free_symbols, key=str), unknowns=[], eqs=[],
+                          witness=lambda vals: {},
+                          name=f"{e} >= 0 (implicada por {resto} + {anterior} >= 0)")
+            self._cache[clave] = vacio
+            return vacio
+        sistema = base(e)
+        self._cache[clave] = sistema
+        if anterior is None or const < anterior:
+            self._por_resto[k_resto] = const
+        return sistema
 
     def sistemas(self):
         """Los sub-sistemas distintos creados (cada uno se compone UNA vez)."""
@@ -517,6 +553,55 @@ def L_prime(n, over_N=True):
 #   BUSQUEDA CON COMPARTICION DE INCOGNITAS (la unica via hacia el record)
 # ---------------------------------------------------------------------------
 
+class PellBase:
+    """Base `a` de Pell COMPARTIDA por contextos con exponentes DISTINTOS.
+
+    La comparticion que ya existia (`PellContext`) exige el MISMO exponente,
+    porque x_k(a) e y_k(a) dependen de (a,k). Pero `a` solo depende de a: es un
+    parametro libre de la familia de Pell, sujeto unicamente a ser bastante
+    grande. Nada obliga a que cada exponente use el suyo.
+
+    Asi que todos los contextos comparten (a, u) y cada uno aporta su cota. Como
+    todas las cotas son positivas sobre N, exigir
+
+        a = (suma de todas las cotas) + u,   u >= 0
+
+    implica  a >= cota_j  para cada contexto j (la suma domina a cada sumando).
+    No se puede escribir un `max` en una ecuacion diofantica; una suma de
+    terminos no negativos hace el mismo trabajo y es lineal.
+
+    Ahorro: 2 incognitas (a y su holgura) por cada contexto adicional.
+    """
+
+    def __init__(self, over_N=True):
+        self.over_N = over_N
+        self.A = fresh("ca")
+        self.cotas = []
+
+    def require(self, cota):
+        """Registra una cota inferior que `a` debe superar."""
+        self.cotas.append(cota)
+
+    def build(self):
+        total = sympy.Integer(0)
+        for c in self.cotas:
+            total = total + c
+        # IGUALDAD, no desigualdad: `a` no necesita ser "suficientemente grande",
+        # basta con FIJARLO a un valor que lo sea. La suma de cotas lo es, y una
+        # igualdad no gasta holgura. Es mas restrictivo que `a >= suma`, luego
+        # sigue siendo sound; y la completitud se conserva porque el testigo
+        # elegia exactamente ese valor.
+        eq = sympy.expand(self.A - total)
+        params = sorted(eq.free_symbols - {self.A}, key=str)
+
+        def w(vals):
+            tv = int(total.subs(vals)) if hasattr(total, 'subs') else int(total)
+            return {self.A: tv}
+
+        return Dioph(params, [self.A], [eq], witness=w,
+                     name="base de Pell compartida (a = suma de cotas)")
+
+
 class PellContext:
     """Contexto de Pell COMPARTIDO por todas las relaciones con el mismo exponente.
 
@@ -528,13 +613,17 @@ class PellContext:
     Coste: 4 incognitas compartidas + 1 por relacion, en vez de 5 por relacion.
     """
 
-    def __init__(self, k, over_N=True, pool=None):
+    def __init__(self, k, over_N=True, pool=None, base=None):
         self.k = k
         self.over_N = over_N
         # Pool compartido con el resto de la construccion: si `k >= 1` o `b >= 2`
         # ya se impuso en otro eslabon, aqui cuesta 0.
         self.pool = pool
-        self.A, self.X, self.Y = fresh("ca"), fresh("cx"), fresh("cy")
+        # Base `a` compartida entre exponentes distintos (PellBase). Si no se da,
+        # el contexto crea la suya y paga las 2 incognitas.
+        self.base = base
+        self.A = base.A if base is not None else fresh("ca")
+        self.X, self.Y = fresh("cx"), fresh("cy")
         self.t = fresh("ct")
         self.rels = []          # (base, valor, s)
 
@@ -547,45 +636,57 @@ class PellContext:
     def build(self):
         """Sistema completo del contexto (base compartida + todas las relaciones).
 
-        REPARAMETRIZACION EN LUGAR DE HOLGURAS (la razon de que esto sea barato).
-        Las condiciones laterales clasicas son cotas INFERIORES sobre la incognita
-        compartida `a`:   a-1 > k,  a > c_i,  a > b_i,  c_i < M_i.
-        Imponerlas con una holgura cada una costaria ~2 incognitas por relacion.
-        En vez de eso se sustituye la propia incognita por
+        COTA POR ECUACION LINEAL, NO POR SUSTITUCION (esto importa para el grado).
+        Las condiciones laterales clasicas son cotas inferiores sobre la incognita
+        compartida `a`:  a-1 > k,  a > c_i,  a >= b_i,  c_i < M_i. Imponerlas con
+        una holgura cada una costaria ~2 incognitas por relacion.
 
-            a  :=  a' + k + 2 + sum_i (b_i + c_i)          con a' >= 0 fresca
+        Una version anterior las resolvia SUSTITUYENDO `a := a' + cota` dentro de
+        las ecuaciones. Correcto y de coste cero en la representacion, pero
+        desastroso al aplanar: `a` aparece al cuadrado en la ecuacion de Pell, y
+        elevar al cuadrado una suma de 6 simbolos genera decenas de monomios de
+        grado 4, cada uno de los cuales hay que nombrar. La representacion era
+        barata y el GENERADOR carisimo.
 
-        y entonces las cuatro se cumplen POR CONSTRUCCION, a coste CERO:
-            a >= k+2                          -> a-1 > k
-            a >= c_i + 2                      -> a > c_i
-            a >= b_i                          -> junto con b_i >= 2:
+        Ahora `a` sigue siendo UN simbolo y la cota se impone con una ecuacion
+        LINEAL aparte:
+
+            a - cota - u = 0,     cota = k + 2 + sum_i (b_i + c_i),   u >= 0 fresca
+
+        Cuesta 1 incognita por contexto, pero deja la ecuacion de Pell con 4
+        monomios en vez de decenas. Es el mismo intercambio incognitas<->grado que
+        hace `flatten_greedy`, aplicado en el sitio correcto: antes de expandir.
+
+        Con `a >= k+2`, `a >= c_i+2`, `a >= b_i` y `b_i >= 2` se sigue:
             M_i - c_i - 1 = b_i(2a-b_i) - c_i - 2 >= b_i*a - c_i - 2
-                          >= 2a - c_i - 2 >= 2c_i + 2 - c_i  > 0
-        Lo mismo con  y := y' + 1, que elimina la solucion degenerada (x,y)=(1,0)
-        de la ecuacion de Pell.
-
-        Solo quedan dos condiciones que NO son cotas sobre una incognita propia,
-        porque k y b_i son EXPRESIONES de la cadena: k >= 1 y b_i >= 2. Esas si
-        cuestan una holgura cada una.
+                          >= 2a - c_i - 2 >= 2c_i + 2 - c_i > 0
+        Y `y >= 1` NO hace falta imponerlo: la ecuacion del indice da
+        y = k + (a-1)t con k >= 1, a >= 2, t >= 0, luego y >= 1 ya se sigue.
+        (Antes se imponia con y := y'+1, otra sustitucion que solo inflaba
+        monomios.)
         """
-        A0, X, Y0, t, k = self.A, self.X, self.Y, self.t, self.k
+        A, X, Y, t, k = self.A, self.X, self.Y, self.t, self.k
         ineq = self.pool if self.pool is not None else (
             L_nonneg_N if self.over_N else L_nonneg)
 
         cota = k + 2
         for b, c, _ in self.rels:
             cota = cota + b + c
-        A = A0 + cota                       # EXPRESION, no simbolo
-        Y = Y0 + 1                          # y >= 1 por construccion
-        self.cota = cota                    # la necesita el testigo
+        self.cota = cota
 
         eqs = [sympy.expand(X ** 2 - (A ** 2 - 1) * Y ** 2 - 1),   # Pell
                sympy.expand(Y - k - (A - 1) * t)]                   # indice
-        unknowns = [A0, X, Y0, t]
-        # Lo unico que ya no es gratis: k y b_i no son incognitas propias.
-        # Sin estas dos el sistema era INSOUND (Z3 lo exhibio: con a in {0,1} la
-        # ecuacion de Pell degenera y (x,y)=(1,0) la resuelve; con b in {0,1} el
-        # modulo M = 2ab-b^2-1 se vuelve <= 0, y colaba cualquier compuesto).
+        unknowns = [X, Y, t]
+        if self.base is None:
+            u = fresh("cu")                 # holgura propia: a = cota + u
+            eqs.append(sympy.expand(A - cota - u))
+            unknowns = [A] + unknowns + [u]
+        else:
+            self.base.require(cota)         # la impone la base compartida
+        # Lo unico que no es cota sobre una incognita propia: k y b_i son
+        # EXPRESIONES de la cadena. Sin estas dos el sistema era INSOUND (Z3 lo
+        # exhibio: con a in {0,1} la ecuacion de Pell degenera y (x,y)=(1,0) la
+        # resuelve; con b in {0,1} el modulo M = 2ab-b^2-1 se vuelve <= 0).
         extras = [ineq(k - 1)]                                      # k >= 1
 
         for b, c, s in self.rels:
@@ -608,11 +709,21 @@ class PellContext:
             if kv < 1 or any(bv < 2 for bv, _, _ in bs):
                 return None
             cota_v = kv + 2 + sum(bv + cv for bv, cv, _ in bs)
-            av = cota_v                       # la cota ya garantiza (4)-(6)
+            if self.base is None:
+                av = cota_v                   # la cota ya garantiza (4)-(6)
+            else:
+                # La base compartida ya fijo `a` (y es >= esta cota, porque la
+                # suma de cotas domina a cada sumando). Se LEE, no se elige.
+                av = int(self.base.A.subs(vals))
+                if av < cota_v:
+                    return None
             xv, yv = pell_seq(av, kv)
             if (yv - kv) % (av - 1) != 0:
                 return None
-            out = {A0: av - cota_v, X: xv, Y0: yv - 1, t: (yv - kv) // (av - 1)}
+            out = {X: xv, Y: yv, t: (yv - kv) // (av - 1)}
+            if self.base is None:
+                out[A] = av
+                out[u] = av - cota_v
             for bv, cv, s in bs:
                 Mv = 2 * av * bv - bv ** 2 - 1
                 rest = (xv - (av - bv) * yv) - cv
@@ -650,21 +761,46 @@ def L_prime_shared(n, over_N=True):
     """
     contexts = {}
     pool = NonnegPool(over_N)          # deduplica las desigualdades de TODA la cadena
+    base = PellBase(over_N)            # UNA sola `a` para los tres exponentes
 
     def rel(b, k, c):
         key = sympy.srepr(sympy.sympify(k))
         if key not in contexts:
-            contexts[key] = PellContext(k, over_N, pool=pool)
+            contexts[key] = PellContext(k, over_N, pool=pool, base=base)
         contexts[key].relate(b, c)
 
     m = fresh("wm")
-    E, A, B = fresh("se"), fresh("sa"), fresh("sb")
-    T, W, P, Q = fresh("st"), fresh("sw"), fresh("sp"), fresh("sq")
+    Ev, A, B = fresh("se"), fresh("sa"), fresh("sb")
+    Tv, W, P = fresh("st"), fresh("sw"), fresh("sp")
+    # ELIMINACION DE Q. Q = floor(W/P) solo se usa para exigir Q == B (mod u).
+    # En vez de darle una incognita propia y una congruencia aparte, se SUSTITUYE
+    # Q por su forma general `B + u*cq`: la congruencia deja de necesitar ecuacion
+    # y Q deja de necesitar incognita. Se ahorra una.
+    cq = fresh("c")
+    Q = B_placeholder = None         # (Q se define abajo, cuando B ya existe)
     nn = n - 1                       # Wilson usa (n-1)!
-    u = T + 1
-    R = E + 1                        # ELIMINACION: R no necesita ser incognita,
-                                     # es una EXPRESION. Segundo mecanismo de
-                                     # reduccion, complementario a la comparticion.
+
+    # DESPLAZAMIENTO DE ORIGEN (coste 0, ahorra holguras).
+    # Las condiciones `R >= 2` y `u >= 2` -- ambas de la forma `base >= 2` -- se
+    # convierten en condiciones sobre polinomios de coeficientes no negativos, que
+    # sobre N son GRATIS. Basta almacenar E y T desplazados una unidad:
+    #     E = Ev + 1  (E = n^n >= 4 para n >= 2, luego Ev >= 0 no pierde nada)
+    #     T = Tv + 1  (T = 2^R >= 2)
+    # Con eso  R = Ev + 2  y  u = Tv + 2: `R - 2 = Ev` y `u - 2 = Tv` tienen todos
+    # los coeficientes >= 0. Antes costaban una holgura cada una.
+    E = Ev + 1
+    T = Tv + 1
+    u = T + 1                        # = Tv + 2
+    R = E + 1                        # = Ev + 2. ELIMINACION: R no necesita ser
+                                     # incognita, es una EXPRESION. Segundo
+                                     # mecanismo, complementario a la comparticion.
+
+    Q = B + u * cq                   # forma general de un entero == B (mod u)
+
+    # SEMILLA DEL POOL: se impone `n >= 2` ANTES que nada para que `n >= 1`
+    # (exponente n de la primera relacion) quede IMPLICADA y no gaste holgura.
+    # La regla de implicacion del pool se queda con la primera cota registrada.
+    pool(n - 2)
 
     rel(n, n, E)                     # E = n^n     [= (nn+1)^(nn+1)]
     rel(R, nn, A)                    # A = R^nn
@@ -675,22 +811,26 @@ def L_prime_shared(n, over_N=True):
     ineq = pool
     partes = [
         L_value(m, lambda v: sympy.factorial(int(n.subs(v)) - 1)),
-        L_value(E, lambda v: int(n.subs(v)) ** int(n.subs(v))),
+        L_value(Ev, lambda v: int(n.subs(v)) ** int(n.subs(v)) - 1),
         L_value(A, lambda v: int(R.subs(v)) ** (int(n.subs(v)) - 1)),
-        L_value(T, lambda v: 2 ** int(R.subs(v))),
+        L_value(Tv, lambda v: 2 ** int(R.subs(v)) - 1),
         L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(R.subs(v))),
         L_value(P, lambda v: int(u.subs(v)) ** (int(n.subs(v)) - 1)),
-        L_value(Q, lambda v: int(W.subs(v)) // int(P.subs(v))),
+        L_value(cq, lambda v: (int(W.subs(v)) // int(P.subs(v))
+                               - int(sympy.binomial(int(R.subs(v)), int(n.subs(v)) - 1)))
+                              // int(u.subs(v))),
         L_value(B, lambda v: int(sympy.binomial(int(R.subs(v)), int(n.subs(v)) - 1))),
     ]
-    partes += [c.build() for c in contexts.values()]
+    # ORDEN: los contextos se construyen primero para que registren sus cotas en
+    # la base, pero la base va ANTES en la conjuncion porque su testigo fija `a`
+    # y los contextos lo LEEN.
+    sistemas_ctx = [c.build() for c in contexts.values()]
+    partes += [base.build()] + sistemas_ctx
     partes += [
+        # Q = B + u*cq ya lleva la congruencia dentro: no hace falta L_congruent.
+        # (El orden Q - B - u*k, y no al reves, era esencial cuando si la habia:
+        # como Q >> B, el multiplicador solo queda >= 0 en ese sentido.)
         L_floor_div(W, P, Q, over_N=over_N),
-        # ORDEN IMPORTANTE: Q - B - u*k = 0 (no B - Q - ...), porque Q >> B y asi el
-        # multiplicador k queda >= 0. Con el orden inverso k es NEGATIVO y el
-        # sistema deja de estar sobre N — lo que invalidaria el modo over_N y
-        # cualquier construccion que exija variables no negativas.
-        L_congruent(Q, B, u),
         ineq(u - B - 1),
         L_floor_div(A, B, m, over_N=over_N),
         L_divides(n, m + 1),

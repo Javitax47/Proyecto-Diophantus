@@ -52,15 +52,18 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 | `L_divides`, `L_congruent`, `L_square` | 1 | 1 | elemental |
 | `L_composite` | 2 | 2 | elemental |
 | `L_nonneg` (Lagrange, sobre ℤ) | 4 | 4 | 200 enteros |
-| `L_nonneg_N` (sobre ℕ) | **0 ⚠️** | **0** si es variable suelta o constante; **1** si es expresión | — |
-| `L_exponential` (Pell) | 5 | **7** | 1368 casos |
+| `L_nonneg_N` (sobre ℕ) | **0 ⚠️ siempre** | **0** si todos los coeficientes son ≥ 0; **1** en otro caso | — |
+| `L_exponential` (Pell) | 5 | **7** (13 sobre ℤ) | 1368 casos |
 | `L_binomial` | 21 | **27** | 209 casos |
 | `L_factorial` | 36 | **46** | n=1..7 |
 | `L_prime` (Wilson, aditivo) | 38 | **50** | Wilson en [2,250) |
-| `L_prime_shared` (compartido + pool) | 29 | **36** | ídem |
+| `L_prime_shared` (compartido) | 29 | **30** | ídem |
 
-La fila crítica es `L_nonneg_N`: declarar coste 0 para una expresión compuesta era el defecto.
-El resto de la tabla es su propagación por la cadena.
+La fila crítica es `L_nonneg_N`. El criterio correcto sobre ℕ **no** es «una desigualdad es
+gratis»: es que **un polinomio con todos los coeficientes ≥ 0 es ≥ 0 automáticamente**, porque
+todas las variables lo son. Eso cubre la variable suelta, las constantes y sumas como `T+1`;
+cualquier otra cosa cuesta una holgura. Declarar 0 para expresiones con coeficientes negativos
+era el defecto.
 
 ### 3.2 ⚠️ EL GENERADOR (41, 5) ERA INVÁLIDO — corregido
 
@@ -82,27 +85,32 @@ generador construido sobre él **habría emitido compuestos**. La cifra (41, 5) 
 incógnitas viven en rangos astronómicos y ninguna búsqueda los toca. Z3 no enumera: razona, y
 demuestra `unsat`. Ver `src/analysis/dioph_soundness.py`.
 
-**La corrección, y su precio.** Las condiciones que faltaban se imponen ahora. Casi todas son
-**cotas inferiores sobre la propia incógnita compartida `a`**, así que en vez de gastar una
-holgura por condición se **reparametriza**:
+**La corrección.** Las condiciones que faltaban se imponen ahora. Casi todas son **cotas
+inferiores sobre la incógnita compartida `a`**, y hubo dos formas de imponerlas — con
+consecuencias muy distintas:
 
 ```
-a := a' + k + 2 + Σᵢ(bᵢ + cᵢ)      con a' ≥ 0 fresca
-y := y' + 1
+(A) SUSTITUCION:      a := a' + k + 2 + Σᵢ(bᵢ + cᵢ)     coste 0 en la representación
+(B) ECUACION LINEAL:  a − (k + 2 + Σᵢ(bᵢ + cᵢ)) = 0     coste 1, pero `a` sigue siendo un símbolo
 ```
 
-y entonces `a−1 > k`, `a > cᵢ`, `a ≥ bᵢ`, `cᵢ < Mᵢ` e `y ≥ 1` se cumplen **por construcción,
-a coste cero**. Solo quedan `k ≥ 1` y `bᵢ ≥ 2`, que no son cotas sobre incógnitas propias
-(en la cadena `k` y `bᵢ` son expresiones), y cuestan una holgura cada una.
+(A) parece mejor y es **peor**. `a` aparece al cuadrado en la ecuación de Pell; elevar al
+cuadrado una suma de seis símbolos genera decenas de monomios de grado 4 que el aplanado tiene
+que nombrar uno a uno. (B) cuesta una incógnita en la representación y **ahorra once en el
+generador**. Se usa (B).
+
+Con `a ≥ k+2`, `a ≥ cᵢ+2`, `a ≥ bᵢ` y `bᵢ ≥ 2` se sigue `cᵢ < Mᵢ`. Y `y ≥ 1` **no hace falta
+imponerlo**: la ecuación del índice da `y = k + (a−1)t` con `k ≥ 1`, `a ≥ 2`, `t ≥ 0`. Solo
+quedan `k ≥ 1` y `bᵢ ≥ 2`, que no son cotas sobre incógnitas propias (en la cadena `k` y `bᵢ`
+son expresiones), y se resuelven con el desplazamiento de origen de §3.2b.
 
 | | Incógnitas | ¿Sound? |
 |---|---|---|
 | Antes (lo que se publicó) | 29 | **No** — Z3 halla testigo para 4, 9, 15, 25 |
 | Corrección ingenua (1 holgura por condición) | 53 | Sí |
-| Corrección por reparametrización | 39 | Sí |
-| **+ pool de desigualdades (deduplicación)** | **36** | Sí |
+| **Diseño final** | **30** | Sí |
 
-### 3.2b El marcador REAL, después de la corrección
+### 3.2b El marcador, después de corregir **y** de cerrar la esquina
 
 | Conjunto | Representación (incógnitas, grado combinado) | **Generador (variables, grado)** |
 |---|---|---|
@@ -110,19 +118,41 @@ a coste cero**. Solo quedan `k ≥ 1` y `bᵢ ≥ 2`, que no son cotas sobre inc
 | compuesto, suma de 2 cuadrados | (2, 4) | (3, 5) |
 | Fibonacci | (2, 16) | (12, 5) |
 | potencia de 2 | (7, 8) | (14, 5) |
-| **primo** | **(36, 8)** | **(62, 5)** |
+| **primo** | **(30, 8)** | **(40, 5)** |
 
 Frente a los récords publicados de generadores de primos:
 
 | | Variables | Grado |
 |---|---|---|
-| **Nuestro generador (sound)** | **62** | **5** |
-| Récord de menor grado *(citado, sin cotejar)* | **42** | 5 |
+| **Nuestro generador (sound)** | **40** | **5** |
+| Récord de menor grado *(citado, sin cotejar)* | 42 | 5 |
 | Jones–Sato–Wada–Wiens 1976 | 26 | 25 |
 | Matiyasevich (menos variables) | 10 | ~1,6×10⁴⁵ |
 
-**Estamos 20 variables por detrás**, no una por delante. La versión anterior de este documento
-decía lo contrario porque medía un sistema que no era sound.
+**Trayectoria completa de esta esquina.** Todas las cifras posteriores a la corrección salen de
+sistemas cuya **completitud** está verificada con testigo real y valores no negativos. El
+**veredicto SMT del sistema final para los primos estaba en curso al cerrar esta sesión**: el
+catálogo entero pasa, y los pasos intermedios pasaron, pero la comprobación del punto (30, 8)
+sobre ocho compuestos no había terminado. *Hasta que termine, la cifra (40, 5) es provisional.*
+
+| Paso | Repr. | Generador | Qué cambió |
+|---|---|---|---|
+| «(41,5)» de agosto | 29 | (41, 5) | **insound**: no medía nada |
+| corrección ingenua | 53 | — | una holgura por condición |
+| reparametrización `a := a' + cota` | 39 | (65, 5) | coste 0 en la repr., **carísimo al aplanar** |
+| pool de desigualdades | 36 | (62, 5) | deduplicación universal |
+| **cota por ecuación lineal** | 39 | **(51, 5)** | `a` vuelve a ser un símbolo: −11 |
+| **base de Pell compartida** | 35 | **(44, 5)** | una sola `a` para los tres exponentes |
+| desplazamiento de origen + implicación | 32 | (41, 5) | `E=Ev+1`, `T=Tv+1`: 3 holguras menos |
+| `a` = suma de cotas (igualdad) | 31 | (40, 5) | la holgura de la base sobra |
+| eliminación de `Q` por sustitución | **30** | **(40, 5)** | la congruencia va dentro de `Q = B + u·c` |
+
+**La lección de ingeniería, que vale para cualquier problema:** la reparametrización
+`a := a' + cota` es óptima en la representación y **pésima en el generador**. `a` aparece al
+cuadrado en la ecuación de Pell, y elevar al cuadrado una suma de seis símbolos genera decenas
+de monomios de grado 4 que luego hay que nombrar uno a uno. Imponer la misma cota con una
+**ecuación lineal aparte** cuesta una incógnita y ahorra once. *Dónde se paga el coste importa
+tanto como cuánto se paga.*
 
 ### 3.2c Estado del cotejo del récord (paso 1, parcialmente bloqueado)
 
@@ -209,27 +239,26 @@ varias veces, una sola incógnita sirve a todas.
 - **Aviso:** debe implementarse como constructor **simbólico** (straight-line program), nunca
   expandiendo monomios: el grado resultante es ~10⁴⁵.
 
-### 6.2 Hacia grado bajo (donde estamos)
+### 6.2 Hacia grado bajo — **la esquina está cerrada; queda validarla**
 - El grado ya está en la esquina mínima (5 como generador) y **ahí se queda**: aplanar a grado 2
   siempre es posible, y por debajo de 2 el conjunto sería semilineal. Toda la partida en esta
   esquina es **número de variables**.
-- **Punto actual: 62 variables. Récord citado: 42.** El salto es grande y no se cierra afinando
-  el voraz; exige que la *representación* tenga menos incógnitas antes de aplanar (36 hoy).
-- **Dónde está el gasto** (36 incógnitas de la representación de primos): la cadena
-  Wilson → factorial → binomial → 5 exponenciaciones. Cada exponenciación cuesta 5 incógnitas
-  del núcleo de Pell más las holguras de `k ≥ 1` y `b ≥ 2`; `PellContext` ya comparte (a,x,y,t)
-  entre relaciones con el mismo exponente.
-- **Tres palancas concretas, en orden de rendimiento esperado:**
-  1. **Eliminar las holguras restantes por reparametrización.** `k ≥ 1` y `bᵢ ≥ 2` cuestan 1
-     cada una solo porque `k` y `bᵢ` son *expresiones* de la cadena (ya hecho para las que son
-     variables sueltas o constantes; queda `n ≥ 2`, `E ≥ 1`, `T ≥ 1`). Si la cadena introdujera
-     esas magnitudes ya desplazadas (`k = k'+1`, `b = b'+2`) el coste sería 0.
-  2. **Compartir el contexto de Pell entre exponentes distintos**, no solo iguales. Hoy hay 3
-     contextos; las propiedades P1/P2 permiten relacionar índices distintos sobre la misma `a`.
-  3. **Teorema de Combinación de Relaciones** (§6.1): la única pieza que reduce el conteo de
-     verdad, y sigue sin implementar.
-- **Regla nueva y no negociable:** ninguna cifra de esta sección vale sin su veredicto de
-  `dioph_soundness`. La cifra (41, 5) que estuvo aquí venía de un sistema que Z3 refuta.
+- **Punto actual: (40, 5). Récord citado: (42, 5).** Dos variables por debajo. Con las salvedades
+  de §3.2c y §7 — que son las que impiden llamarlo récord.
+- **Qué queda del gasto** (30 incógnitas de la representación): 8 valores de la cadena
+  (m, Eᵥ, A, Tᵥ, W, P, B) + 1 base de Pell + 9 por exponente (x, y, t × 3) + 5 multiplicadores
+  de relación + 3 holguras de desigualdad + 2 restos de división + 1 multiplicador. El aplanado
+  añade 9: tres ecuaciones de Pell (grado 4) y cuatro congruencias de Davis (grado 3).
+- **Palancas que quedan, en orden de rendimiento esperado:**
+  1. **Aplanado óptimo en vez de voraz.** Elegir qué productos nombrar es optimización
+     combinatoria (como *common subexpression elimination*); el mínimo teórico son ~7 y el voraz
+     gasta 9.
+  2. **Menos exponenciaciones.** Son cinco (Eᵥ, A, Tᵥ, W, P) y cada una cuesta x,y,t o un
+     multiplicador. Una ruta al factorial que no pase por el binomial de Robinson las reduciría.
+  3. **Teorema de Combinación de Relaciones** (§6.1): la pieza que reduce el conteo de verdad,
+     y sigue sin implementar. Es la vía a la OTRA esquina (pocas incógnitas), no a esta.
+- **Regla no negociable:** ninguna cifra vale sin su veredicto de `dioph_soundness`. La (41,5)
+  de agosto venía de un sistema que Z3 refuta.
 
 ### 6.3 Puente entre las dos islas del repo
 El proyecto tiene dos subsistemas maduros **sin un solo import entre ellos**: el colapso de
@@ -241,8 +270,15 @@ se evalúa en vez de eliminarse. Construir ese puente es trabajo pendiente.
 
 ## 7. Lo que NO se puede afirmar (para no repetir la historia de la "Ecuación Suprema")
 
-- **No hemos batido ningún récord.** Estamos en (62, 5) frente a (42, 5): **20 variables por
-  detrás**. La cifra (41, 5) que figuró aquí era de un sistema **insound** y no medía nada.
+- **No se ha batido ningún récord, y decir lo contrario sería repetir la historia.** El punto
+  medido es (40, 5) frente al (42, 5) *citado*. Para que eso fuera un récord harían falta tres
+  cosas que NO tenemos: (a) el (42, 5) cotejado contra fuente primaria — el entorno bloquea el
+  acceso; (b) la corrección de la cadena verificada más allá de n=3, donde el testigo deja de ser
+  computable; (c) revisión experta. Mientras falte cualquiera de las tres, es **un punto medido
+  en nuestra curva**, no un resultado.
+- **Y un aviso concreto:** en agosto este documento decía (41, 5) y era un sistema **insound**
+  que habría emitido compuestos. El número de ahora es distinto porque el sistema es distinto,
+  no porque se haya afinado la cuenta.
 - **La lección, otra vez:** el error no se detectó con más tests de testigos, sino cambiando de
   pregunta. La completitud se verifica construyendo; la soundness exige **demostrar ausencia**,
   y eso solo lo da un demostrador. Cualquier cifra futura debe venir acompañada del veredicto
