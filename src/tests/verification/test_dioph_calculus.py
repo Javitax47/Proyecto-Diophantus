@@ -295,21 +295,37 @@ def test_exponencial_soundness(stats):
 
 
 def test_coste_N_vs_Z(stats):
+    """[10] Coste sobre N vs sobre Z, con el modelo CORREGIDO.
+
+    Este test afirmaba antes 5 sobre N y 17 sobre Z, con "3 desigualdades x 4
+    cuadrados = 12 de diferencia". Aquella cuenta daba por bueno que una
+    desigualdad cuesta 0 sobre N, y eso solo vale para una VARIABLE SUELTA: para
+    una expresion compuesta hace falta una holgura. Tratarlas igual dejaba el
+    sistema sin condiciones laterales y lo volvia INSOUND (Z3 hallaba testigo
+    para compuestos). Las cifras de abajo son las del sistema ya corregido.
+    """
     print(f"{Colors.HEADER}[10] COSTE: N vs Z, el eje que separa los records{Colors.ENDC}")
     b, k, c = sympy.symbols('b k c', integer=True)
     cN = L_exponential(b, k, c, over_N=True).cost()
     cZ = L_exponential(b, k, c, over_N=False).cost()
-    if cN == 5 and cZ == 17 and cZ - cN == 12:
+    # 5 del nucleo + 2 desigualdades (k>=1, b>=2). El resto de condiciones
+    # laterales se cumple por REPARAMETRIZACION, a coste cero.
+    if cN == 7 and cZ == 13 and cZ - cN == 6:
         stats.ok()
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} exponencial: {cN} incognitas sobre N vs {cZ} sobre Z "
-              f"(3 desigualdades x 4 cuadrados = 12 de diferencia)")
+              f"(2 desigualdades: 1 holgura sobre N, 4 cuadrados sobre Z)")
     else:
-        stats.fail(f"coste inesperado: N={cN}, Z={cZ}")
-    if L_nonneg_N(b - 1).cost() == 0 and L_nonneg(b - 1).cost() == 4:
+        stats.fail(f"coste inesperado: N={cN}, Z={cZ} (esperado 7 y 13)")
+    libre = L_nonneg_N(b).cost()                 # variable suelta: gratis sobre N
+    compuesta = L_nonneg_N(b - 1).cost()         # expresion: 1 holgura
+    sobreZ = L_nonneg(b - 1).cost()              # Lagrange
+    if libre == 0 and compuesta == 1 and sobreZ == 4:
         stats.ok()
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} una desigualdad cuesta 0 sobre N y 4 sobre Z (Lagrange)")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} desigualdad: 0 sobre N si es variable suelta, "
+              f"1 si es expresion, 4 sobre Z (Lagrange)")
     else:
-        stats.fail("coste de la desigualdad mal contabilizado")
+        stats.fail(f"coste de la desigualdad mal contabilizado: "
+                   f"suelta={libre} expresion={compuesta} Z={sobreZ}")
 
 
 def test_distancia_al_record(stats):

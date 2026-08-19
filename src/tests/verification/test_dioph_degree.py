@@ -213,7 +213,19 @@ def test_generador(stats):
 
 
 def test_situacion_frente_al_record(stats):
-    print(f"{Colors.HEADER}[10] SITUACION FRENTE AL RECORD (con todas las salvedades){Colors.ENDC}")
+    """[10] Marcador honesto frente al record, DESPUES de corregir el defecto.
+
+    HISTORIA (importante, para que nadie repita la cifra vieja): este test
+    afirmaba (41 variables, grado 5) frente al record citado de (42, 5), es decir
+    UNA VARIABLE MEJOR. Era falso. El sistema subyacente no era SOUND: en modo N
+    las condiciones laterales del lema exponencial no imponian nada, y Z3 encontro
+    testigo para n = 4, 9, 15 y 25. Aquel generador habria emitido compuestos.
+
+    Corregido el defecto (ver src/analysis/dioph_soundness.py y el test
+    correspondiente), el punto REAL esta MUY POR DETRAS del record. Se deja
+    escrito aqui porque un marcador que solo sube no es un marcador.
+    """
+    print(f"{Colors.HEADER}[10] SITUACION FRENTE AL RECORD (marcador honesto){Colors.ENDC}")
     p = [x for x in build_catalog() if x.name == 'primo'][0]
     f = flatten_greedy(p.system, 2)
     _, info = to_generator(f, p.param)
@@ -221,19 +233,21 @@ def test_situacion_frente_al_record(stats):
     print(f"  Record de menor grado citado: (42 variables, grado 5)")
     print(f"  Jones-Sato-Wada-Wiens 1976  : (26 variables, grado 25)")
     print(f"  Matiyasevich (menos vars)   : (10 variables, grado ~1.6e45)")
-    print(f"  {Colors.WARN}SALVEDADES QUE IMPIDEN RECLAMAR NADA:")
+    print(f"  {Colors.WARN}ESTAMOS POR DETRAS, y la cifra anterior (41) era de un sistema INSOUND.")
+    print(f"  SALVEDADES QUE SIGUEN EN PIE:")
     print(f"   1. La correccion de la cadena solo se verifica hasta n=3: el testigo")
     print(f"      explota. Para n>=5 no es computable, asi que descansa en los teoremas.")
-    print(f"   2. La direccion inversa (compuesto => sin testigo) NO se comprueba: el")
-    print(f"      constructor cortocircuita. Descansa en Wilson.")
+    print(f"   2. La soundness se comprueba ahora por SMT, pero solo en los valores")
+    print(f"      del rango y con los estados que Z3 concluye ('unknown' no prueba nada).")
     print(f"   3. La cifra '42 variables, grado 5' procede de un resumen de busqueda,")
-    print(f"      NO de fuente primaria. Hay que cotejarla antes de compararse con ella.")
+    print(f"      NO de fuente primaria (arxiv/t5k/MathWorld bloqueados por egreso).")
     print(f"   4. Nada de esto ha pasado revision experta.{Colors.ENDC}")
-    if info['grado'] == 5 and info['variables'] <= 42:
+    if info['grado'] == 5:
         stats.ok()
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} punto medido y salvedades declaradas (sin reclamar record)")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} punto medido ({info['variables']}, 5); "
+              f"distancia al record citado: {info['variables'] - 42:+d} variables")
     else:
-        stats.fail(f"punto inesperado: {info}")
+        stats.fail(f"grado inesperado: {info}")
 
 
 def main():

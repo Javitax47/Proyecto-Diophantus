@@ -48,9 +48,15 @@ class DiophProblem:
         # MODO DE SOUNDNESS (honestidad, no cosmetica):
         #  'exhaustivo' -> la direccion inversa (no pertenece => no hay testigo) se
         #                  COMPRUEBA por busqueda exhaustiva acotada.
-        #  'teorema'    -> NO se comprueba: el constructor de testigos cortocircuita
+        #  'teorema'    -> NO se comprueba AQUI: el constructor de testigos cortocircuita
         #                  consultando el oraculo, luego esa direccion seria CIRCULAR.
         #                  Descansa en el teorema citado en `referencia`.
+        # TERCER CANAL (fuera de este modulo): `dioph_soundness.soundness_report`
+        # pregunta a un SMT si el sistema es INSATISFACIBLE para los valores que no
+        # pertenecen. No es circular -- no usa el constructor de testigos -- y es lo
+        # unico que alcanza rangos astronomicos. Fue lo que descubrio que el sistema
+        # de los primos admitia 4, 9, 15 y 25. Toda cifra de coste deberia venir
+        # acompanada de su veredicto.
         self.soundness = soundness
 
     def cost(self):

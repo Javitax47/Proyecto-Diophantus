@@ -156,7 +156,12 @@ def conj(*systems, name=""):
         for u in s.unknowns:
             if u not in unknowns:
                 unknowns.append(u)
-        eqs.extend(s.eqs)
+        # Las ecuaciones tambien se deduplican: una cadena larga puede imponer la
+        # MISMA restriccion desde eslabones distintos, y repetirla no restringe
+        # mas -- solo infla el grado combinado y el aplanado posterior.
+        for e in s.eqs:
+            if not any(e == q for q in eqs):
+                eqs.append(e)
     # un parametro de un sistema puede ser incognita de otro: prevalece incognita
     params = [p for p in params if p not in unknowns]
 
