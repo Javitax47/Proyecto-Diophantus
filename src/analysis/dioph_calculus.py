@@ -86,9 +86,18 @@ class Dioph:
 
     # --- verificacion -------------------------------------------------------
     def holds(self, assign):
-        """True si TODAS las ecuaciones se anulan con la asignacion dada."""
+        """True si TODAS las ecuaciones se anulan con la asignacion dada.
+
+        Con la asignacion completa la sustitucion ya produce un NUMERO, asi que
+        comparar con 0 basta; solo se recurre a simplify() si queda algo
+        simbolico. (Usar simplify siempre hacia inviable la busqueda exhaustiva.)
+        """
         for e in self.eqs:
-            if sympy.simplify(e.subs(assign)) != 0:
+            val = e.subs(assign)
+            if getattr(val, "is_number", False):
+                if val != 0:
+                    return False
+            elif sympy.simplify(val) != 0:
                 return False
         return True
 

@@ -61,6 +61,7 @@ TESTS = [
     ("test_encodings.py",             "Estrategias de codificación (forma cerrada O(log T) vs β-collapse vs unroll)"),
     ("test_sos.py",                   "Certificados de desigualdad: suma de cuadrados / Positivstellensatz"),
     ("test_dioph_calculus.py",        "Calculo de construcciones diofanticas: lemas certificados y coste (record)"),
+    ("test_dioph_problems.py",         "Catalogo UNIVERSAL: un verificador para cualquier conjunto diofantico"),
     ("test_discovery_campaign.py",    "Campaña de descubrimiento: barrido de familias paramétricas (certificado)"),
     ("test_product.py",               "Producto monetizable: verifier + recheck independiente + metering + atlas"),
     ("test_qubo.py",                  "Exportador a QUBO (sistema diofántico -> optimización binaria / annealing)"),
