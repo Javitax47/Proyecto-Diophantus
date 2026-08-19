@@ -191,8 +191,112 @@ RECORD_PRIMOS = {
     "formalizado": "ITP 2022",
 }
 
-FRONTERA = [
-    "L_exponential (c = a^b via Pell): siguiente eslabon, NO implementado.",
-    "L_factorial (via exponenciacion): requiere el anterior.",
-    "L_prime (Wilson: n | (n-1)!+1): requiere los dos anteriores.",
+LOGRADO = [
+    "L_exponential (c = b^k via Pell): IMPLEMENTADO y verificado. "
+    "5 incognitas sobre N, 17 sobre Z. Completitud por evaluacion del testigo; "
+    "unicidad de c comprobada enumerando [0,M).",
 ]
+
+FRONTERA = [
+    "L_factorial (m = n! via exponenciacion + coeficientes binomiales): "
+    "siguiente eslabon, NO implementado.",
+    "L_prime (Wilson: n primo <=> n | (n-1)!+1): requiere el anterior.",
+    "BUSQUEDA sobre composiciones que COMPARTAN incognitas: sin ella la "
+    "composicion es aditiva y nunca bajara de 9.",
+]
+
+
+# ---------------------------------------------------------------------------
+#   EXPONENCIACION DIOFANTICA (el eslabon que desbloquea la cadena al record)
+# ---------------------------------------------------------------------------
+
+def L_nonneg_N(e):
+    """e >= 0 cuando las incognitas recorren N.   COSTE: 0.
+
+    Sobre N la no-negatividad es GRATIS; sobre Z cuesta 4 (Lagrange). Esa
+    diferencia es exactamente la que separa los records segun el rango de las
+    incognitas (Sun: ν<=11 sobre Z frente a ν<=9 sobre N), y por eso el calculo
+    la contabiliza por separado en lugar de esconderla.
+    """
+    return Dioph(params=sorted(e.free_symbols, key=str), unknowns=[], eqs=[],
+                 witness=lambda vals: {}, name=f"{e} >= 0 (sobre N: gratis)")
+
+
+def L_exponential(b, k, c, over_N=False):
+    """c = b^k.   Construccion clasica via ecuacion de Pell.
+
+    Referencia: Davis, *Hilbert's Tenth Problem is Unsolvable* (1973); la
+    congruencia central es de Matiyasevich/Robinson:
+
+        x_k(a) - (a-b)*y_k(a)  ==  b^k   (mod  2ab - b^2 - 1)
+
+    verificada aqui en 1368 casos sin fallos (ver test_dioph_calculus.py).
+
+    Sistema (incognitas: a, x, y, t, s + holguras):
+        (1) x^2 - (a^2-1) y^2 = 1          -> (x,y) = (x_m(a), y_m(a))
+        (2) y - k - (a-1) t = 0            -> m == k  (mod a-1)
+        (3) (x - (a-b) y) - c - M s = 0    -> congruencia central, M = 2ab-b^2-1
+                                              (escrita asi para que s >= 0)
+        (4) M - c - 1 >= 0                 -> c queda UNIVOCO en [0, M)
+        (5) a - c - 1 >= 0                 -> a > c: agranda M
+        (6) a - k - 2 >= 0                 -> a-1 > k: FIJA el indice m = k
+                                              (sin esto m, m+(a-1), ... colisionan)
+
+    COSTE: 5 incognitas sobre N; 17 sobre Z (cada desigualdad cuesta 4 por
+    Lagrange). Esa brecha 5 vs 17 es exactamente la razon de que los records se
+    enuncien indicando el rango de las incognitas.
+
+    Honestidad: las condiciones laterales (4)-(6) son las que exige el teorema
+    clasico. Este modulo las IMPONE y las VERIFICA computacionalmente en rango;
+    la correccion en general descansa en la referencia, no en estos tests.
+    """
+    A, X, Y = fresh("a"), fresh("x"), fresh("y")
+    t, s = fresh("t"), fresh("s")
+    M = 2 * A * b - b ** 2 - 1
+    ineq = L_nonneg_N if over_N else L_nonneg
+
+    # IMPORTANTE: crear las desigualdades UNA sola vez. Cada llamada a ineq()
+    # genera simbolos frescos; reutilizar los objetos es lo que mantiene
+    # alineadas las holguras del sistema y las del testigo.
+    slacks = [(ineq(M - c - 1), lambda av, kv, cv, bv: (2*av*bv - bv**2 - 1) - cv - 1),
+              (ineq(A - c - 1), lambda av, kv, cv, bv: av - cv - 1),
+              (ineq(A - k - 2), lambda av, kv, cv, bv: av - kv - 2)]
+
+    core = Dioph(
+        params=sorted((b.free_symbols | k.free_symbols | c.free_symbols), key=str),
+        unknowns=[A, X, Y, t, s],
+        eqs=[
+            sympy.expand(X ** 2 - (A ** 2 - 1) * Y ** 2 - 1),
+            sympy.expand(Y - k - (A - 1) * t),
+            sympy.expand((X - (A - b) * Y) - c - M * s),
+        ],
+        witness=None, name="nucleo exponencial")
+
+    system = conj(core, *[d for d, _ in slacks], name=f"{c} = {b}^{k}")
+
+    def w(vals):
+        bv, kv, cv = int(b.subs(vals)), int(k.subs(vals)), int(c.subs(vals))
+        if bv < 2 or kv < 1 or cv != bv ** kv:
+            return None
+        av = max(cv, kv) + 3                      # satisface (5) y (6)
+        while 2 * av * bv - bv ** 2 - 1 <= cv:    # asegura (4)
+            av += 1
+        xv, yv = pell_seq(av, kv)
+        Mv = 2 * av * bv - bv ** 2 - 1
+        if (yv - kv) % (av - 1) != 0:
+            return None
+        rest = (xv - (av - bv) * yv) - cv
+        if rest % Mv != 0 or rest < 0:            # s >= 0: la razon del signo
+            return None
+        out = {A: av, X: xv, Y: yv, t: (yv - kv) // (av - 1), s: rest // Mv}
+        for d, val_fn in slacks:                  # holguras de Lagrange (solo sobre Z)
+            if not d.unknowns:
+                continue
+            q = four_squares(val_fn(av, kv, cv, bv))
+            if q is None:
+                return None
+            out.update(dict(zip(d.unknowns, q)))
+        return out
+
+    system.witness = w
+    return system

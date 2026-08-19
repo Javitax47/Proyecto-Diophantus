@@ -28,6 +28,7 @@ from src.analysis.dioph_calculus import Dioph, conj, disj, four_squares
 from src.analysis.dioph_lemmas import (
     L_divides, L_congruent, L_nonneg, L_positive, L_square, L_composite,
     L_pell, L_is_pell_y, pell_seq, fresh, RECORD_PRIMOS, FRONTERA,
+    L_exponential, L_nonneg_N, LOGRADO,
 )
 
 
@@ -207,6 +208,9 @@ def test_marcador(stats):
     print(f"  {Colors.BOLD}Record primos:{Colors.ENDC} {RECORD_PRIMOS['variables']} variables "
           f"({RECORD_PRIMOS['incognitas']} incognitas + parametro) — {RECORD_PRIMOS['autor']}")
     print(f"  {Colors.BOLD}Estado:{Colors.ENDC} {RECORD_PRIMOS['estado']}")
+    print(f"  {Colors.OKGREEN}Logrado en este modulo:{Colors.ENDC}")
+    for f in LOGRADO:
+        print(f"    + {f}")
     print(f"  {Colors.WARN}Frontera declarada (aun NO implementado):{Colors.ENDC}")
     for f in FRONTERA:
         print(f"    - {f}")
@@ -215,6 +219,113 @@ def test_marcador(stats):
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} marcador y frontera declarados sin sobreafirmar")
     else:
         stats.fail("marcador inconsistente")
+
+
+
+def test_exponencial_completitud(stats):
+    print(f"{Colors.HEADER}[8] EXPONENCIACION c = b^k: COMPLETITUD (testigo construido y evaluado){Colors.ENDC}")
+    b, k, c = sympy.symbols('b k c', integer=True)
+    for over_N, etiqueta in [(True, "sobre N"), (False, "sobre Z")]:
+        sysm = L_exponential(b, k, c, over_N=over_N)
+        malos = []
+        for bv, kv in [(2, 1), (2, 5), (2, 10), (3, 3), (3, 7), (5, 2), (7, 3), (10, 4)]:
+            ok, _ = sysm.check_witness({b: bv, k: kv, c: bv ** kv})
+            if not ok:
+                malos.append(f"{bv}^{kv}")
+        if malos:
+            stats.fail(f"exponencial {etiqueta}: el testigo no anula el sistema en {malos}")
+        else:
+            stats.ok()
+            print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 8/8 casos {etiqueta}: sistema anulado "
+                  f"(coste {sysm.cost()} incognitas, grado {sysm.degree()})")
+
+
+def test_exponencial_soundness(stats):
+    print(f"{Colors.HEADER}[9] EXPONENCIACION: SOUNDNESS (la construccion FUERZA c = b^k){Colors.ENDC}")
+    # Con (a,x,y) fijados por la construccion, la congruencia + la cota c < M
+    # deben dejar UN UNICO c posible, y ese c debe ser b^k.
+    malos = []
+    for bv, kv in [(2, 3), (2, 5), (3, 2), (3, 4), (5, 2), (7, 2)]:
+        cv = bv ** kv
+        av = max(cv, kv) + 3
+        while 2 * av * bv - bv ** 2 - 1 <= cv:
+            av += 1
+        xv, yv = pell_seq(av, kv)
+        Mv = 2 * av * bv - bv ** 2 - 1
+        objetivo = xv - (av - bv) * yv
+        candidatos = [cc for cc in range(0, Mv) if (objetivo - cc) % Mv == 0]
+        if candidatos != [cv]:
+            malos.append((bv, kv, candidatos[:4], cv))
+    if malos:
+        stats.fail(f"c no queda univocamente determinado: {malos[:3]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 6/6: en [0,M) hay EXACTAMENTE un c compatible, y es b^k "
+              f"(la cota c<M no es decorativa)")
+
+    # El constructor no fabrica testigo para un c incorrecto
+    b, k, c = sympy.symbols('b k c', integer=True)
+    sysm = L_exponential(b, k, c, over_N=True)
+    espurios = [(bv, kv, cc) for bv, kv in [(2, 5), (3, 3)]
+                for cc in [bv ** kv - 1, bv ** kv + 1, 0, 1]
+                if sysm.witness({b: bv, k: kv, c: cc}) is not None]
+    if espurios:
+        stats.fail(f"testigo fabricado para c != b^k: {espurios[:3]}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 8 valores c != b^k rechazados (no inventa)")
+
+    # La condicion (6) a-1 > k no es opcional: sin ella el indice colisiona
+    colisiona = False
+    av = 10
+    residuos = {}
+    for m_idx in range(0, 3 * (av - 1)):
+        _, ym = pell_seq(av, m_idx)
+        residuos.setdefault(ym % (av - 1), []).append(m_idx)
+    if any(len(v) > 1 for v in residuos.values()):
+        colisiona = True
+    if colisiona:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} confirmado que sin 'a-1 > k' el indice colisiona "
+              f"(m, m+(a-1), ...): la condicion lateral es NECESARIA")
+    else:
+        stats.fail("no se reprodujo la colision de indices: revisar la justificacion de (6)")
+
+
+def test_coste_N_vs_Z(stats):
+    print(f"{Colors.HEADER}[10] COSTE: N vs Z, el eje que separa los records{Colors.ENDC}")
+    b, k, c = sympy.symbols('b k c', integer=True)
+    cN = L_exponential(b, k, c, over_N=True).cost()
+    cZ = L_exponential(b, k, c, over_N=False).cost()
+    if cN == 5 and cZ == 17 and cZ - cN == 12:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} exponencial: {cN} incognitas sobre N vs {cZ} sobre Z "
+              f"(3 desigualdades x 4 cuadrados = 12 de diferencia)")
+    else:
+        stats.fail(f"coste inesperado: N={cN}, Z={cZ}")
+    if L_nonneg_N(b - 1).cost() == 0 and L_nonneg(b - 1).cost() == 4:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} una desigualdad cuesta 0 sobre N y 4 sobre Z (Lagrange)")
+    else:
+        stats.fail("coste de la desigualdad mal contabilizado")
+
+
+def test_distancia_al_record(stats):
+    print(f"{Colors.HEADER}[11] DISTANCIA REAL AL RECORD (sin autoengano){Colors.ENDC}")
+    b, k, c = sympy.symbols('b k c', integer=True)
+    coste_exp = L_exponential(b, k, c, over_N=True).cost()
+    record = RECORD_PRIMOS['incognitas']
+    print(f"  Record (conjunto completo de los PRIMOS): {record} incognitas sobre N")
+    print(f"  Nuestro coste solo para UN paso (exponenciacion): {coste_exp} incognitas")
+    print(f"  {Colors.WARN}-> la composicion ingenua ya gasta {coste_exp}/{record} del presupuesto"
+          f" del record en un unico eslabon.{Colors.ENDC}")
+    print(f"  {Colors.WARN}-> batir 10 exige COMPARTIR incognitas entre eslabones,"
+          f" no encadenarlos.{Colors.ENDC}")
+    if coste_exp >= 5:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} distancia declarada honestamente (no se afirma haber batido nada)")
+    else:
+        stats.fail("coste sospechosamente bajo: revisar")
 
 
 def main():
@@ -227,6 +338,10 @@ def main():
     test_is_pell_y(stats)
     test_composicion_y_coste(stats)
     test_marcador(stats)
+    test_exponencial_completitud(stats)
+    test_exponencial_soundness(stats)
+    test_coste_N_vs_Z(stats)
+    test_distancia_al_record(stats)
 
     total = stats.passed + stats.failed
     print()
