@@ -133,6 +133,124 @@ def flatten_to_degree(system, target=2, name=None):
                  name=name or f"{system.name} [aplanado a grado {target}]")
 
 
+
+def flatten_greedy(system, target=2, name=None):
+    """Aplanado VORAZ: en cada paso nombra el producto MAS FRECUENTE.
+
+    El aplanado ingenuo toma los dos primeros factores de cada monomio, lo que
+    desperdicia reutilizacion. Aqui se cuenta, entre todos los monomios que aun
+    exceden el grado objetivo, que par de variables aparece mas veces, y se nombra
+    ese primero: una sola incognita sirve entonces a varios monomios.
+
+    Mismo principio que PellContext, aplicado al eje del grado: COMPARTIR.
+    Devuelve un Dioph equisatisfacible con el testigo extendido.
+    """
+    gens = list(system.params) + list(system.unknowns)
+
+    # (coef, [vars con multiplicidad]) por ecuacion
+    desc = []
+    for e in system.eqs:
+        try:
+            poly = sympy.Poly(e, *gens)
+        except sympy.PolynomialError:
+            desc.append(None)
+            continue
+        mons = []
+        for expo, coef in zip(poly.monoms(), poly.coeffs()):
+            vs = []
+            for g, k in zip(gens, expo):
+                vs.extend([g] * k)
+            mons.append([sympy.Integer(coef), vs])
+        desc.append(mons)
+
+    orden = []          # (w, a, b) en orden de creacion
+    definitorias = []
+
+    def contar():
+        c = {}
+        for mons in desc:
+            if mons is None:
+                continue
+            for _, vs in mons:
+                if len(vs) <= target:
+                    continue
+                vistos = set()
+                for i in range(len(vs)):
+                    for j in range(i + 1, len(vs)):
+                        clave = tuple(sorted([str(vs[i]), str(vs[j])]))
+                        if clave in vistos:
+                            continue
+                        vistos.add(clave)
+                        c[clave] = c.get(clave, 0) + 1
+        return c
+
+    simbolos = {str(g): g for g in gens}
+
+    while True:
+        cuenta = contar()
+        if not cuenta:
+            break
+        clave = max(cuenta.items(), key=lambda kv: (kv[1], kv[0]))[0]
+        a, b = simbolos[clave[0]], simbolos[clave[1]]
+        w = _fresh_flat()
+        simbolos[str(w)] = w
+        orden.append((w, a, b))
+        definitorias.append(sympy.expand(w - a * b))
+        # sustituir una aparicion del par en cada monomio que lo contenga y siga alto
+        for mons in desc:
+            if mons is None:
+                continue
+            for m in mons:
+                vs = m[1]
+                while len(vs) > target and str(a) in [str(x) for x in vs]:
+                    nombres = [str(x) for x in vs]
+                    if str(b) not in nombres:
+                        break
+                    ia = nombres.index(str(a))
+                    resto = nombres[:ia] + nombres[ia + 1:]
+                    if str(b) not in resto:
+                        break
+                    ib_rel = resto.index(str(b))
+                    vs_new = [vs[i] for i in range(len(vs)) if i != ia]
+                    vs_new = [vs_new[i] for i in range(len(vs_new)) if i != ib_rel]
+                    vs_new.append(w)
+                    vs = vs_new
+                m[1] = vs
+
+    eqs_out = []
+    for mons, orig in zip(desc, system.eqs):
+        if mons is None:
+            eqs_out.append(orig)
+            continue
+        acc = sympy.Integer(0)
+        for coef, vs in mons:
+            term = coef
+            for v in vs:
+                term = term * v
+            acc = acc + term
+        eqs_out.append(sympy.expand(acc))
+
+    unknowns = list(system.unknowns) + [w for w, _, _ in orden]
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        entorno = dict(param_vals)
+        entorno.update(base)
+        out = dict(base)
+        for w, a, b in orden:
+            val = int(sympy.Integer(a.subs(entorno)) * sympy.Integer(b.subs(entorno)))
+            out[w] = val
+            entorno[w] = val
+        return out
+
+    return Dioph(system.params, unknowns, eqs_out + definitorias, witness=w_ext,
+                 name=name or f"{system.name} [aplanado voraz a grado {target}]")
+
+
 def pareto_point(system):
     """(incognitas, grado de la ecuacion unica) — el punto en la frontera."""
     return (system.cost(), system.degree())

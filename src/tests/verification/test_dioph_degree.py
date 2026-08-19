@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.analysis.dioph_problems import build_catalog, verify_problem, rango_de, DiophProblem
 from src.analysis.dioph_degree import (
-    flatten_to_degree, max_equation_degree, pareto_point, pareto_curve,
+    flatten_to_degree, flatten_greedy, max_equation_degree, pareto_point, pareto_curve,
 )
 
 
@@ -120,6 +120,47 @@ def test_honestidad_comparacion(stats):
     print(f"  {Colors.OKGREEN}✓{Colors.ENDC} alcance declarado sin sobreafirmar")
 
 
+
+def test_voraz_mejora(stats):
+    print(f"{Colors.HEADER}[6] APLANADO VORAZ: compartir productos ahorra incognitas{Colors.ENDC}")
+    peor = []
+    for p in build_catalog():
+        s = p.system
+        if max_equation_degree(s) <= 2:
+            continue
+        fn, fg = flatten_to_degree(s, 2), flatten_greedy(s, 2)
+        if fg.cost() > fn.cost():
+            peor.append(f"{p.name}: voraz {fg.cost()} > ingenuo {fn.cost()}")
+        else:
+            print(f"    {p.name:20s} ingenuo {fn.cost():3d} -> voraz {fg.cost():3d} "
+                  f"(ahorro {fn.cost()-fg.cost():+d})")
+    if peor:
+        stats.fail(f"el voraz empeoro: {peor}")
+    else:
+        stats.ok()
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} el voraz nunca empeora y ahorra donde hay productos repetidos")
+
+
+def test_voraz_correcto(stats):
+    print(f"{Colors.HEADER}[7] El voraz PRESERVA el conjunto (misma garantia que el ingenuo){Colors.ENDC}")
+    for p in build_catalog():
+        s = p.system
+        if max_equation_degree(s) <= 2:
+            continue
+        fg = flatten_greedy(s, 2)
+        if max_equation_degree(fg) > 2:
+            stats.fail(f"{p.name}: el voraz dejo grado {max_equation_degree(fg)}")
+            continue
+        plano = DiophProblem(p.name + " [voraz]", p.param, fg, p.oracle,
+                             p.referencia, p.search_bound, soundness=p.soundness)
+        ok, fallos = verify_problem(plano, rango_de(p), exhaustivo=False)
+        if ok:
+            stats.ok()
+            print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {p.name}: mismo veredicto, {pareto_point(fg)}")
+        else:
+            stats.fail(f"{p.name}: {fallos[:2]}")
+
+
 def main():
     print(f"{Colors.BOLD}=== REDUCCION DE GRADO: LA ESQUINA DE GRADO BAJO ==={Colors.ENDC}")
     stats = Stats()
@@ -127,6 +168,8 @@ def main():
     test_equisatisfacibilidad(stats)
     test_sin_soluciones_nuevas(stats)
     test_curva_pareto(stats)
+    test_voraz_mejora(stats)
+    test_voraz_correcto(stats)
     test_honestidad_comparacion(stats)
 
     total = stats.passed + stats.failed

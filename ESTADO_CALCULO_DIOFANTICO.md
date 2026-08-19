@@ -59,13 +59,17 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 
 ### 3.2 Curva de Pareto del catálogo — (incógnitas, grado combinado)
 
-| Conjunto | Original | Aplanado a grado 4 |
-|---|---|---|
-| cuadrado, triangular, Pell D=2, Pell D=3 | (1, 4) | — |
-| compuesto, suma de 2 cuadrados | (2, 4) | — |
-| Fibonacci | (2, 16) | (39, 4) |
-| potencia de 2 | (6, 8) | (8, 4) |
-| **primo** | **(29, 8)** | **(42, 4)** |
+| Conjunto | Original | Aplanado ingenuo | **Aplanado voraz** |
+|---|---|---|---|
+| cuadrado, triangular, Pell D=2, Pell D=3 | (1, 4) | — | — |
+| compuesto, suma de 2 cuadrados | (2, 4) | — | — |
+| Fibonacci | (2, 16) | (39, 4) | **(11, 4)** |
+| potencia de 2 | (6, 8) | (8, 4) | (8, 4) |
+| **primo** | **(29, 8)** | (42, 4) | **(40, 4)** |
+
+El **voraz** nombra en cada paso el producto v₁·v₂ *más frecuente*, de modo que una sola
+incógnita sirve a varios monomios. Nunca empeora al ingenuo y ahorra mucho donde hay productos
+repetidos (Fibonacci: 28 incógnitas menos).
 
 ### 3.3 Arsenal de Pell verificado (14.752 casos, 0 fallos)
 
@@ -85,6 +89,7 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 | ↓ incógnitas | **Compartición**: relaciones con el mismo exponente comparten (a,x,y,t) | 38 → 29 | `PellContext` |
 | ↓ incógnitas | **Eliminación**: sustituir variables definidas (R = E+1) | −1 | `L_prime_shared` |
 | ↓ grado | **Aplanado**: nombrar productos v₁·v₂ con incógnitas nuevas | grado 8 → 4, +13 incógnitas | `flatten_to_degree` |
+| ↓ grado | **Aplanado voraz**: nombrar primero el producto más frecuente | grado 8 → 4, +11 incógnitas | `flatten_greedy` |
 
 **Principio común:** las sustituciones se **comparten** entre ecuaciones; si un producto aparece
 varias veces, una sola incógnita sirve a todas.
@@ -120,8 +125,10 @@ varias veces, una sola incógnita sirve a todas.
 
 ### 6.2 Hacia grado bajo (donde estamos)
 - Ya alcanzamos grado 4 por aplanado, la esquina mínima conocida.
-- **Pendiente:** reducir el número de incógnitas *a grado fijo 4*. Hoy 42 para los primos; la
-  pregunta abierta es cuánto se puede bajar sin subir el grado.
+- **Progreso:** el aplanado voraz bajó los primos de 42 a **40** a grado 4 (y Fibonacci de 39 a 11).
+- **Pendiente:** seguir bajando incógnitas *a grado fijo 4*. El voraz es una heurística local;
+  la elección óptima de qué productos nombrar es un problema de optimización combinatoria
+  (parecido a *common subexpression elimination*) que admite búsqueda mejor que la voraz.
 
 ### 6.3 Puente entre las dos islas del repo
 El proyecto tiene dos subsistemas maduros **sin un solo import entre ellos**: el colapso de
