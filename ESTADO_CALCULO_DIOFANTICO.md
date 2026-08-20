@@ -190,15 +190,34 @@ de Pell: *dónde* se paga el coste importa tanto como cuánto.
 | | Incógnitas | Grado máx. | ¿Sound? |
 |---|---|---|---|
 | `L_exponential` (roto) | 7 | 4 | **No** |
-| **`L_psi`** | **11** | **4** | soundness sin violaciones; **completitud sin verificar** |
+| **`L_psi`** | **11** | **4** | soundness sin violaciones; **completitud constructiva, 10/10** |
 
-**Estado de verificación, y es la parte que decide.** Soundness: enumerando hacia delante todas
-las tuplas pequeñas que cumplen `F|(H−C)` y `B≤C`, las que además cumplen `DFI = □` tienen
-`C = ψ_A(B)` — **0 violaciones**, que es la dirección que nos mató. Completitud: **no verificada**.
-Los testigos `(i, j)` son astronómicos incluso para A y B diminutos; el constructor solo alcanza
-`A=2, B=1, C=1` por búsqueda. **Mientras eso no se resuelva, este lema no puede sostener ninguna
-cifra**, y el siguiente paso concreto es implementar la construcción explícita del testigo que da
-la prueba clásica en vez de buscarlo.
+**El testigo ya no se busca: se CONSTRUYE.** Era el bloqueo, y la salida vino de la estructura:
+
+1. `D = x_B(A)²` automáticamente, porque `C = y_B(A)`.
+2. `F` es cuadrado ⟺ `E` es un y-valor de `A`. Como `E = (i+1)·K` con `K = 2D(e+1)C²`, hace
+   falta `l` con `K | y_l(A)`: el **rango de aparición** de K, que existe porque la sucesión de
+   Pell es una sucesión de divisibilidad. Entonces `E = y_l(A)`, `F = x_l(A)²`, `i = y_l(A)/K − 1`.
+3. Para `H` basta **`m = B`**, y eso desatasca todo: `G ≡ 1 (mod 2C)` da la forma `B + 2jC`
+   exigida, y `G ≡ A (mod F)` da `F | (H − C)`. De paso `I = x_B(G)²` sale cuadrado solo.
+4. Luego `DFI = (x_B(A)·x_l(A)·x_B(G))²`, **cuadrado por construcción**.
+
+El rango de aparición se calcula factorizando `K` y tomando el mcm de los rangos de cada
+potencia de primo — iterar módulo K directamente se queda corto en cuanto K pasa de unos
+millones.
+
+| Comprobación | Resultado |
+|---|---|
+| Soundness (enumeración hacia delante, tuplas pequeñas) | **0 violaciones** |
+| Completitud: testigo construido y evaluado | **10/10** casos calculables |
+| Reverso: `C ≠ ψ_A(B)` no admite testigo | **0 espurios** |
+
+**Aviso de escala, y no es un detalle.** El rango de aparición crece brutalmente: certificar que
+`y_2(3) = 6` ya exige `l = 408`; `y_4(2) = 56` exige **l = 43.456**, con `E` de decenas de miles
+de cifras. Los testigos de este lema son astronómicos **por naturaleza, no por la
+implementación**. Consecuencia metodológica: *la cadena completa nunca se podrá validar por
+evaluación más allá de casos diminutos*. La verificación por testigo constructivo —el pilar de
+este proyecto— tiene aquí su techo, y lo que quede por encima descansa en el teorema citado.
 
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 

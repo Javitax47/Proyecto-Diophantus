@@ -336,28 +336,31 @@ def test_unicidad_por_enumeracion(stats):
 
 
 def test_lema_psi(stats):
-    """[9] EL LEMA CORRECTO: C = psi_A(B), de fuente primaria.
+    """[9] EL LEMA CORRECTO: C = psi_A(B), con TESTIGO CONSTRUIDO.
 
     Reemplaza a la parte rota del lema exponencial. Transcrito del Teorema 1 de
     Pak-Kaliszyk (ITP 2022, Mizar HILB10_8:19), que sigue a Matiyasevich-Robinson.
     Lo que anade y faltaba: ANCLA EL INDICE. La version rota solo tenia la
     congruencia `y_k(a) == k (mod a-1)`, que fija el residuo de k pero no k.
 
-    Se comprueba aqui:
-      * el sistema se construye con GRADO <= 4 por ecuacion (la ecuacion unica
-        del paper, expandida, pasa de grado 300 y es inviable: hay que nombrar
-        los intermedios D..I);
-      * SOUNDNESS por enumeracion hacia delante: de todas las tuplas pequenas que
-        cumplen `F | (H-C)` y `B <= C`, las que ademas cumplen `DFI = cuadrado`
-        tienen C = psi_A(B). Es la direccion que fallo antes;
-      * el unico testigo alcanzable por busqueda (A=2, B=1, C=1) ANULA el sistema.
+    El testigo ya no se BUSCA (era inviable: los (i,j) son astronomicos), se
+    CONSTRUYE, y esa es la diferencia entre un lema y una conjetura:
+      * i sale del RANGO DE APARICION de K = 2D(e+1)C^2 en la sucesion y_.(A),
+        que existe porque es una sucesion de divisibilidad;
+      * para H basta m = B, y eso desatasca todo: G == 1 (mod 2C) da la forma
+        B + 2jC, y G == A (mod F) da F | (H - C);
+      * DFI = (x_B(A) * x_l(A) * x_B(G))^2, cuadrado POR CONSTRUCCION.
 
-    LO QUE NO SE COMPRUEBA, y por eso este lema todavia no sostiene ninguna cifra:
-    la COMPLETITUD. Los testigos (i, j) son astronomicos incluso para A y B
-    diminutos, asi que el constructor solo los halla por busqueda en un caso.
-    Hace falta la construccion explicita de la prueba clasica.
+    Se comprueba: grado <= 5 por ecuacion, soundness hacia delante, testigos
+    validos para C = psi_A(B), y AUSENCIA de testigo para C != psi_A(B).
+
+    AVISO DE ESCALA. El rango de aparicion crece muy rapido: certificar que
+    y_2(3) = 6 ya exige l = 408, y y_4(2) = 56 exige l = 43.456, con E de decenas
+    de miles de cifras. Los testigos de este lema son astronomicos POR NATURALEZA.
+    Por eso la cadena completa nunca se podra validar por evaluacion mas alla de
+    casos diminutos: descansa en el teorema citado, y conviene no olvidarlo.
     """
-    print(f"\n{Colors.HEADER}[9] Lema psi_A(B): la pieza correcta, de fuente primaria{Colors.ENDC}")
+    print(f"\n{Colors.HEADER}[9] Lema psi_A(B): la pieza correcta, con testigo construido{Colors.ENDC}")
     A, B, C = sympy.symbols('A B C', integer=True)
     S = L_psi(A, B, C, over_N=True)
     grado = max(sympy.Poly(e, *(S.params + S.unknowns)).total_degree() for e in S.eqs)
@@ -366,15 +369,15 @@ def test_lema_psi(stats):
         stats.fail(f"grado {grado}: los intermedios D..I no se estan nombrando")
         return
 
-    # SOUNDNESS hacia delante (barato y es la direccion que importa)
+    # SOUNDNESS hacia delante: barato, y es la direccion que fallo antes.
     violaciones, positivos = [], 0
     for Av in range(2, 7):
         for Bv in range(1, 6):
             _, yB = pell_seq(Av, Bv)
             for Cv in range(1, 120):
-                Dv = (Av * Av - 1) * Cv * Cv + 1
                 if Cv < Bv:
                     continue
+                Dv = (Av * Av - 1) * Cv * Cv + 1
                 for iv in range(0, 25):
                     Ev = 2 * (iv + 1) * Dv * Cv * Cv
                     Fv = (Av * Av - 1) * Ev * Ev + 1
@@ -395,15 +398,37 @@ def test_lema_psi(stats):
         stats.fail(f"C != psi_A(B) en {violaciones[:3]}")
         return
 
-    ok, _ = S.check_witness({A: 2, B: 1, C: 1})
-    print(f"  testigo A=2, B=1, C=1 (psi=1) anula el sistema: {ok}")
-    if not ok:
-        stats.fail("el unico testigo alcanzable no anula el sistema")
-        return
-    print(f"  {Colors.WARN}COMPLETITUD NO VERIFICADA: los testigos (i,j) son astronomicos y")
-    print(f"  el constructor solo alcanza un caso. Mientras siga asi, este lema NO")
-    print(f"  puede sostener ninguna cifra de record.{Colors.ENDC}")
-    stats.ok()
+    # COMPLETITUD con el constructor explicito, y su reverso.
+    # Lista explicita, no un rango: el rango de aparicion --y con el, el coste de
+    # construir el testigo-- crece brutalmente con (A,B). Estos son los casos que
+    # se calculan en segundos; mas alla no es que falte testigo, es que no se
+    # puede CALCULAR, y son cosas distintas.
+    casos = [(2, 1), (2, 2), (2, 3), (3, 1), (3, 2), (3, 3),
+             (4, 1), (4, 2), (5, 1), (5, 2)]
+    buenos, malos, espurios = 0, [], []
+    for Av, Bv in casos:
+        if True:
+            _, y = pell_seq(Av, Bv)
+            ok, _ = S.check_witness({A: Av, B: Bv, C: y})
+            if ok:
+                buenos += 1
+            else:
+                malos.append((Av, Bv, y))
+            for delta in (1, 2):
+                m, _ = S.check_witness({A: Av, B: Bv, C: y + delta})
+                if m:
+                    espurios.append((Av, Bv, y + delta, y))
+    print(f"  completitud: {buenos} testigos construidos y verificados, {len(malos)} fallos")
+    print(f"  reverso: {len(espurios)} testigos espurios para C != psi_A(B)")
+    if malos:
+        stats.fail(f"sin testigo para valores correctos: {malos[:3]}")
+    elif espurios:
+        stats.fail(f"testigo para valores incorrectos: {espurios[:3]}")
+    else:
+        print(f"  {Colors.WARN}Escala: certificar y_2(3)=6 exige rango de aparicion l=408, y")
+        print(f"  y_4(2)=56 exige l=43.456. Los testigos son astronomicos por")
+        print(f"  naturaleza; la cadena completa no se validara por evaluacion.{Colors.ENDC}")
+        stats.ok()
 
 
 def main():

@@ -320,6 +320,51 @@ class NonnegPool:
         return list(self._cache.values())
 
 
+def _rango_de_aparicion(A, K, limite=200000):
+    """Menor l >= 1 con K | y_l(A). Existe: y_.(A) es una sucesion de divisibilidad.
+
+    Iterar la recurrencia modulo K es correcto pero se queda corto: el rango puede
+    ser del orden de K, y K = 2*D*(e+1)*C^2 llega a miles de millones enseguida.
+    Se usa la propiedad que hace tratable el problema: en una sucesion de
+    divisibilidad,
+
+        rango(m*n) = lcm(rango(m), rango(n))   para m, n coprimos
+
+    asi que basta FACTORIZAR K y calcular el rango de cada potencia de primo
+    iterando modulo ella --que es pequena-- y tomar el minimo comun multiplo.
+    El resultado se comprueba antes de devolverlo (K | y_l de verdad).
+
+    Devuelve None si no se alcanza; el llamante debe distinguir "no hay testigo"
+    de "no se ha sabido calcular", que no es lo mismo.
+    """
+    if K <= 0:
+        return None
+    if K == 1:
+        return 1
+
+    def rango_potencia(pe):
+        p, q = 0 % pe, 1 % pe
+        for l in range(1, limite + 1):
+            if q == 0:
+                return l
+            p, q = q, (2 * A * q - p) % pe
+        return None
+
+    total = 1
+    for primo, exp in sympy.factorint(K).items():
+        r = rango_potencia(primo ** exp)
+        if r is None:
+            return None
+        total = total * r // sympy.igcd(total, r)
+        if total > limite * 64:
+            return None
+    # comprobacion: el rango calculado debe funcionar de verdad
+    p, q = 0 % K, 1 % K
+    for _ in range(total - 1):
+        p, q = q, (2 * A * q - p) % K
+    return total if q % K == 0 else None
+
+
 def L_psi(A, B, C, e=0, over_N=True):
     """C = psi_A(B) = y_B(A):  el B-esimo valor de la sucesion de Pell de parametro A.
 
@@ -403,27 +448,55 @@ def L_psi(A, B, C, e=0, over_N=True):
     ]
 
     def w(vals):
-        """Testigo por BUSQUEDA. Limitacion declarada: solo casos diminutos."""
+        """Testigo CONSTRUIDO, no buscado.
+
+        La busqueda era inviable: los (i, j) son astronomicos. Pero la estructura
+        los determina, y esa es la diferencia entre un lema y una conjetura:
+
+          1. D = x_B(A)^2 automaticamente, porque C = y_B(A).
+          2. `F` es cuadrado si y solo si `E` es un y-valor de A. Como
+             E = 2(i+1)D(e+1)C^2 = (i+1)*K, hace falta l con K | y_l(A): el RANGO
+             DE APARICION de K, que existe porque la sucesion de Pell es una
+             sucesion de divisibilidad. Entonces E = y_l(A), F = x_l(A)^2 e
+             i = y_l(A)/K - 1.
+          3. Para H basta **m = B**, y esto es lo que desatasca todo:
+               * G = A + F(F-A) == 1 (mod 2C)  [porque F == 1 (mod 2C)], luego
+                 2C | G-1, y por P3  y_B(G) == B (mod G-1) == B (mod 2C):
+                 asi que H = y_B(G) tiene la forma B + 2jC exigida;
+               * G == A (mod F) y por P5  y_B(G) == y_B(A) = C (mod F):
+                 asi que F | (H - C).
+             Y de paso I = (G^2-1)H^2+1 = x_B(G)^2 sale cuadrado solo.
+          4. Luego DFI = (x_B(A) * x_l(A) * x_B(G))^2, cuadrado POR CONSTRUCCION.
+
+        AVISO DE ESCALA, que no es un detalle: `l` es el rango de aparicion y
+        crece muy rapido (para A=3, B=2 --o sea, para certificar que y_2(3)=6--
+        ya vale 408, y E = y_408(3) tiene ~317 cifras). Los testigos de este lema
+        son astronomicos POR NATURALEZA, no por la implementacion. Evaluarlos solo
+        es posible en los casos mas pequenos, y por eso la completitud de la
+        cadena no se podra nunca verificar por evaluacion: descansa en el teorema.
+        """
         Av, Bv, Cv, evv = (int(A.subs(vals)), int(B.subs(vals)),
                            int(C.subs(vals)), int(ev.subs(vals)))
         if Av < 2 or Bv < 1 or Cv < Bv:
             return None
+        xB, yB = pell_seq(Av, Bv)
+        if yB != Cv:                      # solo hay testigo si C = psi_A(B)
+            return None
         Dv = (Av * Av - 1) * Cv * Cv + 1
-        for iv in range(0, 120):
-            Ev = 2 * (iv + 1) * Dv * (evv + 1) * Cv * Cv
-            Fv = (Av * Av - 1) * Ev * Ev + 1
-            Gv = Av + Fv * (Fv - Av)
-            for jv in range(0, 120):
-                Hv = Bv + 2 * jv * Cv
-                if (Hv - Cv) % Fv != 0:
-                    continue
-                Iv = (Gv * Gv - 1) * Hv * Hv + 1
-                raiz, exacto = sympy.integer_nthroot(Dv * Fv * Iv, 2)
-                if not exacto:
-                    continue
-                return {i: iv, j: jv, al: int(raiz), be: abs(Hv - Cv) // Fv,
-                        ga: Cv - Bv, D: Dv, E: Ev, F: Fv, G: Gv, H: Hv, I: Iv}
-        return None
+        K = 2 * Dv * (evv + 1) * Cv * Cv
+        lv = _rango_de_aparicion(Av, K)
+        if lv is None:
+            return None
+        xl, Ev = pell_seq(Av, lv)
+        Fv = (Av * Av - 1) * Ev * Ev + 1
+        Gv = Av + Fv * (Fv - Av)
+        xm, Hv = pell_seq(Gv, Bv)         # m = B
+        Iv = (Gv * Gv - 1) * Hv * Hv + 1
+        if (Hv - Bv) % (2 * Cv) != 0 or (Hv - Cv) % Fv != 0:
+            return None                   # no deberia ocurrir; si ocurre, se declara
+        return {i: Ev // K - 1, j: (Hv - Bv) // (2 * Cv),
+                al: xB * xl * xm, be: abs(Hv - Cv) // Fv, ga: Cv - Bv,
+                D: Dv, E: Ev, F: Fv, G: Gv, H: Hv, I: Iv}
 
     params = sorted((A.free_symbols | B.free_symbols | C.free_symbols
                      | ev.free_symbols), key=str)
