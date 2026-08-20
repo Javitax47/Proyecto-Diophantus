@@ -256,11 +256,28 @@ optimización, que es para lo que sirve esta maquinaria.
 sobre 5 objetivos × 4 criterios. Todas convergen a 46 incógnitas (47 variables). *Los reinicios
 aleatorios están agotados.*
 
-**Siguiente paso concreto.** Para bajar de 47 hace falta algo con MEMORIA, no más muestreo ciego:
-búsqueda por haz sobre la secuencia de nombres, o —lo que encaja con la maquinaria que ya hay—
-**codificar el aplanado mínimo como problema de optimización y pasárselo a Z3 o al exportador
-QUBO**. «Elegir el conjunto mínimo de productos que reduce todos los monomios a grado ≤ 2» es un
-problema tipo cobertura, y el proyecto ya tiene ambos backends.
+**Se hizo el siguiente paso: optimización exacta, con cota inferior demostrada**
+(`src/analysis/dioph_optflat.py`). Aplanar restringido a nombrar monomios es un problema
+combinatorio exacto y `z3.Optimize` lo resuelve dando modelo **y** cota:
+
+| Punto de partida | Nombres | Total | Generador | Cota inferior |
+|---|---|---|---|---|
+| original expandido | 25 | 50 | (51, 5) | **25 — óptimo** |
+| tras `flatten_tree(S, 8)` | 16 | 46 | **(47, 5)** | **16 — óptimo** |
+| JSWW 1976, a mano | — | 41 | (42, 5) | — |
+
+**Y esto reorienta el diagnóstico: nuestra búsqueda ya estaba en el óptimo.** Los ~2.000
+reinicios aleatorios habían encontrado 46, y Z3 demuestra que 46 es el mínimo para esa base.
+Luego el problema **no es la búsqueda: es la formulación.**
+
+**Dónde está exactamente la brecha de 5 variables.** JSWW no nombran solo monomios: nombran
+**subexpresiones compuestas** —`(a + u²(u²−a))²`, `(n+4dy)²`— que no son monomios de ningún
+desarrollo. Optimizar sobre ese espacio es el problema del **circuito aritmético mínimo con
+puertas de grado 2** (un *straight-line program* mínimo), muchísimo más grande que el de los
+monomios. Ahí está la brecha, y ahí hay que atacar para bajar de 47.
+
+Nótese que ellos lo hicieron a mano en 1976, con conocimiento de su propia construcción. No es
+una heurística que se nos escape: es comprensión estructural del sistema concreto.
 
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
