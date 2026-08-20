@@ -64,6 +64,33 @@ ECUACIONES = [
     z + p * l * (a - p) + t * (2 * a * p - p ** 2 - 1) - p * m,
 ]
 
+#: Las MISMAS ecuaciones en la forma AGRUPADA en que las escribe el paper
+#: (Teorema 2.12, p. 454), con k -> k+1 ya aplicado.
+#:
+#: POR QUE IMPORTA: JSWW escriben (12) como `b(2a(n+1) - (n+1)^2 - 1)`, con
+#: `(n+1)` agrupado; nosotros lo guardabamos desarrollado como
+#: `b(2an + 2a - n^2 - 2n - 2)`. Son iguales al expandir, pero la forma agrupada
+#: EXPONE `(n+1)` y `(n+1)^2` como subexpresiones nombrables -- y `(n+1)^2` ya
+#: hace falta en la ecuacion (3). Desarrollar destruye justo lo que el optimizador
+#: aprovecha. Es la misma leccion que la cota de Pell y que el aplanado por arbol:
+#: la forma en que se ESCRIBE el sistema cambia lo que cuesta aplanarlo.
+ECUACIONES_AGRUPADAS = [
+    w * z + h + j - q,
+    (g * (k + 1) + g + (k + 1)) * (h + j) + h - z,
+    2 * n + p + q + z - e,
+    (2 * (k + 1)) ** 3 * (2 * (k + 1) + 2) * (n + 1) ** 2 + 1 - f ** 2,
+    e ** 3 * (e + 2) * (a + 1) ** 2 + 1 - o ** 2,
+    (a ** 2 - 1) * y ** 2 + 1 - x ** 2,
+    16 * (a ** 2 - 1) * r ** 2 * y ** 4 + 1 - u ** 2,
+    ((a + u ** 2 * (u ** 2 - a)) ** 2 - 1) * (n + 4 * d * y) ** 2 + 1 - (x + c * u) ** 2,
+    n + l + v - y,
+    (a ** 2 - 1) * l ** 2 + 1 - m ** 2,
+    (k + 1) + i * (a - 1) - l,
+    p + l * (a - n - 1) + b * (2 * a * (n + 1) - (n + 1) ** 2 - 1) - m,
+    q + y * (a - p - 1) + s * (2 * a * (p + 1) - (p + 1) ** 2 - 1) - x,
+    z + p * l * (a - p) + t * (2 * a * p - p ** 2 - 1) - p * m,
+]
+
 INCOGNITAS = [a, b, c, d, e, f, g, h, i, j, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z]
 PARAMETRO = k
 #: El generador es (k+2)*(1 - sum P_i^2): el factor es k+2, no k.
@@ -79,7 +106,7 @@ PUBLICADO = {
 }
 
 
-def sistema(expandir=True):
+def sistema(expandir=True, agrupado=False):
     """El sistema (1) de JSWW como `Dioph`.
 
     `expandir=False` conserva la forma FACTORIZADA. No es un detalle cosmetico:
@@ -98,6 +125,7 @@ def sistema(expandir=True):
     Sin testigo: hallar uno es el reto famoso del paper (los valores son
     astronomicos). No hace falta para medir grado ni coste de aplanado.
     """
-    eqs = [sympy.expand(x_) for x_ in ECUACIONES] if expandir else list(ECUACIONES)
+    fuente = ECUACIONES_AGRUPADAS if agrupado else ECUACIONES
+    eqs = [sympy.expand(x_) for x_ in fuente] if expandir else list(fuente)
     return Dioph(params=[PARAMETRO], unknowns=list(INCOGNITAS), eqs=eqs,
                  witness=None, name="JSWW 1976 (26 variables, grado 25)")

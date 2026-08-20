@@ -308,6 +308,49 @@ Y uno más en la materialización: `sympify("g*k")` crea símbolos **sin** `inte
 sympy no son los mismos que los del sistema; y probar una partición lanzando excepción abortaba
 la búsqueda en la primera rama muerta en vez de seguir con la siguiente.
 
+### 3.2e ⚠️ NO CONSEGUIMOS REPRODUCIR EL (42, 5), Y EL MÉTODO CITADO DA 51
+
+Este es el hallazgo que reorienta todo el ataque al récord. Hay que leerlo con la misma
+desconfianza con la que se leyó nuestra propia cifra de agosto.
+
+**Qué dice JSWW.** Una sola frase, sin construcción (p. 450): *«All that is necessary to reduce
+the degree to 5 is the Skolem substitution method (cf. [3], p. 263). However, this procedure
+increases the number of variables (to 42 when applied to (1)).»*
+
+**Qué es exactamente ese método.** La referencia [3] es Martin Davis, «Hilbert's tenth problem is
+unsolvable», *Amer. Math. Monthly* 80 (1973) 233–269. En su p. 263, Teorema 7.5, textual:
+
+> *«The degree of P satisfying (\*) may be reduced by introducing additional variables `zⱼ`
+> satisfying equations of the form `zⱼ = yᵢyₖ`, `zⱼ = xyᵢ`, `zⱼ = x²`. By successive substitutions
+> of the `zⱼ`'s into P its degree can be brought down to 2. Hence the equation is equivalent to a
+> system of simultaneous equations each of degree 2. Summing the squares gives an equation of
+> degree 4.»*
+
+Es **exactamente** nuestro aplanado: nombrar productos de dos variables y sustituir. Y de eso
+tenemos el óptimo con **cota inferior demostrada**:
+
+| Método | Mínimo demostrado | Cota inferior |
+|---|---|---|
+| **Davis p. 263 tal cual** (productos de dos variables) | **51 variables** | 25 nombres |
+| **Nuestro espacio** (Davis **+** subexpresiones compuestas: un superconjunto) | **46 variables** | 20 nombres |
+| **JSWW afirman** | **42 variables** | *sin construcción publicada* |
+
+**42 < 46 < 51.** Con el método que ellos mismos citan, el mínimo es 51. Con un método
+estrictamente más potente, 46. La cifra de 42 **no la sabemos reproducir**.
+
+**Qué NO se está afirmando.** Que JSWW se equivoquen. Lo que se afirma es más modesto y más
+comprobable: (a) nuestra transcripción de (1) es fiel —reproduce las (26, 25) publicadas—;
+(b) sobre ella, el mínimo de nombres está demostrado por cota inferior, no estimado; (c) el
+espacio de movimientos que optimizamos **contiene** el que describe Davis; y (d) la frase de JSWW
+no viene acompañada de construcción, ni hemos encontrado que nadie la haya escrito después.
+Es posible que aplicaran simplificaciones que no acreditan. **Hace falta revisión experta.**
+
+**Consecuencia práctica.** Nuestro **(46, 5) materializado y verificado** podría ser el mejor
+polinomio de grado 5 representador de primos **explícitamente construido**. No es «batir el
+récord»: es que el récord quizá nunca se construyó. Y esa es exactamente la clase de afirmación
+que este proyecto ya se equivocó una vez en dar por buena, así que va con las cuatro salvedades
+de §7 intactas.
+
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
 Con el egreso a arXiv abierto, el (42, 5) queda cotejado. **Jones–Sato–Wada–Wiens,
