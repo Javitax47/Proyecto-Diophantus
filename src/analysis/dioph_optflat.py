@@ -188,7 +188,35 @@ def _monomio_expr(expo, gens):
     return m
 
 
-def _factores(e, limite=8):
+def _division(e, c, gens):
+    """(q, r) con  e == q*c + r  como identidad polinomica exacta, o None.
+
+    LA RUTA QUE FALTABA. El encoding sabia reducir una expresion partiendo su
+    ARBOL en grupos de factores, partiendo el vector de exponentes de un monomio
+    sobre los generadores ORIGINALES, o expandiendo. Ninguna de las tres sabe usar
+    un nombre ya elegido como GENERADOR NUEVO, y esa es justo la jugada que hace
+    falta a menudo: con `m = E^2` nombrado, reducir `E^3(E+2)` exige la identidad
+    `E^3(E+2) = m^2 + 2*m*E`. Expandir, que era el unico recurso, destruye
+    precisamente el `E^2` que el nombre captura.
+
+    Dividiendo se obtiene esa identidad sin adivinarla: si `e = q*c + r` y `c`
+    esta nombrado --luego cuenta como grado 1--, entonces `e` tiene grado
+    `max(deg(q)+1, deg(r))`. Basta pedir `q` de grado <= d-1 y `r` de grado <= d.
+
+    Se exige que AMBOS bajen de grado estrictamente respecto de `e`: en division
+    multivariante el resto no lo garantiza, y sin esa guarda la recursion no
+    termina.
+    """
+    try:
+        q, r = sympy.div(sympy.expand(e), sympy.expand(c), *gens)
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded, ZeroDivisionError):
+        return None
+    if q == 0:
+        return None
+    return q, r
+
+
+def _factores(e, limite=8):   # el tope de particiones lo pone quien llama
     """Factores de `e` con las POTENCIAS DESPLEGADAS: `E**3*(E+2)` -> [E,E,E,E+2].
 
     CUARTO BUG DE ESTE ENCODING, y del mismo tipo que los tres anteriores: lo
@@ -248,7 +276,8 @@ def no_negativo_sobre_N(e):
 
 
 def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
-                              solo_no_negativos=False, demostrados=()):
+                              solo_no_negativos=False, demostrados=(),
+                              sustitucion=False, tope_sustitucion=12):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     Es la generalizacion que faltaba. `aplanado_minimo` demostro que 46 es el
@@ -389,12 +418,43 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
             if len(fs) == 1:
                 # un solo factor no constante: el coeficiente no cambia el grado
                 ops.append(R(fs[0], d))
-            elif fs and d >= 2 and len(fs) <= 8:   # 8: desplegar potencias alarga fs
+            # TOPE 6, y con motivo medido: desplegar potencias alarga `fs`, y las
+            # particiones son 2^len(fs). Subirlo a 8 multiplico por ~4 el tamano
+            # del encoding y llevo un test de 10 s a varios minutos, sin mejorar
+            # ninguna cifra. La correccion estaba en desplegar; el tope se queda.
+            elif fs and d >= 2 and len(fs) <= 6:
                 for r in range(1, len(fs)):
                     for comb in itertools.combinations(range(len(fs)), r):
                         g1 = sympy.Mul(*[fs[i] for i in comb])
                         g2 = sympy.Mul(*[fs[i] for i in range(len(fs)) if i not in comb])
                         ops.append(z3.And(R(g1, 1), R(g2, 1)))
+        # RUTA DE SUSTITUCION: usar un nombre ya elegido como GENERADOR NUEVO.
+        # Por defecto DESACTIVADA por coste, no por dudas: da cotas estrictamente
+        # mejores --medido: 21 -> 18 nombres en el sistema del contraejemplo-- y
+        # cuesta un orden de magnitud mas de tiempo (27 s -> 203 s ahi mismo),
+        # porque anade una division polinomica por cada par (nodo, candidato).
+        # Quien quiera la cota buena la pide; quien quiera la cifra rapida, no.
+        # Ver `_division`. Sin esto el encoding no podia certificar conjuntos de
+        # nombres VALIDOS --se exhibio uno de 20 para un sistema donde declaraba
+        # cota inferior 21-- porque su unico recurso de reescritura era expandir,
+        # que destruye la subexpresion que el nombre captura.
+        if sustitucion and d >= 1:
+            ge = e.free_symbols
+            gd = grado(e)
+            vistos = 0
+            for c in orden:
+                if vistos >= tope_sustitucion:
+                    break
+                if c is e or not (c.free_symbols <= ge) or grado(c) > gd:
+                    continue
+                par = _division(e, c, gens)
+                if par is None:
+                    continue
+                q, rr = par
+                if grado(q) >= gd or grado(rr) >= gd:
+                    continue          # sin esta guarda la recursion no termina
+                vistos += 1
+                ops.append(z3.And(x[c], R(q, d - 1), R(rr, d)))
         return z3.Or(ops) if ops else z3.BoolVal(False)
 
     raiz = [R(e, target) for e in system.eqs]
@@ -436,7 +496,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
             "elegidos": [str(c) for c in elegidos]}
 
 
-def materializar(system, elegidos, target=2, name=None):
+def materializar(system, elegidos, target=2, name=None, sustitucion=False):
     """Construye el sistema REAL a partir del conjunto de nombres que eligio Z3.
 
     El optimizador devuelve un NUMERO y un conjunto; eso no es un sistema. Sin
@@ -470,6 +530,10 @@ def materializar(system, elegidos, target=2, name=None):
     clave_elegidos = {sympy.srepr(sympy.expand(c)): c for c in elegidos}
     nombres = {}
     defs = []
+    # Orden por grado descendente: dividir primero por lo mas grande tiende a
+    # dejar cociente y resto pequenos, que es lo que hace terminar la recursion.
+    # (Va DESPUES de `nombres`, que es lo que consulta `grado`.)
+    elegidos_expr = sorted(elegidos, key=lambda c: -grado(c))
 
     def simbolo(c):
         k = sympy.srepr(sympy.expand(c))
@@ -539,6 +603,40 @@ def materializar(system, elegidos, target=2, name=None):
                         if r2 is None:
                             continue
                         return coef * r1 * r2
+        # RUTA DE SUSTITUCION, la misma que en el optimizador. Tiene que estar en
+        # los dos sitios: si el optimizador puede certificar un conjunto de
+        # nombres que el materializador no sabe construir, la cifra no existe.
+        #
+        # DESACTIVADA POR DEFECTO, y no por gusto: activarla produjo un sistema de
+        # GRADO 3 por ecuacion donde el camino de siempre da 2 --generador de
+        # grado 7 en vez de 5--. O la contabilidad de grado de esta ruta esta mal,
+        # o gana una reduccion peor a otra mejor por probarse en mal orden. Hasta
+        # que se sepa cual de las dos, la cifra publicada sale del camino que si
+        # esta verificado. Un atajo que no entiendo no entra en la cifra.
+        if sustitucion and d >= 1:
+            ge = e.free_symbols
+            gd = grado(e)
+            for c in elegidos_expr:
+                if c is e or sympy.expand(c - e) == 0:
+                    continue
+                if not (c.free_symbols <= ge) or grado(c) > gd:
+                    continue
+                par = _division(e, c, gens)
+                if par is None:
+                    continue
+                q, rr = par
+                if grado(q) >= gd or grado(rr) >= gd:
+                    continue
+                nc = intentar(c, 1)
+                if nc is None:
+                    continue
+                r1 = intentar(q, d - 1)
+                if r1 is None:
+                    continue
+                r2 = intentar(rr, d)
+                if r2 is None:
+                    continue
+                return r1 * nc + r2
         return None
 
     def reducir(e, d, permitir_nombre=True):
