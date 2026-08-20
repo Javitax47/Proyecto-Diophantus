@@ -351,3 +351,154 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
     return {"estado": estado, "nombres": len(elegidos),
             "total": system.cost() + len(elegidos), "cota": cota,
             "elegidos": [str(c) for c in elegidos]}
+
+
+def materializar(system, elegidos, target=2, name=None):
+    """Construye el sistema REAL a partir del conjunto de nombres que eligio Z3.
+
+    El optimizador devuelve un NUMERO y un conjunto; eso no es un sistema. Sin
+    materializar no se puede (a) comprobar que el grado baja de verdad, (b) contar
+    las incognitas EFECTIVAMENTE usadas --alguna original puede quedar sin
+    aparecer tras las sustituciones-- ni (c) verificar equisatisfacibilidad con
+    testigos. Una cifra sin sistema es un numero de un solucionador, no un
+    resultado.
+
+    `elegidos` son las subexpresiones a nombrar (las mismas que devuelve
+    `aplanado_minimo_compuesto`, como expresiones sympy o cadenas).
+    """
+    gens = list(system.params) + list(system.unknowns)
+
+    def grado(e):
+        e = sympy.expand(e)
+        if getattr(e, "is_number", False):
+            return 0
+        try:
+            return sympy.Poly(e, *(gens + list(nombres.values()))).total_degree()
+        except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+            return 99
+
+    # OJO CON LOS SIMBOLOS: `sympify("g*k")` crea variables SIN la hipotesis
+    # `integer=True`, y en sympy `Symbol('k')` no es `Symbol('k', integer=True)`.
+    # Sin pasar el diccionario de locales, los nombres elegidos no casan con los
+    # del sistema y la reduccion falla con un "no se pudo reducir" enganoso.
+    locales = {str(g): g for g in gens}
+    elegidos = [sympy.sympify(c, locals=locales) if isinstance(c, str) else c
+                for c in elegidos]
+    clave_elegidos = {sympy.srepr(sympy.expand(c)): c for c in elegidos}
+    nombres = {}
+    defs = []
+
+    def simbolo(c):
+        k = sympy.srepr(sympy.expand(c))
+        if k not in nombres:
+            w = sympy.Symbol("m%d" % (len(nombres) + 1), integer=True)
+            nombres[k] = w
+            defs.append((w, c))
+        return nombres[k]
+
+    def intentar(e, d, permitir_nombre=True):
+        """Reduce `e` a grado <= d, o devuelve None si no puede.
+
+        Devolver None en vez de lanzar es lo que permite PROBAR una particion y,
+        si no sale, seguir con la siguiente. Una version anterior lanzaba dentro
+        del bucle y abortaba la busqueda en la primera rama muerta, con un mensaje
+        enganoso ("no se pudo reducir k**3") sobre una particion que simplemente
+        no era la buena.
+        """
+        e = sympy.sympify(e)
+        if grado(e) <= d:
+            return e
+        k = sympy.srepr(sympy.expand(e))
+        if permitir_nombre and k in clave_elegidos:
+            return simbolo(clave_elegidos[k])
+        if e.is_Add:
+            partes = [intentar(a, d) for a in e.args]
+            if all(p is not None for p in partes):
+                return sympy.Add(*partes)
+        ex = sympy.expand(e)
+        if ex != e and ex.is_Add:
+            partes = [intentar(a, d) for a in ex.args]
+            if all(p is not None for p in partes):
+                return sympy.Add(*partes)
+        expo = _como_monomio(ex, gens)
+        if expo is not None and d >= 2:
+            for d1 in itertools.product(*[range(a + 1) for a in expo]):
+                s1 = sum(d1)
+                if s1 == 0 or s1 == sum(expo):
+                    continue
+                d2 = _dividir(expo, d1)
+                if d2 is None or s1 > sum(d2):
+                    continue
+                r1 = intentar(_monomio_expr(d1, gens), 1)
+                if r1 is None:
+                    continue
+                r2 = intentar(_monomio_expr(d2, gens), 1)
+                if r2 is None:
+                    continue
+                coef = sympy.expand(ex / _monomio_expr(expo, gens))
+                return coef * r1 * r2
+        if e.is_Mul or e.is_Pow:
+            if e.is_Pow:
+                base, exp = e.args
+                fs = [base] * int(exp) if exp.is_Integer and int(exp) > 0 else []
+                coef = sympy.Integer(1)
+            else:
+                coef, resto = e.as_coeff_Mul()
+                fs = list(resto.args) if resto.is_Mul else [resto]
+            if len(fs) == 1:
+                r = intentar(fs[0], d)
+                if r is not None:
+                    return coef * r
+            elif fs and d >= 2:
+                for r in range(1, len(fs)):
+                    for comb in itertools.combinations(range(len(fs)), r):
+                        g1 = sympy.Mul(*[fs[i] for i in comb])
+                        g2 = sympy.Mul(*[fs[i] for i in range(len(fs)) if i not in comb])
+                        r1 = intentar(g1, 1)
+                        if r1 is None:
+                            continue
+                        r2 = intentar(g2, 1)
+                        if r2 is None:
+                            continue
+                        return coef * r1 * r2
+        return None
+
+    def reducir(e, d, permitir_nombre=True):
+        r = intentar(e, d, permitir_nombre)
+        if r is None:
+            raise ValueError(f"no se pudo reducir a grado {d}: {e}")
+        return r
+
+    eqs = [sympy.expand(reducir(e, target)) for e in system.eqs]
+    i = 0
+    while i < len(defs):
+        w, c = defs[i]
+        eqs.append(sympy.expand(w - reducir(c, target, permitir_nombre=False)))
+        i += 1
+
+    usadas = set()
+    for e in eqs:
+        usadas |= e.free_symbols
+    incognitas = [u for u in system.unknowns if u in usadas]
+    incognitas += [w for _, w in sorted(((str(k), v) for k, v in nombres.items()))]
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        asign = dict(param_vals); asign.update(base)
+        out = {u: v for u, v in base.items() if u in usadas}
+        for k in sorted(nombres, key=lambda z: str(nombres[z])):
+            w = nombres[k]
+            val = int(sympy.expand(sympy.sympify(k)).subs(asign))
+            asign[w] = val
+            out[w] = val
+        return out
+
+    return Dioph(list(system.params), incognitas, eqs, witness=w_ext,
+                 name=name or f"{system.name} [optimo materializado]")
+
+
+from src.analysis.dioph_calculus import Dioph          # noqa: E402  (al final: evita ciclo)

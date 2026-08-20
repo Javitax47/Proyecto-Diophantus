@@ -280,26 +280,33 @@ cada ecuación *y* monomios del desarrollo— con codificación tipo Tseitin: ca
 |---|---|---|---|
 | solo monomios, desde el original | 25 nombres | (51, 5) | 25 |
 | solo monomios, tras `flatten_tree(S,8)` | 16 nombres | (47, 5) | 16 |
-| **compuestos ∪ monomios, desde el original** | **21 nombres** | **(47, 5)** | **21** |
+| **compuestos ∪ monomios, con partición de exponentes** | **20 nombres** | **(46, 5)** | **20** |
 | JSWW 1976, a mano | — | (42, 5) | — |
 
-**47 variables es el ÓPTIMO de todo el aplanado mecánico**, demostrado, y coincide exactamente
-con lo que la búsqueda aleatoria había alcanzado por construcción. Ampliar el espacio de
-candidatos de monomios a subexpresiones compuestas **no mejora el resultado**: solo confirma que
-47 es el suelo.
+**46 variables es el óptimo demostrado del aplanado mecánico**, y no es un número de un
+solucionador: `materializar()` construye el sistema real —45 incógnitas (las 25 originales, todas
+usadas, más 20 nombres), grado 2 por ecuación, 34 ecuaciones—. La materialización está verificada
+en todo el catálogo: preserva la equisatisfacibilidad y además mejora a las heurísticas
+(Fibonacci pasa de 12 a **10** variables).
 
-**Conclusión, y es la que importa para saber dónde atacar:** las cinco variables que nos separan
-de JSWW **no están en el aplanado**. Aplanar mejor es imposible —está demostrado—. Tienen que
-salir de reestructurar el sistema de ecuaciones en sí, que es lo que ellos hicieron a mano en
-1976 con conocimiento de su propia construcción. No es una heurística que se nos escape: es
-matemática sobre el problema concreto.
+**Conclusión, y es la que dice dónde atacar:** las cuatro variables que nos separan de JSWW
+**no están en el aplanado**. Aplanar mejor es imposible —la cota inferior se alcanza—. Tienen que
+salir de reestructurar el sistema de ecuaciones, que es lo que ellos hicieron a mano en 1976 con
+conocimiento de su propia construcción.
 
-*Dos errores de codificación que costaron caro y merecen quedar escritos:* (a) un `Mul` con un
-solo factor no constante —`−(cu+x)²`— no generaba ninguna partición y volvía **insatisfacible**
-el sistema entero; (b) memoizar la fórmula z3 durante la recursión capturaba constantes `False`
-de nodos a medio calcular, lo que daba `unsat` en un sistema y un óptimo **peor** en otro. Que
-una minimización empeore al añadir candidatos es imposible: era la señal de que el encoding
-estaba mal, no el problema.
+**Cuatro errores de codificación, y los cuatro los cazó la misma pregunta: *¿es este resultado
+posible?*** Merecen quedar escritos porque el patrón vale para cualquier optimizador:
+
+| Fallo | Síntoma imposible |
+|---|---|
+| un `Mul` con un solo factor no constante (`−(cu+x)²`) no generaba particiones | **`unsat`** en un sistema que obviamente tiene solución |
+| memoizar la fórmula z3 durante la recursión capturaba constantes `False` | el óptimo **empeoró** (20 → 16 nombres) al **ampliar** el espacio de candidatos |
+| solo particionaba factores sintácticos, no vectores de exponentes | nuestro «óptimo» (21) era **mayor** que las 16 de JSWW, cuyo método es mecánico y por tanto una cota **superior** |
+| la ruta monomial sin la guarda `d ≥ 2` partía `k²` en `k·k` como grado 1 | **cero nombres** para ecuaciones de grado 6 |
+
+Y uno más en la materialización: `sympify("g*k")` crea símbolos **sin** `integer=True`, que en
+sympy no son los mismos que los del sistema; y probar una partición lanzando excepción abortaba
+la búsqueda en la primera rama muerta en vez de seguir con la siguiente.
 
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 

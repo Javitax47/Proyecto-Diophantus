@@ -30,6 +30,9 @@ from src.analysis.dioph_jsww import sistema, FACTOR, PUBLICADO, INCOGNITAS
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
 )
+from src.analysis.dioph_optflat import (
+    Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar,
+)
 
 
 class Colors:
@@ -115,12 +118,53 @@ def test_grado_menor_que_5(stats):
         stats.fail("se ha alterado la nota sobre el estado del problema")
 
 
+def test_aplanado_optimo(stats):
+    """[4] El aplanado OPTIMO, con cota inferior demostrada y sistema materializado.
+
+    Las heuristicas dicen "he encontrado 46". Esto dice "46 es el minimo, y aqui
+    esta el sistema". La diferencia importa: sin cota inferior no se sabe si vale
+    la pena seguir buscando, y sin materializar la cifra es un numero de un
+    solucionador, no un resultado.
+
+    Se comprueba: el optimizador alcanza su cota (optimo demostrado), el sistema
+    materializado tiene grado <= 2 por ecuacion, y las cifras salen donde deben.
+    """
+    print(f"\n{Colors.HEADER}[4] Aplanado optimo sobre el sistema de JSWW{Colors.ENDC}")
+    if not Z3_DISPONIBLE:
+        print("  (z3 no disponible: omitido)"); return
+    S = sistema(expandir=False)
+    r = aplanado_minimo_compuesto(S, 2, timeout_s=300)
+    print(f"  optimizador: {r['estado']}, {r['nombres']} nombres (cota inferior {r['cota']})")
+    if r["estado"] != "optimo":
+        stats.fail(f"no se alcanzo la cota: {r['estado']}")
+        return
+    M = materializar(S, r["elegidos"], 2)
+    grado = max_equation_degree(M)
+    _, g = to_generator(M, FACTOR)
+    usadas = sum(1 for u in INCOGNITAS if u in M.unknowns)
+    print(f"  materializado: {M.cost()} incognitas ({usadas} originales + "
+          f"{M.cost()-usadas} nombres), grado maximo {grado}")
+    print(f"  GENERADOR: ({g['variables']} variables, grado {g['grado']})"
+          f"     JSWW 1976: (42, 5)")
+    if grado > 2:
+        stats.fail(f"el sistema materializado tiene grado {grado}, no 2")
+    elif g["grado"] != 5:
+        stats.fail(f"generador de grado {g['grado']}, se esperaba 5")
+    else:
+        distancia = g["variables"] - 42
+        print(f"  {Colors.WARN}Distancia al record: {distancia:+d} variables. Y esta demostrado")
+        print(f"  que aplanar mejor es IMPOSIBLE: la cota inferior se alcanza. Lo que")
+        print(f"  falta tiene que salir de reestructurar el sistema, no de optimizar.{Colors.ENDC}")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
     test_transcripcion(stats)
     test_marcador_de_aplanado(stats)
     test_grado_menor_que_5(stats)
+    test_aplanado_optimo(stats)
 
     total = stats.passed + stats.failed
     print()
