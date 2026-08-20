@@ -550,11 +550,50 @@ En 2025, investigadores del área señalan que **algunos pares anunciados carece
 publicada** y toman la molestia de no apoyarse en ellos. Que el (42, 5) sea otro caso así no es
 una hipótesis excéntrica: es el patrón documentado de esta literatura.
 
-**La afirmación que se sostiene, y sus límites.** *Entre los polinomios representadores de primos
-efectivamente construidos y exhibibles, éste es el de menor grado.* Con tres salvedades que van
-siempre pegadas:
+#### ⚠️ Corrección: la afirmación anterior era un EMPATE vendido como récord
 
-1. **No haberlo encontrado no prueba que no exista.** Una búsqueda bibliográfica no es un teorema.
+Este apartado decía: *«entre los polinomios **representadores** de primos efectivamente
+construidos y exhibibles, éste es el de menor grado»*. Una revisión adversarial la **refutó**, y
+con razón. Tres errores, todos comprobables con el código de este repo en segundos:
+
+1. **El grado 5 es una MESETA, no un récord.** Aplicar la sustitución de Davis (1973, p. 263) al
+   sistema publicado de JSWW da un generador de grado 5 en **3 segundos**. Medido aquí mismo:
+
+   | ruta desde el (1) publicado | generador |
+   |---|---|
+   | Davis/Skolem textual | (134, 5) |
+   | voraz | (56, 5) |
+   | árbol | (52, 5) |
+   | óptimo demostrado | **(46, 5)** |
+
+   Los cuatro están «construidos y exhibidos» exactamente en el mismo sentido. Cualquier lector de
+   JSWW podía obtener un generador explícito de grado 5 en una tarde desde 1976; que nadie gastara
+   páginas del *Monthly* en imprimir 2.000 monomios es un hecho tipográfico, no matemático.
+
+2. **El filtro «solo lo construido» no discrimina nada en el eje del grado.** Ordenados por grado,
+   los generadores conocidos son: 5 (42 vars, anunciado), 25 (26, exhibido), 29 (19, anunciado),
+   >6000 (10, exhibido), … El filtro elimina **un** elemento, el (42,5), que **empata**. No hay
+   nada por debajo de 5, ni construido ni anunciado. Aplicar ahí la distinción
+   construido/anunciado —legítima, con precedente en Bayer–David— es retórica: convierte un empate
+   en un récord aparente. Donde esa distinción **sí** discrimina es en el eje de variables.
+
+3. **La palabra «representadores» la hundía sola.** Como *representación* —una sola ecuación
+   `ΣPᵢ² = 0`— el grado es **4**, no 5, y se obtiene aquí en 2 segundos (45 incógnitas). Y la
+   ecuación universal de Jones (1982) también es de grado 4. La frase solo se sostenía leyendo
+   «representador» como «generador», que es justo el intercambio de unidades contra el que este
+   documento advierte.
+
+**La afirmación que sí se sostiene**, y es sobre el eje de VARIABLES dentro de la meseta de grado:
+
+> *Éste es el generador de primos de grado 5 con **menos variables** que consta construido y
+> verificado: **46**, y **47** si no se admite ninguna demostración auxiliar. El grado 5 no es
+> nuestro — es el suelo publicado por JSWW en 1976, alcanzable mecánicamente en segundos.*
+
+Con tres salvedades que van siempre pegadas:
+
+1. **JSWW anunciaron 42 < 46.** Si alguien lo construyó alguna vez, somos segundos. La evidencia a
+   favor es que el método que citan (Davis, p. 263) da un mínimo demostrado de **51**, así que su
+   42 no sale de lo que citan. Pero no haberlo encontrado no prueba que no exista.
 2. **Descansa en que el sistema (1) de JSWW represente los primos** — resultado de 1976 con
    cincuenta años de citas y linaje de formalización. No lo hemos verificado nosotros ni hace falta.
 3. **Nadie con criterio lo ha revisado.** Sigue siendo la salvedad que más pesa, y la única que no

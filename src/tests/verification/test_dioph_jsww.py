@@ -199,7 +199,12 @@ def test_equivalencia_por_sustitucion(stats):
         print("  (z3 no disponible: omitido)"); return
     import sympy
     S = sistema(expandir=False)
-    r = aplanado_minimo_compuesto(S, 2, timeout_s=300)
+    # MISMAS OPCIONES QUE [4], y esto no es un detalle: sin ellas este test
+    # verificaba un sistema DISTINTO del que publica [4]. El optimo no es unico,
+    # asi que "el aplanado equivale al original" quedaba comprobado sobre un
+    # aplanado que no era el de la cifra. Lo detecto una revision adversarial.
+    r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
+                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     if r["estado"] != "optimo":
         stats.fail(f"el optimizador no alcanzo la cota: {r['estado']}")
         return
