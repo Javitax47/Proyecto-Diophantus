@@ -29,7 +29,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.analysis.dioph_problems import build_catalog, rango_de
 from src.analysis.dioph_calculus import Dioph
-from src.analysis.dioph_lemmas import L_exponential, L_composite, L_nonneg_N, fresh
+from src.analysis.dioph_lemmas import (
+    L_exponential, L_composite, L_nonneg_N, L_psi, pell_seq, fresh,
+)
 from src.analysis.dioph_soundness import (
     Z3_DISPONIBLE, sympy_to_z3, solve, soundness_report, uniqueness_report, resumen,
     refuta_configuracion, cota_desde_testigo, unicidad_exponencial,
@@ -333,6 +335,77 @@ def test_unicidad_por_enumeracion(stats):
         stats.ok()
 
 
+def test_lema_psi(stats):
+    """[9] EL LEMA CORRECTO: C = psi_A(B), de fuente primaria.
+
+    Reemplaza a la parte rota del lema exponencial. Transcrito del Teorema 1 de
+    Pak-Kaliszyk (ITP 2022, Mizar HILB10_8:19), que sigue a Matiyasevich-Robinson.
+    Lo que anade y faltaba: ANCLA EL INDICE. La version rota solo tenia la
+    congruencia `y_k(a) == k (mod a-1)`, que fija el residuo de k pero no k.
+
+    Se comprueba aqui:
+      * el sistema se construye con GRADO <= 4 por ecuacion (la ecuacion unica
+        del paper, expandida, pasa de grado 300 y es inviable: hay que nombrar
+        los intermedios D..I);
+      * SOUNDNESS por enumeracion hacia delante: de todas las tuplas pequenas que
+        cumplen `F | (H-C)` y `B <= C`, las que ademas cumplen `DFI = cuadrado`
+        tienen C = psi_A(B). Es la direccion que fallo antes;
+      * el unico testigo alcanzable por busqueda (A=2, B=1, C=1) ANULA el sistema.
+
+    LO QUE NO SE COMPRUEBA, y por eso este lema todavia no sostiene ninguna cifra:
+    la COMPLETITUD. Los testigos (i, j) son astronomicos incluso para A y B
+    diminutos, asi que el constructor solo los halla por busqueda en un caso.
+    Hace falta la construccion explicita de la prueba clasica.
+    """
+    print(f"\n{Colors.HEADER}[9] Lema psi_A(B): la pieza correcta, de fuente primaria{Colors.ENDC}")
+    A, B, C = sympy.symbols('A B C', integer=True)
+    S = L_psi(A, B, C, over_N=True)
+    grado = max(sympy.Poly(e, *(S.params + S.unknowns)).total_degree() for e in S.eqs)
+    print(f"  sistema: {S.cost()} incognitas, {len(S.eqs)} ecuaciones, grado maximo {grado}")
+    if grado > 5:
+        stats.fail(f"grado {grado}: los intermedios D..I no se estan nombrando")
+        return
+
+    # SOUNDNESS hacia delante (barato y es la direccion que importa)
+    violaciones, positivos = [], 0
+    for Av in range(2, 7):
+        for Bv in range(1, 6):
+            _, yB = pell_seq(Av, Bv)
+            for Cv in range(1, 120):
+                Dv = (Av * Av - 1) * Cv * Cv + 1
+                if Cv < Bv:
+                    continue
+                for iv in range(0, 25):
+                    Ev = 2 * (iv + 1) * Dv * Cv * Cv
+                    Fv = (Av * Av - 1) * Ev * Ev + 1
+                    Gv = Av + Fv * (Fv - Av)
+                    for jv in range(0, 25):
+                        Hv = Bv + 2 * jv * Cv
+                        if (Hv - Cv) % Fv != 0:
+                            continue
+                        Iv = (Gv * Gv - 1) * Hv * Hv + 1
+                        if not sympy.integer_nthroot(Dv * Fv * Iv, 2)[1]:
+                            continue
+                        positivos += 1
+                        if Cv != yB:
+                            violaciones.append((Av, Bv, Cv, yB))
+    print(f"  soundness: {positivos} tuplas cumplen las tres condiciones, "
+          f"{len(violaciones)} violaciones")
+    if violaciones:
+        stats.fail(f"C != psi_A(B) en {violaciones[:3]}")
+        return
+
+    ok, _ = S.check_witness({A: 2, B: 1, C: 1})
+    print(f"  testigo A=2, B=1, C=1 (psi=1) anula el sistema: {ok}")
+    if not ok:
+        stats.fail("el unico testigo alcanzable no anula el sistema")
+        return
+    print(f"  {Colors.WARN}COMPLETITUD NO VERIFICADA: los testigos (i,j) son astronomicos y")
+    print(f"  el constructor solo alcanza un caso. Mientras siga asi, este lema NO")
+    print(f"  puede sostener ninguna cifra de record.{Colors.ENDC}")
+    stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== SOUNDNESS POR SMT: LA DIRECCION QUE FALTABA ==={Colors.ENDC}")
     if not Z3_DISPONIBLE:
@@ -347,6 +420,7 @@ def main():
     test_criterio_gratis(stats)
     test_base_pell_compartida(stats)
     test_unicidad_por_enumeracion(stats)
+    test_lema_psi(stats)
 
     total = stats.passed + stats.failed
     print()

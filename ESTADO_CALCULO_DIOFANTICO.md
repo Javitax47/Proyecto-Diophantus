@@ -165,6 +165,41 @@ exponenciación (Davis 1973, o Jones–Matiyasevich), que ancla el índice con e
 adicionales. Costará incógnitas —el lema pasará de 7 a bastante más— y **todas las cifras de la
 esquina de grado bajo habrá que volver a medirlas desde cero**.
 
+### 3.2b-bis La reconstrucción: el lema correcto ya está, de fuente primaria
+
+`L_psi(A, B, C)` — «C = ψ_A(B) = y_B(A)» — transcrito del **Teorema 1 de Pąk–Kaliszyk (ITP
+2022, formalizado en Mizar como `HILB10_8:19`)**, que sigue a Matiyasevich–Robinson:
+
+> Sean A, B, C ∈ ℕ con A > 1, B > 0 y e ∈ ℕ. Entonces **C = ψ_A(B)** si y solo si existen
+> i, j ∈ ℕ y auxiliares D, E, F, G, H, I ∈ ℤ tales que
+> **`DFI = □ ∧ F | (H − C) ∧ B ≤ C`**
+> donde `D = (A²−1)C²+1`, `E = 2(i+1)D(e+1)C²`, `F = (A²−1)E²+1`, `G = A+F(F−A)`,
+> `H = B+2jC`, `I = (G²−1)H²+1`.
+
+**Lo que añade y faltaba: ancla el índice.** La versión rota solo tenía `y_k(a) ≡ k (mod a−1)`,
+que fija el *residuo* de k pero no k. Aquí el anclaje viene de que `D` es cuadrado exactamente
+cuando `C` es un y-valor de `A`, `F` cuando lo es `E`, e `I` cuando `H` lo es de `G`.
+
+**Se implementa como SISTEMA, no como la ecuación única del paper.** La forma compacta
+`0 = (DFI−α²)² + (Fβ−H+C)²(Fβ+H−C)² + (B+γ−C)²` es elegante sobre el papel e **inviable** al
+expandir: `D` es de grado 4, `E` de 7, `F` de 16, `G` de 32, `I` de ~70, y el cuadrado del primer
+sumando pasa de **grado 300**. Nombrando D…I como incógnitas, **ninguna ecuación pasa de grado
+4** — que además es justo lo que quiere la esquina de grado bajo. Es la misma lección que la cota
+de Pell: *dónde* se paga el coste importa tanto como cuánto.
+
+| | Incógnitas | Grado máx. | ¿Sound? |
+|---|---|---|---|
+| `L_exponential` (roto) | 7 | 4 | **No** |
+| **`L_psi`** | **11** | **4** | soundness sin violaciones; **completitud sin verificar** |
+
+**Estado de verificación, y es la parte que decide.** Soundness: enumerando hacia delante todas
+las tuplas pequeñas que cumplen `F|(H−C)` y `B≤C`, las que además cumplen `DFI = □` tienen
+`C = ψ_A(B)` — **0 violaciones**, que es la dirección que nos mató. Completitud: **no verificada**.
+Los testigos `(i, j)` son astronómicos incluso para A y B diminutos; el constructor solo alcanza
+`A=2, B=1, C=1` por búsqueda. **Mientras eso no se resuelva, este lema no puede sostener ninguna
+cifra**, y el siguiente paso concreto es implementar la construcción explícita del testigo que da
+la prueba clásica en vez de buscarlo.
+
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
 Con el egreso a arXiv abierto, el (42, 5) queda cotejado. **Jones–Sato–Wada–Wiens,

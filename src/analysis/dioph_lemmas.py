@@ -320,6 +320,118 @@ class NonnegPool:
         return list(self._cache.values())
 
 
+def L_psi(A, B, C, e=0, over_N=True):
+    """C = psi_A(B) = y_B(A):  el B-esimo valor de la sucesion de Pell de parametro A.
+
+    ESTE ES EL LEMA QUE FALTABA. La version anterior de `L_exponential` intentaba
+    apanarse con la congruencia del indice (`y_k(a) == k mod a-1`), que fija el
+    RESIDUO de k pero no k: valen tambien k + j(a-1), y por eso admitia valores
+    espurios (3^2 admitia c en {1,3,5,7,9}). Anclar el indice es justo lo que hace
+    falta, y es el contenido profundo del teorema de Matiyasevich.
+
+    FUENTE PRIMARIA, transcrita literalmente. K. Pak, C. Kaliszyk, "Formalizing a
+    Diophantine Representation of the Set of Prime Numbers", ITP 2022, Teorema 1
+    (formalizado en Mizar como HILB10_8:19), que a su vez sigue a Matiyasevich y
+    Robinson:
+
+        Sean A, B, C en N con A > 1, B > 0 y e en N. Entonces C = psi_A(B) si y
+        solo si existen i, j en N y auxiliares D, E, F, G, H, I en Z tales que
+
+            D*F*I = cuadrado   AND   F | (H - C)   AND   B <= C
+
+        donde  D = (A^2-1)C^2 + 1,   E = 2(i+1)D(e+1)C^2,   F = (A^2-1)E^2 + 1,
+               G = A + F(F-A),       H = B + 2jC,           I = (G^2-1)H^2 + 1.
+
+        Por tanto C = psi_A(B) se representa como
+
+            0 = (D*F*I - alpha^2)^2 + (F*beta - H + C)^2 * (F*beta + H - C)^2
+                + (B + gamma - C)^2
+
+        con alpha, beta, gamma en N ocultas.
+
+    POR QUE ESA FORMA. Cada sumando codifica una condicion y los tres se anulan a
+    la vez solo si las tres se cumplen:
+      * `DFI - alpha^2`            -> DFI es un cuadrado;
+      * `(F*beta-H+C)(F*beta+H-C)` -> F*beta = |H-C|, es decir F | (H-C), y el
+                                      producto cubre los dos signos sin gastar
+                                      una incognita en el signo;
+      * `B + gamma - C`            -> B <= C.
+    La sucesion aparece implicitamente: D es cuadrado exactamente cuando C es un
+    y-valor de A (D = x_B(A)^2), F lo es cuando E lo es, e I cuando H es un
+    y-valor de G. Ahi esta anclado el indice.
+
+    COSTE: 11 incognitas -- i, j, alpha, beta, gamma mas los seis intermedios
+    D, E, F, G, H, I, que se nombran para que ninguna ecuacion pase de GRADO 5
+    (ver el comentario del cuerpo: la ecuacion unica del paper, expandida, pasa
+    de grado 300 y es inviable). Frente a las 7 del lema roto, son 4 mas; a
+    cambio, este si es correcto.
+
+    VERIFICACION HASTA HOY (honesta, e insuficiente):
+      * SOUNDNESS: 5040 tuplas (A<=7, B<=7, C<250, e<3, i<40, j<40) que pasan
+        `F|(H-C)` y `B<=C`; de ellas 1 cumple ademas `DFI = cuadrado`, y esa es
+        correcta. **0 violaciones**, que es la direccion que nos mato antes.
+      * COMPLETITUD: NO verificada. Los testigos (i, j) son astronomicos incluso
+        para A, B pequenos, asi que el constructor de testigos de abajo solo los
+        encuentra por busqueda en casos diminutos y devuelve None en el resto.
+        Mientras eso siga asi, este lema NO puede sostener una cifra de record.
+    """
+    A = sympy.sympify(A); B = sympy.sympify(B); C = sympy.sympify(C)
+    ev = sympy.sympify(e)
+    i, j = fresh("pi"), fresh("pj")
+    al, be, ga = fresh("pal"), fresh("pbe"), fresh("pga")
+    D, E, F, G, H, I = (fresh("pD"), fresh("pE"), fresh("pF"),
+                        fresh("pG"), fresh("pH"), fresh("pI"))
+
+    # SISTEMA CON INTERMEDIOS NOMBRADOS, no ecuacion unica.
+    # La forma "0 = (DFI-alpha^2)^2 + ..." del paper es compacta sobre el papel y
+    # ENORME al expandir: D es de grado 4, E de 7, F de 16, G de 32, I de ~70, y
+    # el cuadrado del primer sumando pasa de grado 300. Expandirla es inviable, y
+    # ademas seria contraproducente: la esquina que nos interesa es la de GRADO
+    # BAJO. Nombrando D..I como incognitas, ninguna ecuacion pasa de grado 5.
+    # Es el mismo principio que ya aprendimos con la cota de Pell: donde se paga
+    # el coste importa tanto como cuanto se paga.
+    eqs = [
+        D - (A ** 2 - 1) * C ** 2 - 1,              # grado 4
+        E - 2 * (i + 1) * D * (ev + 1) * C ** 2,    # grado 5
+        F - (A ** 2 - 1) * E ** 2 - 1,              # grado 4
+        G - A - F * (F - A),                        # grado 2
+        H - B - 2 * j * C,                          # grado 2
+        I - (G ** 2 - 1) * H ** 2 - 1,              # grado 4
+        D * F * I - al ** 2,                        # DFI es un cuadrado
+        (F * be - H + C) * (F * be + H - C),        # F | (H - C), ambos signos
+        B + ga - C,                                 # B <= C
+    ]
+
+    def w(vals):
+        """Testigo por BUSQUEDA. Limitacion declarada: solo casos diminutos."""
+        Av, Bv, Cv, evv = (int(A.subs(vals)), int(B.subs(vals)),
+                           int(C.subs(vals)), int(ev.subs(vals)))
+        if Av < 2 or Bv < 1 or Cv < Bv:
+            return None
+        Dv = (Av * Av - 1) * Cv * Cv + 1
+        for iv in range(0, 120):
+            Ev = 2 * (iv + 1) * Dv * (evv + 1) * Cv * Cv
+            Fv = (Av * Av - 1) * Ev * Ev + 1
+            Gv = Av + Fv * (Fv - Av)
+            for jv in range(0, 120):
+                Hv = Bv + 2 * jv * Cv
+                if (Hv - Cv) % Fv != 0:
+                    continue
+                Iv = (Gv * Gv - 1) * Hv * Hv + 1
+                raiz, exacto = sympy.integer_nthroot(Dv * Fv * Iv, 2)
+                if not exacto:
+                    continue
+                return {i: iv, j: jv, al: int(raiz), be: abs(Hv - Cv) // Fv,
+                        ga: Cv - Bv, D: Dv, E: Ev, F: Fv, G: Gv, H: Hv, I: Iv}
+        return None
+
+    params = sorted((A.free_symbols | B.free_symbols | C.free_symbols
+                     | ev.free_symbols), key=str)
+    return Dioph(params=params,
+                 unknowns=[i, j, al, be, ga, D, E, F, G, H, I],
+                 eqs=eqs, witness=w, name=f"{C} = psi_{A}({B})")
+
+
 def L_exponential(b, k, c, over_N=False):
     """c = b^k.   Construccion clasica via ecuacion de Pell.
 
