@@ -106,6 +106,42 @@ Unificación de la verificación independiente mediante un único validador mini
 *   **Cota-QUBO:** Óptimo o cota inferior de un QUBO mediante Nullstellensatz + testigo (`src/product/qubo_bound.py`).
 *   **NN-lineal:** Robustez de una capa lineal sobre una caja mediante Positivstellensatz (Handelman) + testigo (`src/product/nn_linear.py`).
 
+### 10. Cálculo Diofántico Universal y Optimización de Representaciones
+Módulo para construir, medir y **minimizar** representaciones diofánticas de cualquier conjunto
+decidible. Donde la Compilación Diofántica (capacidad 1) traduce *código* a ecuaciones añadiendo
+variables por operación, este módulo va en la dirección contraria: **compone reducciones
+certificadas y minimiza el coste**.
+
+*   **Núcleo con contabilidad exacta (`dioph_calculus.py`):** el tipo `Dioph` (parámetros,
+    incógnitas, ecuaciones, testigo constructivo) y los combinadores `conj`/`disj`, que
+    deduplican incógnitas y ecuaciones. El coste se mide, no se estima.
+*   **Biblioteca de lemas certificados (`dioph_lemmas.py`):** divisibilidad, congruencia,
+    cuadrado, no-negatividad, ecuación de Pell, `L_psi` (el valor B-ésimo de la sucesión de Pell,
+    del Teorema 1 de Pąk–Kaliszyk / Matiyasevich–Robinson), exponenciación, binomial, factorial y
+    Wilson. Cada uno declara **su coste en incógnitas** y trae **testigo construido**, no buscado.
+*   **Arsenal de Pell verificado (`dioph_pell.py`):** propiedades P1–P5 y el crecimiento de Julia
+    Robinson, comprobadas en 14.752 casos.
+*   **Catálogo universal y verificador único (`dioph_problems.py`):** un solo verificador valida
+    cualquier conjunto (cuadrados, triangulares, Fibonacci, Pell, potencias de 2, primos…).
+    Añadir un conjunto nuevo no toca la maquinaria.
+*   **Soundness por SMT (`dioph_soundness.py`):** la dirección que ninguna búsqueda alcanza —
+    *no pertenece ⟹ no hay testigo*. Traduce cualquier `Dioph` a Z3 y **demuestra
+    insatisfacibilidad**, distinguiendo `unsat` / `sat` / `unknown` / `vacuo` sin confundirlos.
+*   **Reducción de grado (`dioph_degree.py`):** aplanados que bajan el grado a costa de
+    incógnitas — voraz por monomios, sustitución de Skolem sobre el árbol, y búsqueda sobre
+    ambos ejes. Preservan la equisatisfacibilidad y **extienden el testigo**.
+*   **Aplanado ÓPTIMO con cota demostrada (`dioph_optflat.py`):** codifica la elección de qué
+    subexpresiones nombrar como problema de optimización y lo resuelve con `z3.Optimize`,
+    devolviendo **modelo y cota inferior**. `materializar()` convierte la solución en un sistema
+    real, verificado. Es la diferencia entre «he encontrado 46» y «46 es el mínimo».
+*   **Patrón de medida externo (`dioph_jsww.py`):** el polinomio de Jones–Sato–Wada–Wiens (1976)
+    transcrito y **verificado** (reproduce sus 26 variables y grado 25 publicados), para poder
+    medirse contra la literatura sin depender de construcciones propias.
+
+**Frontera de Pareto.** Los pares (incógnitas, grado) forman una frontera: bajar el grado cuesta
+incógnitas y viceversa. El módulo mide ambos ejes y permite moverse por ella de forma dirigida.
+Documentación de trabajo en `ESTADO_CALCULO_DIOFANTICO.md`.
+
 ---
 
 ## Instalación y Requisitos
@@ -251,6 +287,14 @@ Proyecto-Diophantus/
     │   └── latex_exporter.py # Generador de informes LaTeX.
     │
     ├── analysis/             # FASE ALGEBRAICA: Análisis y Optimización
+    │   ├── dioph_calculus.py  # Cálculo diofántico: tipo Dioph, combinadores, coste y grado.
+    │   ├── dioph_lemmas.py    # Lemas certificados con coste declarado y testigo constructivo.
+    │   ├── dioph_pell.py      # Arsenal de Pell (P1-P5) verificado numéricamente.
+    │   ├── dioph_problems.py  # Catálogo universal de conjuntos + verificador único.
+    │   ├── dioph_soundness.py # Soundness por SMT: demuestra que NO hay testigo.
+    │   ├── dioph_degree.py    # Reducción de grado: aplanados y búsqueda sobre sus ejes.
+    │   ├── dioph_optflat.py   # Aplanado ÓPTIMO con cota inferior + materialización.
+    │   ├── dioph_jsww.py      # Jones-Sato-Wada-Wiens 1976 como patrón de medida externo.
     │   ├── deep_optimizer.py # Optimización y reducción con Bases de Gröbner.
     │   ├── math_kernels.py   # Transmutador. Sustitución por Dickson y Chebyshev.
     │   ├── matrix_kernel.py  # Exponenciación de matrices para recurrencias lineales.

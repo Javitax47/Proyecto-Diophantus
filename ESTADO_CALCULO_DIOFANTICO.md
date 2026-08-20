@@ -351,6 +351,32 @@ récord»: es que el récord quizá nunca se construyó. Y esa es exactamente la
 que este proyecto ya se equivocó una vez en dar por buena, así que va con las cuatro salvedades
 de §7 intactas.
 
+### 3.2f Cierre del ataque al récord: MESETA EN 46, por tres caminos independientes
+
+| Base de partida | Mejor generador | Cómo |
+|---|---|---|
+| JSWW (1), 26 variables | **46** | aplanado óptimo, cota alcanzada |
+| JSWW Teorema 3.9, sustituyendo B, C, S | **46** | 28 base + 17 nombres |
+| JSWW Teorema 3.9, búsqueda voraz de sustituciones | **46** | sustituye B y S |
+| Teorema 3.9 sin sustituir nada | 49 | nombrar los 14 intermedios sale caro |
+| Teorema 3.9 sustituyendo además M y A | 56 | aparecen al cuadrado: ruinoso |
+| (1) con eliminación lineal (16 subconjuntos) | 50–65 | siempre peor |
+
+**Tres construcciones independientes convergen a 46.** Eso es más informativo que cualquiera por
+separado: sugiere que 46 no es un accidente de una base concreta sino el suelo de esta familia
+bajo aplanado óptimo.
+
+**La regla que emergió, y vale más que el número:** *sustituir lo poco profundo, nombrar lo
+profundo.* Sustituir `S` —que aparece una vez y tiene definición lineal— gana 2 variables;
+sustituir `M` y `A` —que aparecen elevados al cuadrado— cuesta 10. Todo-o-nada era la decisión
+equivocada: es una elección **por variable**, y el optimizador la toma mejor que cualquier regla
+fija. Es la misma lección que la cota de Pell y el aplanado por árbol, ya en su forma general.
+
+**Lo que haría falta para bajar de 46.** No optimizar mejor (demostrado imposible) ni cambiar a
+otra base publicada (probadas las dos de JSWW). Haría falta **una construcción con menos
+profundidad algebraica**: el coste no está en las incógnitas de partida —el Teorema 3.9 parte de
+10 y acaba igual— sino en cuántos productos anidados hay que desmontar.
+
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
 Con el egreso a arXiv abierto, el (42, 5) queda cotejado. **Jones–Sato–Wada–Wiens,
