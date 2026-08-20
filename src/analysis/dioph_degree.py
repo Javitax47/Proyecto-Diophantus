@@ -815,3 +815,150 @@ def _coeficientes_no_negativos_expr(e):
     except (sympy.PolynomialError, sympy.GeneratorsNeeded):
         return False
     return all(c >= 0 for c in poly.coeffs())
+
+
+def flatten_greedy_semilla(system, target=2, semilla=0):
+    """Voraz con desempate ALEATORIO controlado por `semilla`.
+
+    Por que existe: el criterio "nombrar el par mas frecuente" deja MUCHOS
+    empates, y cual se elija cambia el resultado final mas de lo que parece.
+    Medido sobre el sistema de Jones-Sato-Wada-Wiens, cambiar solo el desempate
+    baja el generador de 49 a 47 variables en las dos primeras semillas. El
+    aplanado optimo es un problema de optimizacion combinatoria (el mismo que la
+    *common subexpression elimination*), y una heuristica con un unico camino
+    deja valor sobre la mesa.
+
+    Identico a `flatten_greedy` salvo por el desempate. Con `semilla=None` se
+    comporta de forma determinista (primer candidato en orden lexicografico).
+    """
+    import random
+    rnd = random.Random(semilla) if semilla is not None else None
+    gens = list(system.params) + list(system.unknowns)
+
+    desc = []
+    for e in system.eqs:
+        try:
+            poly = sympy.Poly(e, *gens)
+        except sympy.PolynomialError:
+            desc.append(None)
+            continue
+        mons = []
+        for expo, coef in zip(poly.monoms(), poly.coeffs()):
+            vs = []
+            for g, k in zip(gens, expo):
+                vs.extend([g] * k)
+            mons.append([sympy.Integer(coef), vs])
+        desc.append(mons)
+
+    orden, definitorias = [], []
+    simbolos = {str(g): g for g in gens}
+
+    while True:
+        cuenta = {}
+        for mons in desc:
+            if mons is None:
+                continue
+            for _, vs in mons:
+                if len(vs) <= target:
+                    continue
+                visto = set()
+                for i in range(len(vs)):
+                    for j in range(i + 1, len(vs)):
+                        cl = tuple(sorted([str(vs[i]), str(vs[j])]))
+                        if cl in visto:
+                            continue
+                        visto.add(cl)
+                        cuenta[cl] = cuenta.get(cl, 0) + 1
+        if not cuenta:
+            break
+        top = max(cuenta.values())
+        candidatos = sorted(k for k, v in cuenta.items() if v == top)
+        cl = rnd.choice(candidatos) if rnd is not None else candidatos[0]
+        a, b = simbolos[cl[0]], simbolos[cl[1]]
+        w = _fresh_flat()
+        simbolos[str(w)] = w
+        orden.append((w, a, b))
+        definitorias.append(sympy.expand(w - a * b))
+        for mons in desc:
+            if mons is None:
+                continue
+            for m in mons:
+                vs = m[1]
+                while len(vs) > target:
+                    nombres = [str(x) for x in vs]
+                    if str(a) in nombres and str(b) in nombres:
+                        nuevo = list(vs)
+                        nuevo.remove(a)
+                        try:
+                            nuevo.remove(b)
+                        except ValueError:
+                            break
+                        nuevo.append(w)
+                        vs = nuevo
+                        m[1] = vs
+                    else:
+                        break
+
+    eqs_out = []
+    for mons in desc:
+        if mons is None:
+            continue
+        acc = sympy.Integer(0)
+        for coef, vs in mons:
+            t = coef
+            for v in vs:
+                t = t * v
+            acc = acc + t
+        eqs_out.append(sympy.expand(acc))
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        entorno = dict(param_vals); entorno.update(base)
+        out = dict(base)
+        for w, a, b in orden:
+            val = int(sympy.Integer(a.subs(entorno)) * sympy.Integer(b.subs(entorno)))
+            out[w] = val
+            entorno[w] = val
+        return out
+
+    return Dioph(system.params, list(system.unknowns) + [w for w, _, _ in orden],
+                 eqs_out + definitorias, witness=w_ext,
+                 name=f"{system.name} [voraz semilla={semilla}]")
+
+
+def flatten_search(system, target=2, intentos=100, objetivos=(8, 10, 3, 2), verbose=False):
+    """Busca el mejor aplanado sobre dos ejes: objetivo intermedio y desempate.
+
+    El aplanado minimo es optimizacion combinatoria, no una formula. Aqui se
+    explora el espacio con lo que ya esta verificado:
+
+      * `objetivos`: grado intermedio al que se aplana primero por ARBOL antes de
+        rematar con el voraz. Medido sobre JSWW, el optimo esta en 8-11 y se
+        degrada fuera; encadenar los dos gana a cualquiera por separado.
+      * `intentos`: reinicios del voraz con desempate aleatorio distinto.
+
+    Devuelve el Dioph con MENOS incognitas de todos los probados. Es una busqueda,
+    no una garantia: no se afirma que sea el minimo.
+    """
+    mejor = None
+    for d in objetivos:
+        try:
+            base = flatten_tree(system, d) if d > target else system
+        except Exception:
+            continue
+        for s in range(intentos):
+            try:
+                F = flatten_greedy_semilla(base, target, semilla=s)
+            except Exception:
+                continue
+            if max_equation_degree(F) > target:
+                continue
+            if mejor is None or F.cost() < mejor.cost():
+                mejor = F
+                if verbose:
+                    print(f"    objetivo={d} semilla={s} -> {F.cost()} incognitas")
+    return mejor if mejor is not None else flatten_greedy(system, target)
