@@ -452,6 +452,49 @@ en otros.
 | El sistema materializado **es** el de JSWW | Sustituyendo cada nombre por su definición en cascada se recuperan **exactamente** las 14 ecuaciones originales: ninguna falta, ninguna sobra |
 | Grado 2 por ecuación ⇒ generador de grado 5 | Medido sobre el sistema materializado |
 | El aplanado preserva la equisatisfacibilidad | Testigo extendido y evaluado en los 8 conjuntos del catálogo con testigo |
+| **Cada nombre nuevo vive en ℕ** | 19 de 20 lo son **por estructura**; el vigésimo se **demuestra** (ver abajo). Sin esto la completitud del generador no estaba cubierta |
+
+#### El requisito que faltaba: los nombres nuevos también viven en ℕ
+
+Lo encontró una revisión adversarial de este mismo documento, y era una grieta real.
+
+El generador `Q = (k+2)(1 − ΣPᵢ²)` representa el conjunto **sobre variables no negativas** — así
+lo enuncian JSWW. Cada subexpresión que el optimizador decide nombrar añade una incógnita que
+**también vive en ℕ**. Por tanto, para que un primo se siga emitiendo hace falta que en la
+solución original de JSWW **cada nombre valga ≥ 0**.
+
+Nombrar algo que puede ser negativo **no rompe la soundness** —toda solución del aplanado sigue
+siéndolo del original, y eso está verificado simbólicamente— pero **puede romper la
+completitud**: el primo deja de emitirse. Y esa dirección no se comprobaba, porque el sistema de
+JSWW se transcribe **sin testigo** (sus valores son astronómicos) y `witness_is_nonnegative`
+nunca llegaba a ejecutarse.
+
+Al comprobarlo: de los 20 nombres, **18–19 son ≥ 0 por estructura** (productos y potencias pares
+de variables de ℕ). Los que no:
+
+- **`a + u²(u²−a)`** — se demuestra, y basta la ecuación (7). De `u² = 16r²y⁴(a²−1)+1`: si
+  `u² = 1` la expresión vale 1; si `u² ≥ 2` entonces `16r²y⁴(a²−1) ≥ 1` obliga a `a ≥ 2` y
+  `r,y ≥ 1`, luego `u² ≥ 16a²−15 > a` y la expresión es `≥ a+2`. Y `u² = 0` es imposible. Así que
+  **vale ≥ 1 siempre**. Comprobado además por barrido: 3.528 ternas `(a,r,y)` que satisfacen (7),
+  0 fallos.
+- **`2a(n+1) − (n+1)² − 1`** — es el **módulo de la congruencia de Davis** de la ecuación (12).
+  Es positivo en la solución que construyen JSWW porque un módulo lo es, pero eso descansa en *su*
+  construcción y aquí **no se demuestra**. Queda fuera.
+
+**Y el óptimo no es único**, lo que hacía la cifra frágil: sin fijar el criterio, Z3 devolvía unas
+veces un conjunto de 20 nombres y otras veces otro, con distintas expresiones sin demostrar. Tres
+medidas, todas con óptimo demostrado (cota inferior alcanzada):
+
+| criterio para poder nombrar una subexpresión | óptimo | generador |
+|---|---|---|
+| ninguno | 20 nombres | (46, 5) — pero depende de qué modelo devuelva Z3 |
+| solo `≥ 0` **por estructura** | 21 nombres | **(47, 5)** — cero suposiciones |
+| estructura **+ la única demostrada** | 20 nombres | **(46, 5)** — la cifra publicada |
+
+Es decir: **exigir que todo nombre sea demostrablemente no negativo sale gratis**. La cifra
+publicada es la tercera fila, y el test `[4]` corre el optimizador con esa restricción para que la
+cifra no dependa de la suerte del solucionador. La segunda fila queda registrada como el número
+que no le debe nada a nadie, por si algún día hiciera falta.
 
 **Descansa en terceros (y está bien que así sea):** que el sistema (1) de JSWW represente
 efectivamente los primos. Es un resultado de 1976, citado durante cincuenta años, reproducido en
@@ -468,9 +511,16 @@ tampoco hace falta.
 
 **La afirmación honesta, entonces**, no es «tenemos un récord» sino: *este es un polinomio de
 grado 5 representador de primos, explícitamente construido, con 46 variables, cuya reducción es
-demostrablemente mínima y cuya equivalencia con el sistema de JSWW está verificada
-simbólicamente.* Si el (42, 5) nunca se construyó, sería el mejor construido. Eso es exhibible y
-comprobable por cualquiera; una frase de 1976 no lo es.
+demostrablemente mínima, cuya equivalencia con el sistema de JSWW está verificada simbólicamente y
+en el que **cada incógnita añadida es demostrablemente no negativa**.* Si el (42, 5) nunca se
+construyó, sería el mejor construido. Eso es exhibible y comprobable por cualquiera; una frase de
+1976 no lo es.
+
+**Y conviene decir qué NO es un récord aquí: el grado 5 no lo es.** El grado 5 lo anunciaron JSWW
+en 1976. No hemos bajado de 5 ni podríamos con esta construcción —el argumento de §3.2c lo cierra
+para la familia `n·(1−ΣP²)`—. Lo único que puede reclamarse es la **exhibición**: tener escrito un
+polinomio de grado 5 que genera los primos, cosa que hasta donde alcanza la búsqueda nadie había
+publicado.
 
 ### 3.2h Investigación cerrada: qué existe CONSTRUIDO y qué solo está anunciado
 

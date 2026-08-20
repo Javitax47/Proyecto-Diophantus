@@ -188,7 +188,41 @@ def _monomio_expr(expo, gens):
     return m
 
 
-def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
+def no_negativo_sobre_N(e):
+    """`e >= 0` para toda asignacion de las variables en N, por ESTRUCTURA.
+
+    Criterio SUFICIENTE, no necesario: devuelve False cuando no sabe. Recorre el
+    ARBOL en vez de expandir, porque expandir pierde informacion -- por ejemplo
+    `(a + u^2(u^2-a))^2` es un cuadrado y por tanto >= 0, pero su desarrollo tiene
+    el monomio `-2a^2u^2` y el criterio de coeficientes lo rechazaria.
+
+    Reglas: un simbolo esta en N; una suma o un producto de no negativos lo es;
+    una potencia de exponente PAR lo es sea cual sea la base. Como respaldo se
+    prueba tambien el criterio de coeficientes sobre el desarrollo, que atrapa
+    casos como `(4dy+n)^2` escritos de otra forma.
+    """
+    e = sympy.sympify(e)
+    if e.is_number:
+        return bool(e >= 0)
+    if e.is_Symbol:
+        return True
+    if e.is_Add or e.is_Mul:
+        if all(no_negativo_sobre_N(t) for t in e.args):
+            return True
+    elif e.is_Pow:
+        base, exp = e.args
+        if exp.is_Integer and int(exp) >= 0:
+            if int(exp) % 2 == 0 or no_negativo_sobre_N(base):
+                return True
+    try:
+        pol = sympy.Poly(sympy.expand(e))
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+        return False
+    return all(c >= 0 for c in pol.coeffs())
+
+
+def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
+                              solo_no_negativos=False, demostrados=()):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     Es la generalizacion que faltaba. `aplanado_minimo` demostro que 46 es el
@@ -244,6 +278,21 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
             mon *= g ** k
         cand.add(mon)
     cand = {c for c in cand if grado(c) >= 2 and not getattr(c, "is_number", False)}
+    if solo_no_negativos:
+        # REQUISITO DEL GENERADOR, no cosmetica. Q = W*(1 - sum P^2) representa el
+        # conjunto sobre variables NO NEGATIVAS. Cada nombre `m = expr` anade una
+        # incognita que tambien vive en N, asi que la solucion original solo se
+        # extiende si `expr >= 0` en ella. Nombrar una expresion que puede ser
+        # negativa preserva la SOUNDNESS (toda solucion del aplanado lo es del
+        # original) pero puede romper la COMPLETITUD: el elemento deja de emitirse.
+        # Con este filtro la cifra resultante no depende de ninguna suposicion
+        # sobre los valores concretos del testigo original.
+        # `demostrados`: expresiones que el criterio ESTRUCTURAL rechaza pero
+        # de las que existe una demostracion escrita. Se pasan por su forma de
+        # texto para que quede constancia de CUAL se esta admitiendo y por que;
+        # una lista vacia es la posicion por defecto, que no debe nada a nadie.
+        cand = {c for c in cand
+                if no_negativo_sobre_N(c) or str(c) in set(demostrados)}
     if not cand:
         return {"estado": "optimo", "nombres": 0, "total": system.cost(),
                 "cota": 0, "elegidos": []}

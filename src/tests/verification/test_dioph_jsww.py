@@ -24,14 +24,18 @@ representation of the set of prime numbers", Amer. Math. Monthly 83:6 (1976)
 import sys
 import os
 
+import sympy
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
-from src.analysis.dioph_jsww import sistema, FACTOR, PUBLICADO, INCOGNITAS
+from src.analysis.dioph_jsww import (
+    sistema, FACTOR, PUBLICADO, INCOGNITAS, NO_NEGATIVOS_DEMOSTRADOS,
+)
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
 )
 from src.analysis.dioph_optflat import (
-    Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar,
+    Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar, no_negativo_sobre_N,
 )
 
 
@@ -128,12 +132,23 @@ def test_aplanado_optimo(stats):
 
     Se comprueba: el optimizador alcanza su cota (optimo demostrado), el sistema
     materializado tiene grado <= 2 por ecuacion, y las cifras salen donde deben.
+
+    RESTRICCION QUE NO ES OPCIONAL. El optimizador corre con `solo_no_negativos`,
+    de modo que solo puede nombrar subexpresiones que sean >= 0 sobre N por
+    estructura o que esten en `NO_NEGATIVOS_DEMOSTRADOS` con su demostracion
+    escrita. Sin esa restriccion Z3 tambien alcanza 20 nombres, pero a veces
+    eligiendo el modulo de Davis `2a(n+1)-(n+1)^2-1`, que NO se ha demostrado
+    no negativo: la cifra seria la misma y la garantia, menor. Y el optimo NO es
+    unico, asi que sin fijar el criterio la cifra publicada dependeria de que
+    modelo devolviera Z3 ese dia. Resulta que la restriccion sale gratis: sigue
+    saliendo 20. Ver [6] para las tres medidas y la demostracion.
     """
     print(f"\n{Colors.HEADER}[4] Aplanado optimo sobre el sistema de JSWW{Colors.ENDC}")
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
     S = sistema(expandir=False)
-    r = aplanado_minimo_compuesto(S, 2, timeout_s=300)
+    r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
+                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     print(f"  optimizador: {r['estado']}, {r['nombres']} nombres (cota inferior {r['cota']})")
     if r["estado"] != "optimo":
         stats.fail(f"no se alcanzo la cota: {r['estado']}")
@@ -146,8 +161,14 @@ def test_aplanado_optimo(stats):
           f"{M.cost()-usadas} nombres), grado maximo {grado}")
     print(f"  GENERADOR: ({g['variables']} variables, grado {g['grado']})"
           f"     JSWW 1976: (42, 5)")
+    sin_probar = [c for c in r["elegidos"]
+                  if not no_negativo_sobre_N(sympy.sympify(
+                      c, locals={str(x): x for x in S.params + S.unknowns}))
+                  and c not in NO_NEGATIVOS_DEMOSTRADOS]
     if grado > 2:
         stats.fail(f"el sistema materializado tiene grado {grado}, no 2")
+    elif sin_probar:
+        stats.fail(f"se nombro sin demostrar que sea >= 0 sobre N: {sin_probar}")
     elif g["grado"] != 5:
         stats.fail(f"generador de grado {g['grado']}, se esperaba 5")
     else:
@@ -226,6 +247,131 @@ def test_equivalencia_por_sustitucion(stats):
         stats.ok()
 
 
+def test_no_negatividad_de_los_nombres(stats):
+    """[6] EL REQUISITO QUE FALTABA: cada nombre nuevo tambien vive en N.
+
+    QUE SE NOS ESCAPO. El generador `Q = (k+2)(1 - sum P_i^2)` representa el
+    conjunto **sobre variables no negativas** -- asi lo enuncian JSWW. Cada
+    subexpresion que el optimizador decide nombrar anade una incognita que
+    tambien vive en N. Por tanto, para que un primo se siga emitiendo, hace falta
+    que en la solucion original de JSWW **cada nombre valga >= 0**.
+
+    Nombrar algo que puede ser negativo NO rompe la soundness (toda solucion del
+    aplanado sigue siendo solucion del original, verificado en [5]) pero puede
+    romper la COMPLETITUD: el primo deja de emitirse. Y esa direccion no se
+    comprobaba, porque el sistema de JSWW se transcribe sin testigo --sus valores
+    son astronomicos-- y `witness_is_nonnegative` no llega a ejecutarse.
+
+    QUE SALE AL COMPROBARLO. De los 20 nombres del optimo, **18 son >= 0 por
+    estructura** (productos y potencias pares de variables de N). Quedan dos:
+
+      * `a + u^2(u^2 - a)`  -- DEMOSTRABLE, y se demuestra aqui. La ecuacion (7)
+        da `u^2 = 16r^2y^4(a^2-1) + 1`. Si `u^2 = 1`, la expresion vale 1. Si
+        `u^2 >= 2`, entonces `16r^2y^4(a^2-1) >= 1` obliga a `a >= 2` y `r,y >= 1`,
+        luego `u^2 >= 16(a^2-1)+1 = 16a^2-15 > a`, y la expresion es `> 0`.
+        Asi que vale **>= 1 siempre**. Se comprueba ademas por barrido.
+
+      * `2a(n+1) - (n+1)^2 - 1` -- NO se demuestra aqui. Es el **modulo de la
+        congruencia de Davis** de la ecuacion (12), y en la solucion que JSWW
+        construyen es positivo porque un modulo lo es. Pero eso descansa en SU
+        construccion, no en nada que este test verifique.
+
+    POR ESO SE DAN DOS CIFRAS, y la segunda es la que no debe nadie nada:
+
+        (46, 5)  optimo, pero su completitud depende de que ese modulo sea >= 0
+                 en la solucion de JSWW;
+        (47, 5)  optimo restringido a nombres demostrablemente >= 0. Una variable
+                 mas, cero suposiciones.
+
+    Ambas siguen siendo de grado 5, que es lo que se estaba midiendo.
+    """
+    print(f"\n{Colors.HEADER}[6] Los nombres nuevos tambien viven en N{Colors.ENDC}")
+    from src.analysis.dioph_optflat import (aplanado_minimo_compuesto, materializar,
+                                            no_negativo_sobre_N)
+    from src.analysis.dioph_degree import to_generator
+
+    S = sistema(expandir=False)
+    libre = aplanado_minimo_compuesto(S, 2, timeout_s=600)
+    if libre.get("elegidos") is None:
+        print("  (el optimizador no concluyo: omitido)"); return
+
+    gens = {str(g): g for g in S.params + S.unknowns}
+    dudosos = [c for c in libre["elegidos"]
+               if not no_negativo_sobre_N(sympy.sympify(c, locals=gens))]
+    print(f"  de {len(libre['elegidos'])} nombres del optimo, "
+          f"{len(libre['elegidos']) - len(dudosos)} son >= 0 POR ESTRUCTURA")
+    for d in dudosos:
+        print(f"    {Colors.WARN}exige demostracion: {d}{Colors.ENDC}")
+
+    # La demostracion de `a + u^2(u^2-a) >= 1`, comprobada por barrido sobre la
+    # ecuacion (7), que es la unica que hace falta.
+    casos = fallos = 0
+    for av in range(0, 45):
+        for rv in range(0, 30):
+            for yv in range(0, 30):
+                t = 16 * rv * rv * yv ** 4 * (av * av - 1) + 1
+                if t < 0:
+                    continue
+                raiz, exacto = sympy.integer_nthroot(t, 2)
+                if not exacto:
+                    continue
+                casos += 1
+                if av + t * (t - av) < 1:
+                    fallos += 1
+    print(f"  {Colors.OKGREEN if not fallos else Colors.FAIL}a+u^2(u^2-a) >= 1 "
+          f"en las {casos} ternas (a,r,y) que satisfacen la ec.(7); "
+          f"{fallos} fallos{Colors.ENDC}")
+
+    # LAS TRES MEDIDAS. La tercera es la que vale, y es la que usa [4].
+    medidas = {}
+    for etiqueta, kw in (("estructural",            dict(solo_no_negativos=True)),
+                         ("estructural+demostrado", dict(solo_no_negativos=True,
+                                                         demostrados=NO_NEGATIVOS_DEMOSTRADOS))):
+        rr = aplanado_minimo_compuesto(S, 2, timeout_s=600, **kw)
+        if rr.get("elegidos") is None:
+            stats.fail(f"el aplanado '{etiqueta}' no concluyo: {rr['estado']}")
+            return
+        _, gg = to_generator(materializar(S, rr["elegidos"], 2), FACTOR)
+        medidas[etiqueta] = (rr, gg)
+
+    _, g_libre = to_generator(materializar(S, libre["elegidos"], 2), FACTOR)
+    r_est, g_est = medidas["estructural"]
+    r_dem, g_dem = medidas["estructural+demostrado"]
+    print(f"  {Colors.BOLD}({g_libre['variables']}, {g_libre['grado']}){Colors.ENDC} "
+          f"sin restringir           -- el optimo NO es unico y algunos nombres no "
+          f"estan demostrados")
+    print(f"  {Colors.BOLD}({g_est['variables']}, {g_est['grado']}){Colors.ENDC} "
+          f"solo >= 0 por estructura -- cero suposiciones, una variable de mas")
+    print(f"  {Colors.BOLD}({g_dem['variables']}, {g_dem['grado']}){Colors.ENDC} "
+          f"estructura + la demostrada -- {Colors.OKGREEN}la cifra publicada, "
+          f"y sale gratis{Colors.ENDC}")
+
+    problemas = []
+    if fallos:
+        problemas.append("la demostracion de a+u^2(u^2-a) >= 1 tiene contraejemplos")
+    for et, (rr, gg) in medidas.items():
+        if rr["estado"] != "optimo":
+            problemas.append(f"'{et}' no es un optimo demostrado: {rr['estado']}")
+        if gg["grado"] != 5:
+            problemas.append(f"'{et}' da grado {gg['grado']}, no 5")
+        if gg["variables"] < g_libre["variables"]:
+            problemas.append(f"'{et}' restringe el espacio y da un optimo MENOR: "
+                             "imposible, el encoding esta mal")
+    # Lo que de verdad se afirma: admitir la UNICA expresion demostrada recupera
+    # la cifra sin restringir. Si dejara de ser cierto, la cifra publicada tendria
+    # que subir a la estructural, y eso hay que enterarse.
+    if g_dem["variables"] != g_libre["variables"]:
+        problemas.append(f"la cifra demostrada ({g_dem['variables']}) ya no iguala "
+                         f"a la libre ({g_libre['variables']}): hay que publicar "
+                         f"{g_est['variables']}, no {g_libre['variables']}")
+    if problemas:
+        for pr in problemas[:3]:
+            print(f"  {Colors.FAIL}{pr}{Colors.ENDC}")
+        stats.fail(problemas[0])
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -234,6 +380,7 @@ def main():
     test_grado_menor_que_5(stats)
     test_aplanado_optimo(stats)
     test_equivalencia_por_sustitucion(stats)
+    test_no_negatividad_de_los_nombres(stats)
 
     total = stats.passed + stats.failed
     print()

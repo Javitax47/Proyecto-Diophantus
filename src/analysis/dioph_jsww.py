@@ -91,6 +91,34 @@ ECUACIONES_AGRUPADAS = [
     z + p * l * (a - p) + t * (2 * a * p - p ** 2 - 1) - p * m,
 ]
 
+#: Subexpresiones que NO son >= 0 por estructura pero de las que SI hay
+#: demostracion. Existe esta lista porque el generador `(k+2)(1 - sum P^2)`
+#: representa el conjunto sobre variables NO NEGATIVAS: cada subexpresion que se
+#: nombra anade una incognita que vive en N, y la solucion original solo se
+#: extiende si esa subexpresion vale >= 0 en ella. Nombrar algo que puede ser
+#: negativo conserva la soundness pero puede romper la COMPLETITUD -- el primo
+#: deja de emitirse. Y eso no se detecta con este sistema por evaluacion, porque
+#: se transcribe sin testigo (los valores de JSWW son astronomicos).
+#:
+#: DEMOSTRACION de `a + u^2(u^2 - a) >= 1` sobre N, usando SOLO la ecuacion (7):
+#:
+#:     (7)  16 r^2 y^4 (a^2 - 1) + 1 - u^2 = 0   =>   u^2 = 16 r^2 y^4 (a^2-1) + 1
+#:
+#:   * Si u^2 = 1:  a + 1*(1 - a) = 1.                                     [>= 1]
+#:   * Si u^2 >= 2: entonces 16 r^2 y^4 (a^2-1) >= 1, lo que obliga a a >= 2 y a
+#:     r, y >= 1. Luego u^2 >= 16(a^2-1) + 1 = 16a^2 - 15 > a para a >= 2, de modo
+#:     que u^2 - a >= 1 y  a + u^2(u^2-a) >= a + 2 > 0.                    [>= 1]
+#:   * u^2 = 0 es imposible: exigiria 16 r^2 y^4 (a^2-1) = -1.
+#:
+#: Comprobada ademas por barrido en test_dioph_jsww [6].
+#:
+#: La OTRA subexpresion que el criterio estructural rechaza --el modulo de Davis
+#: `2a(n+1) - (n+1)^2 - 1` de la ecuacion (12)-- NO esta en esta lista: es
+#: positiva en la solucion que construyen JSWW porque un modulo lo es, pero eso
+#: descansa en SU construccion y aqui no se demuestra. Dejarla fuera cuesta lo que
+#: cueste; resulta que no cuesta nada.
+NO_NEGATIVOS_DEMOSTRADOS = ("a + u**2*(-a + u**2)",)
+
 INCOGNITAS = [a, b, c, d, e, f, g, h, i, j, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z]
 PARAMETRO = k
 #: El generador es (k+2)*(1 - sum P_i^2): el factor es k+2, no k.
