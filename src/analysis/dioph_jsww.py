@@ -128,7 +128,14 @@ FACTOR = k + 2
 PUBLICADO = {
     "generador": (26, 25),        # (variables, grado) del polinomio (1)
     "skolem": (42, 5),            # (1) tras la sustitucion de Skolem
-    "otros": [(19, 29), (12, None)],   # tambien en el paper; el de 12 es de grado enorme
+    # El de 12 variables NO es "de grado enorme" indeterminado: su grado es 13.697,
+    # cifra publicada por Pak-Kaliszyk (arXiv:2204.12311, ITP 2022, introduccion:
+    # "the rank of the polynomial is 13,697"), que ademas son quienes formalizaron
+    # el de 10 variables en Mizar. Consistencia: 13697 = 1 + 2*6848, impar, luego
+    # se lee como GENERADOR. La atribucion primaria (Matiyasevich 1973) carece de
+    # literatura por admision del propio JSWW: "reportedly known to Matiyasevich
+    # in 1973, although no literature is available".
+    "otros": [(19, 29), (12, 13697)],
     "grado_menor_que_5": "abierto (declarado por los autores)",
     "referencia": "Jones-Sato-Wada-Wiens, Amer. Math. Monthly 83:6 (1976) 449-464",
 }

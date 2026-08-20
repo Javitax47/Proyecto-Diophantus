@@ -526,6 +526,48 @@ para la familia `n·(1−ΣP²)`—. Lo único que puede reclamarse es la **exhi
 polinomio de grado 5 que genera los primos, cosa que hasta donde alcanza la búsqueda nadie había
 publicado.
 
+### 3.2h-bis Tabla de la literatura, cotejada contra fuente primaria
+
+Revisión bibliográfica con las fuentes descargadas de arXiv (Pąk–Kaliszyk 2204.12311;
+Bayer–David 2505.16963; Bayer–David–Hassler–Matiyasevich–Schleicher 2506.20909; Sun 1704.03504).
+JSWW 1976 y Davis 1973 no están en arXiv: sus citas proceden de lo ya transcrito aquí y **no se
+han podido re-verificar de forma independiente**.
+
+**Convención sin la cual la tabla es incomparable:** una *representación* `k∈S ⟺ ∃x: P(k,x)=0`
+cuenta **incógnitas** y el grado de `P`; un *generador* `S = {valores positivos de Q}` cuenta
+**variables** y el grado de `Q`. La conversión estándar da `deg Q = 1+2·deg P` y `v = ν+1`, así que
+**todo grado de generador citado es impar** — y eso sirve de test.
+
+| Par | Tipo | Fuente | ¿Exhibido? |
+|---|---|---|---|
+| **(26, 25)** | generador | JSWW 1976, sistema (1) | **Sí**, escrito íntegro |
+| **(42, 5)** | generador | JSWW 1976, p. 450, **una frase** | **No** |
+| **(19, 29)** | generador | JSWW 1976, p. 450, misma frase | **No** |
+| **(12, 13.697)** | generador | JSWW 1976 Teor. 2; grado exacto en Pąk–Kaliszyk | **No** («no literature is available») |
+| **(24, 37)** | generador | Matiyasevich 1971, vía Pąk–Kaliszyk | No localizado |
+| **(10, >6000)** | generador | Matiyasevich 1977/81 | **Sí — y formalizado en Mizar** (`POLYNOM9:85`) |
+| (20, ?), (21, ?) sobre ℤ | generador | Sun, Sci. China Math. 64 (2021), Teor. 1.3(ii) | **No**, existencial |
+| (58, 4) | **par universal**, no de primos | Jones 1982 | Universal sí; **instanciación para primos, nunca** |
+| (9, 1.638·10⁴⁵) | **par universal** | Matiyasevich 1977 / Jones 1982 | — |
+| (32, 12) | **par universal** | Jones | **Sin prueba publicada** (Bayer–David, ITP 2025) |
+
+**Dos confusiones de unidades que circulan y que aquí se corrigen:**
+
+1. **El «(10, ~1.6·10⁴⁵) de Matiyasevich» funde dos objetos.** El `1,638·10⁴⁵` es el grado del par
+   **universal** `(9, ·)ℕ` de Jones 1982. El polinomio de primos de 10 variables que Matiyasevich
+   *construyó* tiene grado **> 6000**, cifra verificada a máquina por quienes lo formalizaron. La
+   frase de Wikipedia introduce el 10⁴⁵ con un «Hence» a partir del teorema de las 9 incógnitas:
+   es **otro** polinomio, y no construido.
+2. **El (58, 4) no es de primos ni es un generador.** Es un par universal, y como *representación*.
+   Instanciado para primos daría 59 variables y, como generador, **grado 9** — dominado en ambos
+   ejes. Además ningún par universal puede tener grado ≤ 2: las ecuaciones cuadráticas son
+   decidibles.
+
+**Lo que la tabla deja ver, y es el punto:** de los cuatro pares de primos por debajo de 26
+variables o por debajo de grado 25 —(42,5), (19,29), (12,13697), (10,·)— **solo el de 10 variables
+está construido y exhibido**, y está en el extremo opuesto de la frontera (grado > 6000). En el eje
+de **grado bajo**, el único objeto exhibible por debajo de grado 25 sigue siendo el de este repo.
+
 ### 3.2i ⚠️ «Mínimo demostrado» era falso, y la cifra baja a (44, 5)
 
 Dos hallazgos de una revisión adversarial, **ambos reproducidos aquí antes de aceptarlos**.
@@ -622,6 +664,18 @@ localizar**, y no es la que yo había supuesto. La palabra «mínimo» sigue ret
 Eso acota dónde buscar: no en cómo Z3 deriva la cota, sino en el repertorio de reducciones que
 `opciones_de` / `intentar` saben aplicar. Y descarta la vía que ya se probó: añadir la división
 por un nombre no basta.
+
+**Y la siguiente vía, ya sondeada y descartada tal cual.** Se probó sustituir en el ÁRBOL en vez de
+dividir, que era lo natural tras ver que `sympy.div` desarrolla. No funciona por sí sola:
+`E³.subs(E², s)` **no dispara** —sympy no sustituye potencias parciales— y `e.subs(E, s)` sí, pero
+deja `s³(s+2)`, que sigue siendo de grado 4.
+
+Lo cual señala el mecanismo que de verdad falta, y ya no es una hipótesis vaga: **la ruta monomial
+parte el vector de exponentes sobre los generadores ORIGINALES, y tendría que hacerlo sobre
+`generadores ∪ nombres`.** Con `E` nombrado como `s`, `s³(s+2)` se parte como `(s·s)|(s·(s+2))` y
+baja a grado 2 nombrando además `s²`. Es decir: hay que **tratar cada nombre como un generador de
+pleno derecho** y reescribir antes de partir. Eso es lo que queda por implementar, y es un cambio
+en `opciones_de`/`intentar`, no en la codificación de la cota.
 
 Consecuencias, todas aplicadas:
 
@@ -799,7 +853,9 @@ factorizada gasta 27; sobre la misma expresión expandida, 41. Como `dioph_lemma
 todo con `sympy.expand`, hoy el voraz gana en nuestros sistemas y el de árbol en los de fuera.
 
 **Otras cifras del mismo paper**, ya cotejadas: (19, 29), y el Teorema 2, un polinomio en **12
-variables** de grado enorme. El de **10 variables** es de Matiyasevich 1977, y Pąk–Kaliszyk
+variables** cuyo grado **sí está publicado: 13.697** (Pąk–Kaliszyk, arXiv:2204.12311, «the rank of
+the polynomial is 13,697»; y `13697 = 1+2·6848` confirma que se lee como generador). El de
+**10 variables** es de Matiyasevich 1977, y Pąk–Kaliszyk
 (ITP 2022, formalización en Mizar) lo llaman *"today the smallest known"* — confirmado en fuente
 primaria; su propio polinomio formalizado tiene **grado > 6000**.
 
