@@ -560,11 +560,30 @@ de **20 nombres**. Luego lo que `opt.lower()` devuelve es una cota inferior **de
 no del problema de aplanado.
 
 Es el **cuarto** bug de este encoding, y como los tres anteriores lo delató *un resultado
-imposible*, no la lectura del código. Una causa localizada y corregida: `Mul.args` devuelve
-`(E³, E+2)`, así que la única partición que se generaba era `(E³)|(E+2)`, nunca `(E·E)|(E·(E+2))`
-—`_factores()` despliega ahora las potencias—. Pero **el contraejemplo sobrevive a esa corrección**,
-así que hay al menos una segunda causa sin localizar. Mientras siga así, la palabra «mínimo» no se
-usa.
+imposible*, no la lectura del código. **Tres causas, las tres localizadas**, y solo las dos primeras
+son arreglables sin rediseñar:
+
+1. **`Mul.args` no despliega potencias.** Para `E³·(E+2)` la única partición generada era
+   `(E³)|(E+2)`, nunca `(E·E)|(E·(E+2))`. Corregido: `_factores()` despliega las potencias.
+2. **`eliminar_lineales` expandía, y el catálogo se construye de la forma sintáctica recibida.**
+   Medido: el sistema de JSWW tiene 40 nodos `Add`; tras eliminar una incógnita **expandiendo**
+   quedaban **13**, y desaparecían justo los útiles (`c*u+x`, `4dy+n`, `a+u²(u²−a)`,
+   `gk+2g+k+1`). Ocho de los veinte nombres del contraejemplo **ni siquiera estaban en el
+   catálogo**. Corregido: la eliminación mantiene dos copias, una expandida para *detectar* las
+   definiciones lineales y el **árbol intacto** para devolver. Ahora son 42 nodos `Add` y los
+   veinte nombres sí están en el catálogo.
+3. **Y aun así el contraejemplo sobrevive** — con los 20 candidatos disponibles, Z3 sigue
+   diciendo 21. La causa, verificada haciendo fallar al materializador sobre esa expresión
+   exacta: **las reglas de reducción no saben re-expresar una subexpresión como polinomio en los
+   nombres ya elegidos.** Con `m = E²` nombrado, reducir `E³(E+2)` exige la identidad
+   `E³(E+2) = m² + 2mE`; el encoding solo sabe (a) partir el árbol en grupos de factores,
+   (b) partir el vector de exponentes de un monomio **sobre los generadores originales**, y
+   (c) expandir — y expandir destruye precisamente el `E²` que el nombre captura. No hay ninguna
+   ruta que use un nombre como generador nuevo.
+
+La (3) no es un bug sino un **límite de diseño** del encoding, y arreglarlo es rediseñarlo:
+haría falta cerrar la reducción sobre reescrituras algebraicas en las variables nombradas, no
+solo sobre la sintaxis. Mientras siga así, la palabra «mínimo» no se usa.
 
 Consecuencias, todas aplicadas:
 

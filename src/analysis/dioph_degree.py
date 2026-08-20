@@ -529,14 +529,29 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     """
     params = list(system.params)
     unknowns = list(system.unknowns)
-    eqs = [sympy.expand(e) for e in system.eqs]
+    # DOS COPIAS A PROPOSITO. `plano` se expande porque la deteccion de
+    # definiciones lineales (`coeff(u,1)`, `coeff(u,2)`) necesita la forma
+    # desarrollada. `eqs` conserva el ARBOL, y es la que se devuelve.
+    #
+    # POR QUE IMPORTA, y no es una micro-optimizacion. Expandir destruye los
+    # nodos compuestos, y el catalogo de candidatos del optimizador se construye
+    # a partir de la forma SINTACTICA que recibe. Medido sobre el sistema de
+    # JSWW: sin tocar tiene 40 nodos Add; tras eliminar una incognita, si se
+    # expande, quedan 13 -- y desaparecen justo los utiles (`c*u + x`,
+    # `4*d*y + n`, `a + u^2(u^2-a)`, `g*k + 2*g + k + 1`). Con el catalogo
+    # empobrecido el optimizador devolvia una "cota inferior" de 21 para un
+    # sistema en el que existe un aplanado de 20: la cota era de su catalogo, no
+    # del problema. Ese fue el contraejemplo que obligo a retirar la palabra
+    # "minimo" (ver ESTADO_CALCULO_DIOFANTICO 3.2i).
+    plano = [sympy.expand(e) for e in system.eqs]
+    eqs = list(system.eqs)
     eliminadas = []
 
     cambiado = True
     while cambiado:
         cambiado = False
         gens = params + unknowns
-        for idx, e in enumerate(eqs):
+        for idx, e in enumerate(plano):
             for u in list(unknowns):
                 if solo is not None and str(u) not in solo:
                     continue
@@ -549,9 +564,12 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
                 valor = sympy.expand(-resto / coef)
                 if not _coeficientes_no_negativos_expr(valor):
                     continue          # u >= 0 dejaria de estar garantizado
-                nuevas = [sympy.expand(q.subs(u, valor))
-                          for k, q in enumerate(eqs) if k != idx]
-                eqs = nuevas
+                # La sustitucion se hace sobre el arbol SIN expandir despues:
+                # `subs` respeta la estructura, y esa estructura es la que el
+                # optimizador aprovecha.
+                eqs = [q.subs(u, valor) for k, q in enumerate(eqs) if k != idx]
+                plano = [sympy.expand(q.subs(u, valor))
+                         for k, q in enumerate(plano) if k != idx]
                 unknowns = [x for x in unknowns if x is not u]
                 eliminadas.append((u, valor))
                 cambiado = True
