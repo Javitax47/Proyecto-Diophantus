@@ -134,3 +134,179 @@ def aplanado_minimo(system, target=2, timeout_s=300):
     return {"estado": estado, "nombres": len(elegidos),
             "total": system.cost() + len(elegidos), "cota": cota,
             "elegidos": [dict(zip([str(g) for g in gens], t)) for t in elegidos]}
+
+
+# ---------------------------------------------------------------------------
+#   APLANADO MINIMO SOBRE SUBEXPRESIONES COMPUESTAS (no solo monomios)
+# ---------------------------------------------------------------------------
+
+def _nodos(e, acc):
+    """Todos los nodos del arbol de `e`, y los productos parciales de cada Mul.
+
+    Los productos parciales hacen falta porque partir `f1*f2*f3` en dos grupos
+    crea subexpresiones (`f1*f2`) que no son nodos del arbol original pero si
+    candidatas a recibir nombre.
+    """
+    e = sympy.sympify(e)
+    acc.add(e)
+    if e.is_Add or e.is_Mul:
+        for a in e.args:
+            _nodos(a, acc)
+    if e.is_Mul:
+        coef, resto = e.as_coeff_Mul()
+        fs = list(resto.args) if resto.is_Mul else [resto]
+        if 2 <= len(fs) <= 5:
+            for r in range(2, len(fs)):
+                for comb in itertools.combinations(range(len(fs)), r):
+                    acc.add(sympy.Mul(*[fs[i] for i in comb]))
+    if e.is_Pow:
+        base, exp = e.args
+        _nodos(base, acc)
+        if exp.is_Integer and 2 <= int(exp) <= 8:
+            for k in range(2, int(exp)):
+                acc.add(base ** k)
+    return acc
+
+
+def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
+    """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
+
+    Es la generalizacion que faltaba. `aplanado_minimo` demostro que 46 es el
+    optimo nombrando monomios, y que JSWW llegan a 41 porque nombran cosas como
+    `(a + u^2(u^2-a))^2` o `(n+4dy)^2`, que no son monomios de ningun desarrollo.
+    Aqui el espacio de candidatos son los NODOS DEL ARBOL de cada ecuacion (mas
+    los productos parciales de cada Mul y las potencias intermedias), y Z3 elige
+    el subconjunto minimo.
+
+    CODIFICACION. Para cada nodo `e` y cada presupuesto de grado d en {1, 2}:
+
+        R[e][d]  :=  "e se puede escribir con grado <= d"
+        R[e][d]  <-  grado(e) <= d                        (cierto de entrada)
+        R[e][d]  <-  x_e                                  (nombrarlo lo baja a 1)
+        e = Add  :  R[e][d]  <-  AND_i R[arg_i][d]        (una suma es el max)
+        e = Mul  :  R[e][2]  <-  OR sobre particiones en dos grupos G1, G2
+                                 de  R[prod G1][1] AND R[prod G2][1]
+        e = Pow  :  se trata como el Mul de sus factores repetidos
+
+    y por cada nodo nombrado se exige que su ECUACION DEFINITORIA tenga grado <= 2,
+    con `R'` = lo mismo pero sin poder usar `x_e` para si mismo (no hay ciclos:
+    R' de un nodo solo depende de R de nodos estrictamente menores).
+
+    Objetivo: minimizar el numero de nombres. Devuelve el mismo dict que
+    `aplanado_minimo`, con `estado` = 'optimo' solo si se alcanza la cota.
+    """
+    if not Z3_DISPONIBLE:
+        return {"estado": "sin_z3"}
+
+    gens = list(system.params) + list(system.unknowns)
+
+    def grado(e):
+        e = sympy.expand(e)
+        if getattr(e, "is_number", False):
+            return 0
+        try:
+            return sympy.Poly(e, *gens).total_degree()
+        except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+            return 99
+
+    cand = set()
+    for e in system.eqs:
+        _nodos(e, cand)
+    # UNION DE LOS DOS ESPACIOS. Solo con nodos del arbol el optimo salia 51
+    # variables, PEOR que la ruta arbol+monomios (47): faltaban monomios utiles
+    # que no son nodos de ningun arbol (`a*n`, `k**2`, `l*p`...). Y solo con
+    # monomios salia 51 desde el sistema original. Cada espacio ve lo que el otro
+    # no; hay que darle a Z3 los dos y que elija.
+    _, _, monomios = _monomios(system, target)
+    for expo in monomios:
+        mon = sympy.Integer(1)
+        for g, k in zip(gens, expo):
+            mon *= g ** k
+        cand.add(mon)
+    cand = {c for c in cand if grado(c) >= 2 and not getattr(c, "is_number", False)}
+    if not cand:
+        return {"estado": "optimo", "nombres": 0, "total": system.cost(),
+                "cota": 0, "elegidos": []}
+
+    orden = sorted(cand, key=lambda c: (grado(c), sympy.count_ops(c), sympy.srepr(c)))
+    x = {c: z3.Bool("c%d" % i) for i, c in enumerate(orden)}
+
+    opt = z3.Optimize()
+    opt.set("timeout", timeout_s * 1000)
+
+    # CODIFICACION TIPO TSEITIN. Una version anterior INLINEABA la formula
+    # recursivamente y memoizaba la expresion z3; al entrar de nuevo en un nodo
+    # que se estaba calculando devolvia la constante False, que quedaba CAPTURADA
+    # en las formulas de los nodos que la habian consultado. Sintoma: 'unsat' en
+    # un sistema y un optimo PEOR (20 nombres en vez de 16) en otro -- una
+    # minimizacion no puede empeorar al anadir candidatos, asi que el encoding
+    # estaba mal, no el problema.
+    # Aqui cada par (nodo, presupuesto) recibe una VARIABLE booleana y su
+    # definicion se ASSERTA. El grafo de dependencias es un DAG (las
+    # subexpresiones son estrictamente menores), asi que no hay ciclos.
+    var = {}
+    pendientes = []
+
+    def R(e, d, permitir_nombre=True):
+        e = sympy.sympify(e)
+        if grado(e) <= d:
+            return z3.BoolVal(True)
+        clave = (sympy.srepr(e), d, permitir_nombre)
+        if clave in var:
+            return var[clave]
+        v = z3.Bool("r%d" % len(var))
+        var[clave] = v
+        pendientes.append((e, d, permitir_nombre, v))
+        return v
+
+    def opciones_de(e, d, permitir_nombre):
+        ops = []
+        if permitir_nombre and e in x:
+            ops.append(x[e])
+        if e.is_Add:
+            ops.append(z3.And(*[R(a, d) for a in e.args]))
+        ex = sympy.expand(e)
+        if ex != e and ex.is_Add and len(ex.args) <= 60:
+            ops.append(z3.And(*[R(a, d) for a in ex.args]))
+        if e.is_Mul or e.is_Pow:
+            if e.is_Pow:
+                base, exp = e.args
+                fs = [base] * int(exp) if exp.is_Integer and int(exp) > 0 else []
+            else:
+                _, resto = e.as_coeff_Mul()
+                fs = list(resto.args) if resto.is_Mul else [resto]
+            if len(fs) == 1:
+                # un solo factor no constante: el coeficiente no cambia el grado
+                ops.append(R(fs[0], d))
+            elif fs and d >= 2 and len(fs) <= 6:
+                for r in range(1, len(fs)):
+                    for comb in itertools.combinations(range(len(fs)), r):
+                        g1 = sympy.Mul(*[fs[i] for i in comb])
+                        g2 = sympy.Mul(*[fs[i] for i in range(len(fs)) if i not in comb])
+                        ops.append(z3.And(R(g1, 1), R(g2, 1)))
+        return z3.Or(ops) if ops else z3.BoolVal(False)
+
+    raiz = [R(e, target) for e in system.eqs]
+    for c in orden:
+        opt.add(z3.Implies(x[c], R(c, target, permitir_nombre=False)))
+    while pendientes:
+        e, d, pn, v = pendientes.pop()
+        opt.add(v == opciones_de(e, d, pn))
+    for r in raiz:
+        opt.add(r)
+    objetivo_min = opt.minimize(z3.Sum([z3.If(x[c], 1, 0) for c in orden]))
+
+    res = opt.check()
+    if res != z3.sat:
+        return {"estado": str(res), "nombres": None, "total": None,
+                "cota": None, "elegidos": []}
+    modelo = opt.model()
+    elegidos = [c for c in orden if z3.is_true(modelo.eval(x[c]))]
+    try:
+        cota = int(str(opt.lower(objetivo_min)))
+    except (ValueError, TypeError):
+        cota = None
+    estado = "optimo" if cota is not None and cota == len(elegidos) else "cota_superior"
+    return {"estado": estado, "nombres": len(elegidos),
+            "total": system.cost() + len(elegidos), "cota": cota,
+            "elegidos": [str(c) for c in elegidos]}

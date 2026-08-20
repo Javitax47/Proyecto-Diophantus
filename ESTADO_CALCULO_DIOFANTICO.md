@@ -270,14 +270,36 @@ combinatorio exacto y `z3.Optimize` lo resuelve dando modelo **y** cota:
 reinicios aleatorios habían encontrado 46, y Z3 demuestra que 46 es el mínimo para esa base.
 Luego el problema **no es la búsqueda: es la formulación.**
 
-**Dónde está exactamente la brecha de 5 variables.** JSWW no nombran solo monomios: nombran
-**subexpresiones compuestas** —`(a + u²(u²−a))²`, `(n+4dy)²`— que no son monomios de ningún
-desarrollo. Optimizar sobre ese espacio es el problema del **circuito aritmético mínimo con
-puertas de grado 2** (un *straight-line program* mínimo), muchísimo más grande que el de los
-monomios. Ahí está la brecha, y ahí hay que atacar para bajar de 47.
+**Se extendió el optimizador a SUBEXPRESIONES COMPUESTAS**, que es donde JSWW ganan: ellos
+nombran cosas como `(a + u²(u²−a))²` o `(n+4dy)²`, que no son monomios de ningún desarrollo.
+`aplanado_minimo_compuesto` optimiza sobre la **unión de los dos espacios** —nodos del árbol de
+cada ecuación *y* monomios del desarrollo— con codificación tipo Tseitin: cada par
+(subexpresión, presupuesto de grado) recibe una variable booleana y su definición se asserta.
 
-Nótese que ellos lo hicieron a mano en 1976, con conocimiento de su propia construcción. No es
-una heurística que se nos escape: es comprensión estructural del sistema concreto.
+| Espacio de candidatos | Óptimo | Generador | Cota |
+|---|---|---|---|
+| solo monomios, desde el original | 25 nombres | (51, 5) | 25 |
+| solo monomios, tras `flatten_tree(S,8)` | 16 nombres | (47, 5) | 16 |
+| **compuestos ∪ monomios, desde el original** | **21 nombres** | **(47, 5)** | **21** |
+| JSWW 1976, a mano | — | (42, 5) | — |
+
+**47 variables es el ÓPTIMO de todo el aplanado mecánico**, demostrado, y coincide exactamente
+con lo que la búsqueda aleatoria había alcanzado por construcción. Ampliar el espacio de
+candidatos de monomios a subexpresiones compuestas **no mejora el resultado**: solo confirma que
+47 es el suelo.
+
+**Conclusión, y es la que importa para saber dónde atacar:** las cinco variables que nos separan
+de JSWW **no están en el aplanado**. Aplanar mejor es imposible —está demostrado—. Tienen que
+salir de reestructurar el sistema de ecuaciones en sí, que es lo que ellos hicieron a mano en
+1976 con conocimiento de su propia construcción. No es una heurística que se nos escape: es
+matemática sobre el problema concreto.
+
+*Dos errores de codificación que costaron caro y merecen quedar escritos:* (a) un `Mul` con un
+solo factor no constante —`−(cu+x)²`— no generaba ninguna partición y volvía **insatisfacible**
+el sistema entero; (b) memoizar la fórmula z3 durante la recursión capturaba constantes `False`
+de nodos a medio calcular, lo que daba `unsat` en un sistema y un óptimo **peor** en otro. Que
+una minimización empeore al añadir candidatos es imposible: era la señal de que el encoding
+estaba mal, no el problema.
 
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
