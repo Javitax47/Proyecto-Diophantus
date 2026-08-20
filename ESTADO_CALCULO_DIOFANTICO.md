@@ -385,6 +385,48 @@ demostrablemente mínima y cuya equivalencia con el sistema de JSWW está verifi
 simbólicamente.* Si el (42, 5) nunca se construyó, sería el mejor construido. Eso es exhibible y
 comprobable por cualquiera; una frase de 1976 no lo es.
 
+### 3.2h Investigación cerrada: qué existe CONSTRUIDO y qué solo está anunciado
+
+**Construido y exhibible** (escrito o verificado por máquina):
+
+| Polinomio | Variables | Grado | Estado |
+|---|---|---|---|
+| Jones–Sato–Wada–Wiens 1976 | 26 | 25 | escrito en el paper; reproducido en Wikipedia; **transcrito y verificado aquí** |
+| Pąk–Kaliszyk 2022 (Mizar) | 10 | > 6000 | formalizado; *«we present only the non-expanded version»* |
+| **Este trabajo** | **46** | **5** | materializado, equivalencia con JSWW **verificada simbólicamente** |
+
+**Anunciado pero sin construcción publicada que hayamos podido encontrar:**
+
+| Cifra | Origen | Qué falta |
+|---|---|---|
+| (42, 5) | una frase de JSWW 1976, p. 450 | ninguna construcción; el método que citan (Davis p. 263) da **≥ 51** por cota demostrada |
+| (58, 4) para primos | par universal de Jones 1982 | la ecuación universal sí es explícita; su **instanciación para primos** no aparece escrita |
+| (12, enorme) | JSWW Teorema 2 | *«reportedly known to Matiyasevich in 1973, although no literature is available»* — palabras del propio paper |
+
+**Y hay precedente reconocido en el campo.** Bayer–David, *A Formal Proof of Complexity Bounds on
+Diophantine Equations* (ITP 2025), al elegir de qué resultados depender:
+
+> *«the second pair depends on Jones' universal pair (32, 12)ℕ **of which there is no published
+> proof in the literature**.»*
+
+En 2025, investigadores del área señalan que **algunos pares anunciados carecen de prueba
+publicada** y toman la molestia de no apoyarse en ellos. Que el (42, 5) sea otro caso así no es
+una hipótesis excéntrica: es el patrón documentado de esta literatura.
+
+**La afirmación que se sostiene, y sus límites.** *Entre los polinomios representadores de primos
+efectivamente construidos y exhibibles, éste es el de menor grado.* Con tres salvedades que van
+siempre pegadas:
+
+1. **No haberlo encontrado no prueba que no exista.** Una búsqueda bibliográfica no es un teorema.
+2. **Descansa en que el sistema (1) de JSWW represente los primos** — resultado de 1976 con
+   cincuenta años de citas y linaje de formalización. No lo hemos verificado nosotros ni hace falta.
+3. **Nadie con criterio lo ha revisado.** Sigue siendo la salvedad que más pesa, y la única que no
+   podemos levantar por nuestra cuenta.
+
+**Y lo que NO se sostiene:** que sea el de menor grado *y* menos variables. Es una frontera de
+Pareto y nuestro punto **no domina** al de JSWW (26, 25): ellos tienen menos variables, nosotros
+menos grado. Ninguno es mejor en ambos ejes. Decir las dos cosas sería repetir el error de agosto.
+
 ### 3.2f Cierre del ataque al récord: MESETA EN 46, por tres caminos independientes
 
 | Base de partida | Mejor generador | Cómo |
