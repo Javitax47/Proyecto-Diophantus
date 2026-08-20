@@ -351,6 +351,40 @@ récord»: es que el récord quizá nunca se construyó. Y esa es exactamente la
 que este proyecto ya se equivocó una vez en dar por buena, así que va con las cuatro salvedades
 de §7 intactas.
 
+### 3.2g Qué está verificado del (46, 5), y qué no
+
+La pregunta «¿tenemos un récord?» se contesta mejor separando lo comprobado de lo que descansa
+en otros.
+
+**Verificado por nosotros:**
+
+| Comprobación | Cómo |
+|---|---|
+| La transcripción de (1) es fiel | Reproduce las **(26 variables, grado 25)** publicadas. Y coincide **carácter a carácter** con la que publica Wikipedia — verificación independiente |
+| El aplanado es el mínimo | `z3.Optimize` alcanza su **cota inferior**: 20 nombres. No es «lo mejor que encontré» |
+| El sistema materializado **es** el de JSWW | Sustituyendo cada nombre por su definición en cascada se recuperan **exactamente** las 14 ecuaciones originales: ninguna falta, ninguna sobra |
+| Grado 2 por ecuación ⇒ generador de grado 5 | Medido sobre el sistema materializado |
+| El aplanado preserva la equisatisfacibilidad | Testigo extendido y evaluado en los 8 conjuntos del catálogo con testigo |
+
+**Descansa en terceros (y está bien que así sea):** que el sistema (1) de JSWW represente
+efectivamente los primos. Es un resultado de 1976, citado durante cincuenta años, reproducido en
+Wikipedia y con linaje de formalización en Mizar, Coq e Isabelle. No lo hemos verificado nosotros
+—no podríamos: el testigo es astronómico y encontrarlo es el reto abierto del propio paper— y
+tampoco hace falta.
+
+**Lo que NO tenemos:**
+
+- **No hemos batido el récord publicado.** El récord citado es (42, 5) y estamos en (46, 5).
+  Lo que sí tenemos es que **el (42, 5) no aparece construido en ningún sitio** y que el método
+  que sus autores citan da, como mínimo demostrado, **51**.
+- **Nadie con criterio lo ha revisado.** Sigue siendo la salvedad que más pesa.
+
+**La afirmación honesta, entonces**, no es «tenemos un récord» sino: *este es un polinomio de
+grado 5 representador de primos, explícitamente construido, con 46 variables, cuya reducción es
+demostrablemente mínima y cuya equivalencia con el sistema de JSWW está verificada
+simbólicamente.* Si el (42, 5) nunca se construyó, sería el mejor construido. Eso es exhibible y
+comprobable por cualquiera; una frase de 1976 no lo es.
+
 ### 3.2f Cierre del ataque al récord: MESETA EN 46, por tres caminos independientes
 
 | Base de partida | Mejor generador | Cómo |

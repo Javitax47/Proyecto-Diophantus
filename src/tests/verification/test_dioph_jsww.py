@@ -158,6 +158,74 @@ def test_aplanado_optimo(stats):
         stats.ok()
 
 
+def test_equivalencia_por_sustitucion(stats):
+    """[5] El sistema materializado ES el de JSWW: sustitución hacia atrás.
+
+    POR QUÉ HACE FALTA ESTE TEST Y NO BASTA EL DEL CATALOGO. La materialización
+    se verifica en el catalogo comprobando que el testigo se extiende y anula el
+    sistema. Con JSWW eso NO se puede hacer: no tenemos testigo, y encontrarlo es
+    el reto famoso del paper (los valores son astronomicos). Sin esta comprobacion,
+    la equisatisfacibilidad de nuestro (46,5) con el original quedaba SIN VERIFICAR.
+
+    Lo que se hace en su lugar es simbolico y mas fuerte que cualquier muestreo:
+    cada incognita nueva `w` viene con su ecuacion definitoria `w = d`. Sustituyendo
+    en cascada hacia atras, las ecuaciones no definitorias deben devolver
+    EXACTAMENTE las 14 originales -- ninguna de menos, ninguna de mas. Si eso se
+    cumple, el sistema aplanado es el mismo objeto matematico escrito de otra forma.
+    """
+    print(f"\n{Colors.HEADER}[5] Equivalencia simbólica con el sistema original{Colors.ENDC}")
+    if not Z3_DISPONIBLE:
+        print("  (z3 no disponible: omitido)"); return
+    import sympy
+    S = sistema(expandir=False)
+    r = aplanado_minimo_compuesto(S, 2, timeout_s=300)
+    if r["estado"] != "optimo":
+        stats.fail(f"el optimizador no alcanzo la cota: {r['estado']}")
+        return
+    M = materializar(S, r["elegidos"], 2)
+
+    nuevas = [u for u in M.unknowns if u not in INCOGNITAS]
+    defs = {}
+    for e in M.eqs:
+        ex = sympy.expand(e)
+        for w in nuevas:
+            if ex.coeff(w, 1) == 1 and ex.coeff(w, 2) == 0:
+                resto = sympy.expand(w - ex)
+                if w not in resto.free_symbols:
+                    defs[w] = resto
+                    break
+    if len(defs) != len(nuevas):
+        stats.fail(f"{len(nuevas)} incognitas nuevas pero solo {len(defs)} definiciones")
+        return
+
+    def desnombrar(e):
+        prev = None
+        while prev != e:
+            prev = e
+            e = sympy.expand(e.subs(defs))
+        return e
+
+    originales = [sympy.expand(x) for x in S.eqs]
+    no_def = [e for e in M.eqs
+              if not any(sympy.expand(e - (w - d)) == 0 for w, d in defs.items())]
+    recuperadas = [desnombrar(e) for e in no_def]
+
+    def casa(u, v):
+        return sympy.expand(u - v) == 0 or sympy.expand(u + v) == 0
+
+    faltan = [o for o in originales if not any(casa(o, rr) for rr in recuperadas)]
+    sobran = [rr for rr in recuperadas if not any(casa(o, rr) for o in originales)]
+    print(f"  {len(nuevas)} incognitas nuevas, {len(defs)} definiciones, "
+          f"{len(no_def)} ecuaciones no definitorias (originales: {len(originales)})")
+    print(f"  originales no recuperadas: {len(faltan)}   recuperadas que no son originales: {len(sobran)}")
+    if faltan or sobran:
+        stats.fail(f"la sustitucion hacia atras no devuelve el sistema original "
+                   f"({len(faltan)} faltan, {len(sobran)} sobran)")
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} el sistema aplanado es el de JSWW escrito de otra forma")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -165,6 +233,7 @@ def main():
     test_marcador_de_aplanado(stats)
     test_grado_menor_que_5(stats)
     test_aplanado_optimo(stats)
+    test_equivalencia_por_sustitucion(stats)
 
     total = stats.passed + stats.failed
     print()
