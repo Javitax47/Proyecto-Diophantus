@@ -505,6 +505,83 @@ def L_psi(A, B, C, e=0, over_N=True):
                  eqs=eqs, witness=w, name=f"{C} = psi_{A}({B})")
 
 
+def L_exponential_psi(b, k, c, over_N=True):
+    """c = b^k, RECONSTRUIDO sobre L_psi (con el indice anclado).
+
+    Sustituye a `L_exponential`, que no era sound: sus tres ecuaciones solo
+    forzaban `b^m == c (mod M)` con `m == k (mod a-1)`, y eso admite
+    m = k + j(a-1). Aqui el indice lo ancla `L_psi`, asi que la congruencia de
+    Davis ya dice lo que parecia decir.
+
+    SISTEMA:
+        Y = psi_a(k)                        [L_psi: 11 incognitas]
+        X^2 - (a^2-1) Y^2 = 1               [X queda determinado sobre N]
+        X - (a-b)Y - c - M*s = 0            [congruencia de Davis, M = 2ab-b^2-1]
+        c < M,  a > c,  b >= 2,  k >= 1     [condiciones laterales]
+
+    y `a` se fija por ecuacion lineal a una cota que garantiza a > c y M > c
+    (mismo patron que PellContext: cota por ecuacion, no por sustitucion, para no
+    destrozar el grado al aplanar).
+
+    POR QUE ES CORRECTO AHORA. La congruencia de Davis
+        x_k(a) - (a-b) y_k(a) == b^k   (mod 2ab - b^2 - 1)
+    esta verificada en 1368 casos (test_dioph_calculus). Con `c < M` el residuo
+    determina c UNIVOCAMENTE, y con el indice anclado por L_psi el residuo es
+    b^k y no b^m para otro m. Los dos ingredientes estaban; faltaba el segundo.
+
+    COSTE: mucho mayor que las 7 del lema roto. Es el precio de que sea cierto.
+    """
+    b = sympy.sympify(b); k = sympy.sympify(k); c = sympy.sympify(c)
+    A, X, s = fresh("ea"), fresh("ex"), fresh("es")
+    Y = fresh("ey")
+    ineq = L_nonneg_N if over_N else L_nonneg
+
+    M = 2 * A * b - b ** 2 - 1
+    cota = b + c + k + 2                  # asegura a > c, a > b, y M > c
+
+    partes = [
+        L_value(A, lambda v: int(b.subs(v)) + int(c.subs(v)) + int(k.subs(v)) + 2),
+        Dioph(params=sorted((b.free_symbols | c.free_symbols | k.free_symbols), key=str),
+              unknowns=[A], eqs=[A - cota], witness=lambda v: {}, name="cota de a"),
+        L_value(Y, lambda v: pell_seq(int(A.subs(v)), int(k.subs(v)))[1]),
+        L_psi(A, k, Y, over_N=over_N),
+        # witness={} a proposito: X y s los rellena el testigo exterior, que ya
+        # conoce a, k y c. `conj` aborta si algun sub-testigo es None.
+        Dioph(params=[], unknowns=[X, Y, A],
+              eqs=[X ** 2 - (A ** 2 - 1) * Y ** 2 - 1],
+              witness=lambda v: {}, name="Pell x"),
+        Dioph(params=sorted((b.free_symbols | c.free_symbols), key=str),
+              unknowns=[X, Y, A, s],
+              eqs=[(X - (A - b) * Y) - c - M * s],
+              witness=lambda v: {}, name="Davis"),
+        ineq(b - 2),
+        ineq(k - 1),
+    ]
+    sistema = conj(*partes, name=f"{c} = {b}^{k} (via psi)")
+
+    interno = sistema.witness
+
+    def w(vals):
+        bv, kv, cv = int(b.subs(vals)), int(k.subs(vals)), int(c.subs(vals))
+        if bv < 2 or kv < 1 or cv != bv ** kv:
+            return None
+        av = bv + cv + kv + 2
+        xv, yv = pell_seq(av, kv)
+        Mv = 2 * av * bv - bv ** 2 - 1
+        resto = (xv - (av - bv) * yv) - cv
+        if Mv <= 0 or resto < 0 or resto % Mv != 0:
+            return None
+        base = interno(vals)
+        if base is None:
+            return None
+        base[X] = xv
+        base[s] = resto // Mv
+        return base
+
+    sistema.witness = w
+    return sistema
+
+
 def L_exponential(b, k, c, over_N=False):
     """c = b^k.   Construccion clasica via ecuacion de Pell.
 
