@@ -337,10 +337,18 @@ def _rango_de_aparicion(A, K, limite=200000):
     Devuelve None si no se alcanza; el llamante debe distinguir "no hay testigo"
     de "no se ha sabido calcular", que no es lo mismo.
     """
+    A, K = int(A), int(K)
     if K <= 0:
         return None
     if K == 1:
         return 1
+    # GUARDA DE TAMANO. `factorint` sobre un K astronomico no falla: se cuelga.
+    # En la cadena completa K = 2*D*(e+1)*C^2 con C ya gigantesco, asi que este
+    # caso es el NORMAL, no el excepcional. Se devuelve None, que el llamante
+    # debe leer como "no se ha sabido calcular", NO como "no existe testigo":
+    # el rango existe siempre (la sucesion de Pell es de divisibilidad).
+    if K.bit_length() > 128:
+        return None
 
     def rango_potencia(pe):
         p, q = 0 % pe, 1 % pe
@@ -500,9 +508,17 @@ def L_psi(A, B, C, e=0, over_N=True):
 
     params = sorted((A.free_symbols | B.free_symbols | C.free_symbols
                      | ev.free_symbols), key=str)
-    return Dioph(params=params,
-                 unknowns=[i, j, al, be, ga, D, E, F, G, H, I],
-                 eqs=eqs, witness=w, name=f"{C} = psi_{A}({B})")
+    sistema = Dioph(params=params,
+                    unknowns=[i, j, al, be, ga, D, E, F, G, H, I],
+                    eqs=eqs, witness=w, name=f"{C} = psi_{A}({B})")
+    # Se exponen los intermedios porque un llamante puede REUTILIZARLOS. En
+    # concreto D = (A^2-1)C^2 + 1 es exactamente x_B(A)^2, asi que quien ya
+    # tenga x_B(A) como incognita (el contexto de Pell) puede escribir `D = X^2`
+    # --grado 2-- en lugar de repetir la ecuacion de Pell --grado 4--. Nombrar
+    # las piezas sirve de poco si luego no se dejan tocar.
+    sistema.intermedios = {'i': i, 'j': j, 'alpha': al, 'beta': be, 'gamma': ga,
+                           'D': D, 'E': E, 'F': F, 'G': G, 'H': H, 'I': I}
+    return sistema
 
 
 def L_exponential_psi(b, k, c, over_N=True):
@@ -720,7 +736,7 @@ def L_floor_div(a, b, q, over_N=True):
     return system
 
 
-def L_binomial(r, n, c, over_N=True):
+def L_binomial(r, n, c, over_N=True, psi=True):
     """c = C(r,n) por EXTRACCION DE DIGITOS en base u.
 
     Identidad (Julia Robinson):  C(r,n) = floor((u+1)^r / u^n) mod u,  con
@@ -733,14 +749,15 @@ def L_binomial(r, n, c, over_N=True):
     T, W, P, Q = fresh("bt"), fresh("bw"), fresh("bp"), fresh("bq")
     u = T + 1
     ineq = L_nonneg_N if over_N else L_nonneg
+    exp = L_exponential_psi if psi else L_exponential
 
     partes = [
         L_value(T, lambda v: 2 ** int(r.subs(v))),
-        L_exponential(sympy.Integer(2), r, T, over_N=over_N),
+        exp(sympy.Integer(2), r, T, over_N=over_N),
         L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(r.subs(v))),
-        L_exponential(u + 1, r, W, over_N=over_N),
+        exp(u + 1, r, W, over_N=over_N),
         L_value(P, lambda v: int(u.subs(v)) ** int(n.subs(v))),
-        L_exponential(u, n, P, over_N=over_N),
+        exp(u, n, P, over_N=over_N),
         L_value(Q, lambda v: int(W.subs(v)) // int(P.subs(v))),
         L_floor_div(W, P, Q, over_N=over_N),
         L_congruent(c, Q, u),
@@ -749,7 +766,7 @@ def L_binomial(r, n, c, over_N=True):
     return conj(*partes, name=f"{c} = C({r},{n})")
 
 
-def L_factorial(n, m, over_N=True):
+def L_factorial(n, m, over_N=True, psi=True):
     """m = n!   via  n! = floor(r^n / C(r,n))  con  r > (n+1)^(n+1).
 
     Identidad clasica (Julia Robinson). La cota (n+1)^(n+1) es la DEMOSTRABLE;
@@ -762,23 +779,24 @@ def L_factorial(n, m, over_N=True):
     representaciones son teoricas y no practicas.
     """
     E, R, A, B = fresh("fe"), fresh("fr"), fresh("fa"), fresh("fb")
+    exp = L_exponential_psi if psi else L_exponential
 
     partes = [
         L_value(E, lambda v: (int(n.subs(v)) + 1) ** (int(n.subs(v)) + 1)),
-        L_exponential(n + 1, n + 1, E, over_N=over_N),
+        exp(n + 1, n + 1, E, over_N=over_N),
         L_value(R, lambda v: int(E.subs(v)) + 1),
         Dioph(params=[], unknowns=[], eqs=[sympy.expand(R - E - 1)],
               witness=lambda v: {}, name="R = E+1"),
         L_value(A, lambda v: int(R.subs(v)) ** int(n.subs(v))),
-        L_exponential(R, n, A, over_N=over_N),
+        exp(R, n, A, over_N=over_N),
         L_value(B, lambda v: sympy.binomial(int(R.subs(v)), int(n.subs(v)))),
-        L_binomial(R, n, B, over_N=over_N),
+        L_binomial(R, n, B, over_N=over_N, psi=psi),
         L_floor_div(A, B, m, over_N=over_N),
     ]
     return conj(*partes, name=f"{m} = {n}!")
 
 
-def L_prime(n, over_N=True):
+def L_prime(n, over_N=True, psi=True):
     """n es PRIMO, via el teorema de WILSON:  n primo <=> n | (n-1)! + 1  (n>1).
 
     Cadena completa: Wilson -> factorial -> binomial -> exponenciacion -> Pell.
@@ -788,7 +806,7 @@ def L_prime(n, over_N=True):
     m = fresh("wm")
     partes = [
         L_value(m, lambda v: sympy.factorial(int(n.subs(v)) - 1)),
-        L_factorial(n - 1, m, over_N=over_N),
+        L_factorial(n - 1, m, over_N=over_N, psi=psi),
         L_divides(n, m + 1),
         (L_nonneg_N if over_N else L_nonneg)(n - 2),
     ]
@@ -875,9 +893,26 @@ class PellContext:
     Coste: 4 incognitas compartidas + 1 por relacion, en vez de 5 por relacion.
     """
 
-    def __init__(self, k, over_N=True, pool=None, base=None):
+    def __init__(self, k, over_N=True, pool=None, base=None, anclaje_psi=False,
+                 testigo_psi=True):
         self.k = k
         self.over_N = over_N
+        # ANCLAJE DEL INDICE. Con `anclaje_psi=False` el indice se fija con la
+        # congruencia `y == k (mod a-1)`, que es BARATA Y FALSA: fija el residuo
+        # de k, no k. Con `anclaje_psi=True` se fija con `L_psi` (Teorema 1 de
+        # Pak-Kaliszyk), que es CARO Y CIERTO. La opcion barata se conserva
+        # unicamente para poder medir la diferencia; no sostiene ninguna cifra.
+        self.anclaje_psi = anclaje_psi
+        # TESTIGO PARCIAL. Con `anclaje_psi=True` el testigo completo NO es
+        # evaluable: sale del rango de aparicion de un K astronomico. Con
+        # `testigo_psi=False` el contexto rellena todo MENOS las incognitas
+        # internas de L_psi (D si, porque D = X^2 y eso se sabe). Sirve para
+        # comprobar que anadir el anclaje no rompio la ARITMETICA de la cadena
+        # --cotas, base compartida, congruencias de Davis-- que es lo unico que
+        # se puede seguir comprobando por evaluacion. No sustituye a nada: el
+        # sistema completo sigue teniendo esas incognitas.
+        self.testigo_psi = testigo_psi
+        self.psi = None
         # Pool compartido con el resto de la construccion: si `k >= 1` o `b >= 2`
         # ya se impuso en otro eslabon, aqui cuesta 0.
         self.pool = pool
@@ -940,9 +975,21 @@ class PellContext:
         # de Skolem (`flatten_tree`). Expandir aqui abarata nada y encarece el
         # generador: medido sobre el sistema de JSWW, aplanar la forma factorizada
         # cuesta +27 incognitas y la expandida +41.
-        eqs = [X ** 2 - (A ** 2 - 1) * Y ** 2 - 1,                  # Pell
-               Y - k - (A - 1) * t]                                 # indice
-        unknowns = [X, Y, t]
+        if self.anclaje_psi:
+            # Y = psi_A(k) DE VERDAD, no "Y == k (mod A-1)". `t` desaparece:
+            # ya no hay congruencia del indice que multiplicar.
+            self.psi = L_psi(A, k, Y, over_N=self.over_N)
+            D = self.psi.intermedios['D']
+            # D = (A^2-1)Y^2 + 1 = x_k(A)^2 lo impone ya L_psi; aqui solo se
+            # dice que X es su raiz. Sobre N eso fuerza X = x_k(A), que es lo
+            # que necesita la congruencia de Davis, y cuesta una ecuacion de
+            # GRADO 2 en vez de repetir la de Pell en grado 4.
+            eqs = [D - X ** 2]
+            unknowns = [X, Y]
+        else:
+            eqs = [X ** 2 - (A ** 2 - 1) * Y ** 2 - 1,              # Pell
+                   Y - k - (A - 1) * t]                             # indice
+            unknowns = [X, Y, t]
         if self.base is None:
             u = fresh("cu")                 # holgura propia: a = cota + u
             eqs.append(A - cota - u)
@@ -967,7 +1014,8 @@ class PellContext:
         params = sorted(params - set(unknowns), key=str)
         core = Dioph(params, unknowns, eqs, witness=None,
                      name=f"contexto Pell k={k} ({len(self.rels)} rel.)")
-        system = conj(core, *extras, name=core.name)
+        piezas = [core] + ([self.psi] if self.psi is not None else []) + extras
+        system = conj(*piezas, name=core.name)
 
         def w(vals):
             kv = int(self.k.subs(vals)) if hasattr(self.k, 'subs') else int(self.k)
@@ -984,9 +1032,12 @@ class PellContext:
                 if av < cota_v:
                     return None
             xv, yv = pell_seq(av, kv)
-            if (yv - kv) % (av - 1) != 0:
-                return None
-            out = {X: xv, Y: yv, t: (yv - kv) // (av - 1)}
+            if self.anclaje_psi:
+                out = {X: xv, Y: yv}
+            else:
+                if (yv - kv) % (av - 1) != 0:
+                    return None
+                out = {X: xv, Y: yv, t: (yv - kv) // (av - 1)}
             if self.base is None:
                 out[A] = av
                 out[u] = av - cota_v
@@ -997,33 +1048,61 @@ class PellContext:
                     return None
                 out[s] = rest // Mv
             vals_ext = dict(vals); vals_ext.update(out)
-            for d in extras:
+            # El testigo de L_psi se CONSTRUYE (rango de aparicion), y para los
+            # tamanos de la cadena real es incomputable: devolvera None. Eso no
+            # invalida el sistema, invalida la EVALUACION del testigo, que es
+            # otra cosa. Se propaga tal cual, sin disimularlo.
+            if self.psi is not None and not self.testigo_psi:
+                out[self.psi.intermedios['D']] = xv * xv
+            piezas_w = ([self.psi] if (self.psi is not None and self.testigo_psi)
+                        else []) + extras
+            for d in piezas_w:
                 if not d.unknowns:
                     continue
                 sub = d.witness(vals_ext)
                 if sub is None:
                     return None
                 out.update(sub)
+                vals_ext.update(sub)
             return out
 
         system.witness = w
         return system
 
 
-def L_prime_shared(n, over_N=True):
+def L_prime_shared(n, over_N=True, anclaje_psi=True, testigo_psi=True):
     """n es PRIMO (Wilson) con COMPARTICION de incognitas entre eslabones.
 
-    Misma matematica que L_prime, pero agrupando las 5 exponenciaciones por
-    EXPONENTE en contextos de Pell compartidos:
+    Misma matematica que L_prime, pero agrupando las exponenciaciones por
+    EXPONENTE en contextos de Pell compartidos (x_k(a) e y_k(a) dependen solo de
+    (a,k), asi que dos relaciones con el mismo k comparten todo menos su `s`):
 
-        exponente n     : {E = n^n}                   -> 4 + 1 = 5
-        exponente n-1   : {A = R^(n-1), P = u^(n-1)}  -> 4 + 2 = 6
-        exponente R     : {T = 2^R,  W = (u+1)^R}     -> 4 + 2 = 6
-                                             total 17  (frente a 5x5 = 25)
+        exponente n-1   : {E = n^(n-1), A = R^(n-1), P = u^(n-1)}
+        exponente R     : {T = 2^R,     W = (u+1)^R}
 
-    Resultado medido: 30 incognitas frente a las 38 de la composicion aditiva.
-    Sigue lejos de las 9 del record, pero demuestra que el mecanismo funciona y
-    cuantifica cuanto da la comparticion "facil" (por exponente comun).
+    mas UNA sola base `a` (PellBase) para los dos exponentes.
+
+    ANCLAJE DEL INDICE (`anclaje_psi`, por defecto True). Cada contexto necesita
+    que su Y sea `y_k(a)` para el k CORRECTO.
+
+      * `anclaje_psi=False` lo pide con `Y == k (mod a-1)`. Barato --una
+        ecuacion, una incognita `t`-- y FALSO: fija el residuo de k, no k, de
+        modo que valen tambien m = k + j(a-1) y con ellos otros valores de c.
+        Medido: 3^2 admitia c en {1,3,5,7,9}. Con este anclaje la cadena NO
+        representa los primos. Se conserva solo para poder medir la diferencia.
+
+      * `anclaje_psi=True` lo pide con `L_psi` (Teorema 1 de Pak-Kaliszyk,
+        Mizar HILB10_8:19), que ancla el indice de verdad. Cuesta 11 incognitas
+        por contexto y devuelve 1 (`t` sobra), es decir +10 por exponente
+        distinto. Ese es el precio de que la cadena sea cierta, y se paga.
+
+    LIMITE HONESTO DEL TESTIGO. `L_psi` construye su testigo a partir del RANGO
+    DE APARICION de K = 2*D*(e+1)*C^2 en la sucesion y_.(A). El rango existe
+    siempre --la sucesion de Pell es de divisibilidad-- pero calcularlo exige
+    factorizar K, y en esta cadena C ya es astronomico. Por tanto el testigo de
+    la version con psi NO es evaluable salvo en casos de juguete: la completitud
+    descansa en el teorema citado, no en una comprobacion numerica. La soundness
+    si se comprueba (refutacion de configuraciones degeneradas y barridos).
     """
     contexts = {}
     pool = NonnegPool(over_N)          # deduplica las desigualdades de TODA la cadena
@@ -1032,7 +1111,9 @@ def L_prime_shared(n, over_N=True):
     def rel(b, k, c):
         key = sympy.srepr(sympy.sympify(k))
         if key not in contexts:
-            contexts[key] = PellContext(k, over_N, pool=pool, base=base)
+            contexts[key] = PellContext(k, over_N, pool=pool, base=base,
+                                        anclaje_psi=anclaje_psi,
+                                        testigo_psi=testigo_psi)
         contexts[key].relate(b, c)
 
     m = fresh("wm")

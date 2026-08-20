@@ -43,6 +43,14 @@ def test_catalogo_universal(stats):
         ok, fallos = verify_problem(prob, rango_de(prob), exhaustivo=True)
         modo = ("ambas direcciones" if prob.soundness == "exhaustivo"
                 else "completitud (soundness POR TEOREMA: el testigo cortocircuita)")
+        if prob.testigo == "parcial":
+            # Se dice en la propia linea del marcador, no en una nota al pie: el
+            # testigo de esta representacion no es evaluable entero (el rango de
+            # aparicion de L_psi es astronomico), asi que 'completitud' aqui
+            # significa menos que en las demas filas y tiene que verse.
+            _, cub, tot = prob.system.check_witness_parcial(
+                {prob.param: next(v for v in rango_de(prob) if prob.oracle(v))})
+            modo = f"completitud PARCIAL ({cub}/{tot} ecuaciones evaluables; el resto, POR TEOREMA)"
         if ok:
             stats.ok()
             print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {prob.name:24s} {prob.cost():5d} {prob.degree():5d}   {modo}")

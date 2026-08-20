@@ -116,6 +116,31 @@ class Dioph:
         assign.update(w)
         return self.holds(assign), assign
 
+    def check_witness_parcial(self, param_vals):
+        """Verifica solo las ecuaciones que el testigo alcanza a cubrir.
+
+        POR QUE HACE FALTA. Desde que la cadena de primos ancla el indice con
+        `L_psi`, su testigo NO es evaluable: se construye a partir del rango de
+        aparicion de un K astronomico. Eso deja dos opciones malas --no comprobar
+        nada, o fingir que se comprueba todo-- y una buena: comprobar lo que se
+        puede y DECIR CUANTO ES. Una ecuacion se evalua si todos sus simbolos
+        estan asignados; las demas se cuentan aparte.
+
+        Devuelve (ok, cubiertas, total). `ok` NO significa "el sistema se anula";
+        significa "ninguna de las `cubiertas` ecuaciones falla".
+        """
+        if self.witness is None:
+            return False, 0, len(self.eqs)
+        w = self.witness(param_vals)
+        if w is None:
+            return False, 0, len(self.eqs)
+        assign = dict(param_vals)
+        assign.update(w)
+        conocidos = set(assign)
+        cubiertas = [e for e in self.eqs if e.free_symbols <= conocidos]
+        ok = all(sympy.expand(e.subs(assign)) == 0 for e in cubiertas)
+        return ok, len(cubiertas), len(self.eqs)
+
     def search_witness(self, param_vals, bound):
         """Busqueda exhaustiva de testigo con incognitas en [0, bound].
 

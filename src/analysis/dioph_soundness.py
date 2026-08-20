@@ -324,6 +324,90 @@ def cota_desde_testigo(system, param_vals, factor=4, minimo=50):
 #   PREGUNTA 4: UNICIDAD POR ENUMERACION ESTRUCTURADA (donde el SMT no llega)
 # ---------------------------------------------------------------------------
 
+def unicidad_exponencial_psi(b, k, c_max):
+    """Lo mismo que `unicidad_exponencial`, pero para el lema RECONSTRUIDO.
+
+    QUE CAMBIA. `L_exponential` fijaba el indice con `y == k (mod a-1)`, asi que
+    la enumeracion tenia que recorrer TODOS los m congruentes con k, y cada uno
+    aportaba su propio c espurio. `L_exponential_psi` fija el indice con `L_psi`,
+    que fuerza Y = psi_a(k) para el k exacto: el bucle en m desaparece y solo
+    queda el barrido en c.
+
+    QUE SE COMPRUEBA Y QUE SE SUPONE, que no es lo mismo:
+
+      * SE SUPONE, y esta comprobado aparte en `test_dioph_soundness` [9] por
+        barrido directo sobre el sistema de 9 ecuaciones: que `L_psi(a,k,Y)`
+        implica Y = y_k(a). Aqui se usa como oraculo.
+      * SE COMPRUEBA aqui: que, dado eso, el resto del sistema --Pell para X, la
+        congruencia de Davis y la cota lineal sobre `a`-- deja UN SOLO c posible.
+        Cada candidato se confirma evaluando las ecuaciones REALES del sistema
+        que no mencionan incognitas internas de L_psi (`Dioph.holds` sobre esa
+        parte), no la enumeracion.
+
+    Por que la comprobacion se parte en dos. Los testigos de L_psi salen del
+    rango de aparicion y son astronomicos incluso en casos de juguete (certificar
+    y_2(3)=6 exige l=408); evaluarlos para cada candidato del barrido no es
+    viable. Partirlo permite comprobar cada mitad con la herramienta adecuada en
+    lugar de no comprobar ninguna.
+
+    Devuelve la lista de c admisibles. Si sale [b**k], el lema calcula el valor.
+    """
+    import sympy
+    from src.analysis.dioph_lemmas import L_exponential_psi, pell_seq, L_psi
+
+    bs, ks, cs = sympy.symbols('b k c', integer=True)
+    S = L_exponential_psi(bs, ks, cs, over_N=True)
+
+    # Las incognitas internas de L_psi: se identifican por el prefijo con el que
+    # `fresh` las bautiza. Las ecuaciones que las mencionan son justo las que
+    # este barrido delega en el oraculo.
+    internas = {u for u in S.unknowns if str(u).startswith('p')}
+    eqs_visibles = [e for e in S.eqs if not (e.free_symbols & internas)]
+    visibles = sorted({u for e in eqs_visibles for u in e.free_symbols} & set(S.unknowns),
+                      key=str)
+
+    admisibles = []
+    for c in range(0, c_max + 1):
+        a = b + c + k + 2
+        if a < 2:
+            continue
+        M = 2 * a * b - b * b - 1
+        if M <= 0:
+            continue
+        x, y = pell_seq(a, k)          # ORACULO: L_psi fuerza Y = y_k(a)
+        r = (x - (a - b) * y) - c
+        if r < 0 or r % M != 0:
+            continue
+        asign = {bs: b, ks: k, cs: c}
+        for u in visibles:
+            nombre = str(u)
+            if nombre.startswith('ea'):
+                asign[u] = a
+            elif nombre.startswith('ex'):
+                asign[u] = x
+            elif nombre.startswith('ey'):
+                asign[u] = y
+            elif nombre.startswith('es'):
+                asign[u] = r // M
+            else:                       # holguras de las desigualdades laterales
+                asign[u] = None
+        # holguras: se resuelven a partir de su propia ecuacion, que sobre N es
+        # `expr - holgura = 0` con expr >= 0.
+        for e in eqs_visibles:
+            libres = [u for u in e.free_symbols & set(visibles) if asign.get(u) is None]
+            if len(libres) == 1:
+                h = libres[0]
+                resto = e.subs({u: v for u, v in asign.items() if v is not None})
+                sol = sympy.solve(sympy.Eq(resto, 0), h)
+                if sol and int(sol[0]) >= 0:
+                    asign[h] = int(sol[0])
+        if any(v is None for v in asign.values()):
+            continue
+        if all(sympy.expand(e.subs(asign)) == 0 for e in eqs_visibles):
+            admisibles.append(c)
+    return admisibles
+
+
 def unicidad_exponencial(b, k, c_max, m_max=300, a0_max=0):
     """Para que valores de c tiene solucion REALMENTE el sistema de `c = b^k`?
 

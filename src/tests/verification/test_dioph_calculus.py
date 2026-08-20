@@ -365,8 +365,14 @@ def test_binomial(stats):
         stats.ok()
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} {tot} casos: C(r,n) = floor((u+1)^r/u^n) mod u con u=2^r+1")
 
-    # (b) el sistema diofantico completo
-    B = L_binomial(r, k2, c, over_N=True)
+    # (b) el sistema diofantico completo.
+    # psi=False: se comprueba el ESQUELETO ARITMETICO. Con el anclaje correcto
+    # (psi=True, que es el de por defecto) el testigo no es evaluable: L_psi lo
+    # construye a partir del rango de aparicion de un K astronomico. Lo que este
+    # apartado verifica es la aritmetica de la extraccion de digitos, que es la
+    # misma con uno y otro anclaje; la correccion del anclaje se comprueba en
+    # test_dioph_soundness [8] y [9].
+    B = L_binomial(r, k2, c, over_N=True, psi=False)
     fallos = [f"C({rv},{nv})" for rv, nv in [(5, 2), (8, 3), (12, 5)]
               if not B.check_witness({r: rv, k2: nv, c: int(sympy.binomial(rv, nv))})[0]]
     if fallos:
@@ -391,7 +397,7 @@ def test_factorial_y_wilson(stats):
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} n=1..7: n! = floor(r^n / C(r,n)) con r=(n+1)^(n+1)+1")
 
     # (b) el sistema factorial (solo n pequenos: el testigo explota)
-    F = L_factorial(n, m, over_N=True)
+    F = L_factorial(n, m, over_N=True, psi=False)   # esqueleto: ver nota en [12](b)
     fallos = [nv for nv in (1, 2)
               if not F.check_witness({n: nv, m: int(sympy.factorial(nv))})[0]]
     if fallos:
@@ -411,7 +417,7 @@ def test_factorial_y_wilson(stats):
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} Wilson exacto en [2,250): n | (n-1)!+1 <=> n primo")
 
     # (d) el sistema completo de primalidad
-    P = L_prime(n, over_N=True)
+    P = L_prime(n, over_N=True, psi=False)          # esqueleto: ver nota en [12](b)
     ok2, _ = P.check_witness({n: 2})
     ok3, _ = P.check_witness({n: 3})
     if ok2 and ok3:
@@ -510,8 +516,12 @@ def test_comparticion(stats):
     else:
         stats.fail(f"la comparticion no ahorro nada: {aditivo} -> {compartido}")
 
-    # (c) la correccion se PRESERVA: mismo veredicto que la version aditiva
-    P = L_prime_shared(n, over_N=True)
+    # (c) la correccion se PRESERVA: mismo veredicto que la version aditiva.
+    # Sobre el ESQUELETO ARITMETICO, por la misma razon que en [12](b): con el
+    # anclaje psi el testigo completo no es evaluable. La cadena con anclaje
+    # correcto se comprueba en test_dioph_soundness [7] (testigo parcial), [3]
+    # (soundness por SMT) y [8] (unicidad del valor exponencial).
+    P = L_prime_shared(n, over_N=True, anclaje_psi=False)
     ok2, _ = P.check_witness({n: 2})
     ok3, _ = P.check_witness({n: 3})
     sin_testigo = all(P.witness({n: v}) is None for v in (4, 9, 15, 25))
@@ -523,11 +533,12 @@ def test_comparticion(stats):
         stats.fail(f"la comparticion rompio la correccion (n2={ok2}, n3={ok3}, comp={sin_testigo})")
 
     # (d) desglose del mecanismo
-    print(f"  {Colors.BOLD}Desglose:{Colors.ENDC} 5 exponenciaciones agrupadas por exponente ->")
-    print(f"    exponente n   : 1 relacion  -> 4 compartidas + 1 = 5")
-    print(f"    exponente n-1 : 2 relaciones-> 4 compartidas + 2 = 6")
-    print(f"    exponente R   : 2 relaciones-> 4 compartidas + 2 = 6")
-    print(f"    total exponencial: 17 (frente a 5x5 = 25) | + eliminacion de R por sustitucion")
+    print(f"  {Colors.BOLD}Desglose:{Colors.ENDC} 5 exponenciaciones en 2 contextos "
+          f"(E = n^(n-1) y R = n*E+1 evitan un tercero) ->")
+    print(f"    exponente n-1 : 3 relaciones (E, A, P)  -> compartidas + 3")
+    print(f"    exponente R   : 2 relaciones (T, W)     -> compartidas + 2")
+    print(f"    + UNA sola base `a` (PellBase) para los dos exponentes")
+    print(f"    + anclaje del indice por L_psi: +11 incognitas por contexto, -1 (`t` sobra)")
 
 
 def test_frontera_del_record(stats):
@@ -546,6 +557,79 @@ def test_frontera_del_record(stats):
         print(f"  {Colors.OKGREEN}✓{Colors.ENDC} distancia declarada; NO se afirma haber batido el record")
     else:
         stats.fail("coste <= record: exigiria revision externa antes de afirmar nada")
+
+
+def test_generador_propio(stats):
+    """[18] EL GENERADOR PROPIO, ya con la cadena anclada por L_psi.
+
+    Que mide. La cadena Wilson -> factorial -> binomial -> exponenciacion que
+    PRODUCE ESTE CALCULO (no la transcrita de nadie), aplanada a grado 2 por
+    ecuacion y convertida en generador Q = n*(1 - sum P_i^2). El grado del
+    generador es 1 + 2*max deg(P_i), asi que aplanar a 2 da grado 5.
+
+    POR QUE APARECE AQUI Y NO ANTES. Hasta la reconstruccion, esta cadena tenia
+    el indice anclado por una congruencia que admitia valores espurios: sus
+    cifras no median un generador de primos y quedaron retiradas. Con `L_psi` el
+    indice queda anclado de verdad, y la cifra vuelve a significar algo.
+
+    QUE NO ES. No es la mejor cifra del proyecto: aplanar el sistema PUBLICADO de
+    Jones-Sato-Wada-Wiens da (46, 5), y esta cadena da mas. Son dos caminos
+    distintos al mismo rincon de grado 5, y el que gana es el que parte de una
+    construccion que costo un paper entero afinar. Lo que esta cifra mide es otra
+    cosa: cuanto cuesta la representacion que el compilador OBTIENE POR SI MISMO,
+    sin transcribir a nadie. Esa es la magnitud que interesa al proyecto.
+
+    El optimo del aplanado es OPTIMO demostrado (Z3 devuelve la cota inferior y
+    coincide con el numero de nombres elegidos), no una heuristica que se planto.
+    """
+    print(f"{Colors.HEADER}[18] GENERADOR PROPIO (cadena anclada por L_psi){Colors.ENDC}")
+    from src.analysis.dioph_degree import to_generator, max_equation_degree
+    from src.analysis.dioph_optflat import aplanado_minimo_compuesto, materializar
+
+    n = sympy.Symbol('n', integer=True)
+    S = L_prime_shared(n, over_N=True, anclaje_psi=True)
+    print(f"  representacion: {S.cost()} incognitas, {len(S.eqs)} ecuaciones, "
+          f"grado maximo {max_equation_degree(S)}")
+
+    r = aplanado_minimo_compuesto(S, 2, timeout_s=600)
+    if r["estado"] == "sin_z3":
+        print("  (z3 no disponible: omitido)"); return
+    if r.get("elegidos") is None:
+        stats.fail(f"el aplanado no concluyo: {r['estado']}")
+        return
+    F = materializar(S, r["elegidos"], 2)
+    grado_f = max_equation_degree(F)
+    _, info = to_generator(F, n)
+    print(f"  aplanado {r['estado']}: {r['nombres']} nombres (cota {r['cota']}) "
+          f"-> {F.cost()} incognitas, grado {grado_f}")
+    print(f"  {Colors.BOLD}GENERADOR: ({info['variables']} variables, "
+          f"grado {info['grado']}){Colors.ENDC}")
+    print(f"  {Colors.WARN}Para comparar: aplanar el sistema publicado de JSWW 1976 da")
+    print(f"  (46, 5). Esta cifra no lo mejora; mide otra cosa -- lo que cuesta la")
+    print(f"  representacion que el calculo construye por su cuenta.{Colors.ENDC}")
+
+    if grado_f > 2 or info["grado"] != 5:
+        stats.fail(f"el aplanado no llego a grado 2 por ecuacion (grado {grado_f})")
+        return
+    if r["estado"] != "optimo":
+        stats.fail(f"la cifra no es un optimo demostrado sino '{r['estado']}': "
+                   f"no debe publicarse como minimo")
+        return
+
+    # Los valores del testigo PARCIAL deben ser >= 0: el generador n*(1-sum P^2)
+    # solo representa el conjunto sobre variables no negativas. El testigo
+    # completo no es evaluable (rango de aparicion astronomico), asi que se
+    # comprueba lo que hay; se dice cual es el alcance de la comprobacion.
+    Sp = L_prime_shared(n, over_N=True, anclaje_psi=True, testigo_psi=False)
+    w = Sp.witness({n: 3})
+    negativos = [] if w is None else [(k, v) for k, v in w.items() if int(v) < 0]
+    if negativos:
+        stats.fail(f"testigo con valores negativos: {negativos[:3]} "
+                   f"(el generador sobre N no seria valido)")
+        return
+    print(f"  {Colors.OKGREEN}✓{Colors.ENDC} optimo DEMOSTRADO, grado 5, y los "
+          f"{0 if w is None else len(w)} valores del testigo parcial son >= 0")
+    stats.ok()
 
 
 def main():
@@ -568,6 +652,7 @@ def main():
     test_marcador_final(stats)
     test_comparticion(stats)
     test_frontera_del_record(stats)
+    test_generador_propio(stats)
 
     total = stats.passed + stats.failed
     print()

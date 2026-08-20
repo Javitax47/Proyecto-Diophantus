@@ -47,17 +47,26 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 
 ### 3.1 Coste de los lemas (sobre ℕ) — **cifras corregidas**
 
-| Lema | Antes (insound) | **Ahora (sound)** | Verificación previa |
-|---|---|---|---|
-| `L_divides`, `L_congruent`, `L_square` | 1 | 1 | elemental |
-| `L_composite` | 2 | 2 | elemental |
-| `L_nonneg` (Lagrange, sobre ℤ) | 4 | 4 | 200 enteros |
-| `L_nonneg_N` (sobre ℕ) | **0 ⚠️ siempre** | **0** si todos los coeficientes son ≥ 0; **1** en otro caso | — |
-| `L_exponential` (Pell) | 5 | **7** (13 sobre ℤ) | 1368 casos |
-| `L_binomial` | 21 | **27** | 209 casos |
-| `L_factorial` | 36 | **46** | n=1..7 |
-| `L_prime` (Wilson, aditivo) | 38 | **50** | Wilson en [2,250) |
-| `L_prime_shared` (compartido) | 29 | **31** | ídem |
+Tres columnas, y la tercera es la única que cuenta. «Antes» son las cifras del sistema que Z3
+refutó; «esqueleto» es la aritmética de la cadena con el índice anclado por congruencia —**no
+representa los primos**, pero es la única versión con testigo evaluable y por eso sigue viva en
+los tests; «sound» es la cadena anclada por `L_psi`.
+
+| Lema | Antes (insound) | Esqueleto (no sound) | **Sound (`L_psi`)** | Verificación |
+|---|---|---|---|---|
+| `L_divides`, `L_congruent`, `L_square` | 1 | 1 | 1 | elemental |
+| `L_composite` | 2 | 2 | 2 | elemental |
+| `L_nonneg` (Lagrange, sobre ℤ) | 4 | 4 | 4 | 200 enteros |
+| `L_nonneg_N` (sobre ℕ) | **0 ⚠️ siempre** | **0** si todos los coeficientes son ≥ 0; **1** en otro caso | ídem | — |
+| `L_psi` (índice anclado) | — | — | **11** | 0 violaciones; 10/10 testigos |
+| exponenciación `c = b^k` | 5 | 7 | **17** | 1368 casos (congruencia de Davis) |
+| `L_binomial` | 21 | 27 | **57** | 209 casos |
+| `L_factorial` | 36 | 46 | **96** | n=1..7 |
+| `L_prime` (Wilson, aditivo) | 38 | 50 | **100** | Wilson en [2,250) |
+| **`L_prime_shared`** (compartido) | 29 | 29 | **49** | ídem |
+
+El salto de 29 a 49 son **+10 por exponente distinto** (11 de `L_psi` menos la `t` que sobra), y
+la cadena usa dos exponentes. No es un coste de implementación: es lo que vale anclar el índice.
 
 La fila crítica es `L_nonneg_N`. El criterio correcto sobre ℕ **no** es «una desigualdad es
 gratis»: es que **un polinomio con todos los coeficientes ≥ 0 es ≥ 0 automáticamente**, porque
@@ -111,6 +120,10 @@ son expresiones), y se resuelven con el desplazamiento de origen de §3.2b.
 | **Diseño final** | **31** | Sí |
 
 ### 3.2b ⛔ LAS CIFRAS DEL GENERADOR QUEDAN RETIRADAS
+
+> **Estado: DEFECTO CERRADO.** Esta sección se conserva como registro de qué falló y por qué; la
+> reparación está en §3.2c-bis. Las cifras que se retiran aquí siguen retiradas — la cadena
+> reconstruida da (68, 5), no (39, 5).
 
 **El lema exponencial no es sound.** Se descubrió al intentar *validar* el récord, no al
 intentar mejorarlo, y invalida (40, 5) y (39, 5).
@@ -218,6 +231,80 @@ de cifras. Los testigos de este lema son astronómicos **por naturaleza, no por 
 implementación**. Consecuencia metodológica: *la cadena completa nunca se podrá validar por
 evaluación más allá de casos diminutos*. La verificación por testigo constructivo —el pilar de
 este proyecto— tiene aquí su techo, y lo que quede por encima descansa en el teorema citado.
+
+### 3.2c-bis La cadena, RECONSTRUIDA sobre `L_psi` — el defecto queda cerrado
+
+`L_psi` existía como pieza suelta desde §3.2b-bis. Ahora la cadena entera descansa sobre él.
+
+**Dónde estaba el agujero.** No en `L_exponential` como lema aislado, sino en `PellContext`: el
+índice se fijaba con la ecuación `Y − k − (a−1)t = 0`, es decir `Y ≡ k (mod a−1)`. Barata —una
+ecuación, una incógnita— y **falsa**: fija el residuo de k, no k. Valen también `m = k + j(a−1)`,
+y cada uno aporta su propio `c`.
+
+**Qué se ha hecho.** `PellContext(..., anclaje_psi=True)` sustituye esa ecuación por `L_psi(A, k, Y)`.
+Con eso `Y = y_k(a)` para el k exacto, `t` sobra, y la congruencia de Davis ya dice lo que parecía
+decir. Coste: **+11 −1 = +10 incógnitas por exponente distinto**.
+
+Un detalle que no cuesta nada y ahorra grado: `L_psi` ya introduce `D = (A²−1)C²+1`, que **es**
+`x_k(A)²`. Así que el contexto no repite la ecuación de Pell en grado 4, sino que escribe
+`D = X²` en **grado 2** y reutiliza la que L_psi ya tenía. Nombrar las piezas sirve de poco si
+luego no se dejan tocar; por eso `L_psi` expone sus intermedios.
+
+| | Incógnitas | Ecuaciones | Grado | ¿Sound? |
+|---|---|---|---|---|
+| Cadena con anclaje por congruencia | 29 | 19 | 5 | **No** — admite valores espurios |
+| **Cadena anclada por `L_psi`** | **49** | **35** | **5** | sí |
+
+**Generador propio, ya válido: (68 variables, grado 5).** Aplanado **óptimo demostrado** (Z3
+devuelve cota inferior 18 y elige 18 nombres). No mejora el (46, 5) que sale de aplanar el
+sistema publicado de JSWW, y no pretende: son dos caminos al mismo rincón de grado 5, y gana el
+que parte de una construcción que costó un paper entero afinar. Lo que esta cifra mide es otra
+cosa —**cuánto cuesta la representación que el compilador obtiene por sí mismo**— y es la
+magnitud que le interesa al proyecto.
+
+#### El intercambio que hay que anotar: se ganó corrección y se perdió verificabilidad
+
+`L_psi` construye su testigo a partir del **rango de aparición** de `K = 2D(e+1)C²`. El rango
+existe siempre —la sucesión de Pell es de divisibilidad— pero calcularlo exige factorizar K, y en
+esta cadena K es astronómico **ya para n = 2** (en el contexto del exponente R, K ≈ 10¹⁶⁷). No es
+un problema de máquina: es la escala del teorema.
+
+Consecuencia directa: **el testigo de la cadena correcta no es evaluable**. Lo que antes se
+comprobaba de un tirón ahora se comprueba en tres piezas, cada una con la herramienta que le
+sirve:
+
+| Qué | Cómo | Resultado |
+|---|---|---|
+| `L_psi` ⟹ `Y = y_k(a)` | barrido directo sobre sus 9 ecuaciones (`soundness` [9]) | 0 violaciones |
+| dado eso, el resto fija `c` unívocamente | enumeración con confirmación contra el sistema real (`soundness` [8]) | `c ∈ {b^k}` en 6/6 casos |
+| la aritmética de la cadena no se rompió | testigo **parcial**: 19/35 ecuaciones anuladas en n=2,3 (`soundness` [7]) | ok |
+| soundness de la cadena completa | SMT: firma `a ∈ {0,1}` refutada **sin cota**, + barrido en [0,20] (`soundness` [3]) | `unsat` en 16+8 consultas |
+
+Y se conserva el **esqueleto aritmético** (`anclaje_psi=False`) precisamente porque *sí* es
+evaluable: no representa los primos, pero es donde vive toda la aritmética —cotas, base
+compartida, congruencias de Davis, Wilson, factorial, binomial— y su testigo completo se sigue
+comprobando en `test_dioph_calculus` [12], [13] y [16].
+
+**Lo que queda sin comprobar por evaluación, y hay que decirlo:** la **completitud** de la cadena
+correcta. Descansa en el Teorema 1 de Pąk–Kaliszyk, que está formalizado en Mizar — no es poco,
+pero no es lo mismo que un testigo evaluado aquí.
+
+**Un requisito que sí queda cubierto, y por argumento en vez de por evaluación.** El generador
+`Q = n·(1 − ΣPᵢ²)` solo representa el conjunto **sobre variables no negativas**, así que el
+testigo debe serlo. No se puede comprobar evaluándolo entero, pero cada valor que `L_psi`
+construye es ≥ 0 por su propia definición: `i = E/K − 1 ≥ 0` porque `E = y_l(A)` es múltiplo de K
+y no nulo; `j = (H−B)/2C ≥ 0` porque `H = y_B(G) ≥ B`; `β = |H−C|/F ≥ 0` por el valor absoluto;
+`γ = C−B ≥ 0` por la condición `B ≤ C` del propio teorema; y `α, D…I` son productos y sumas de
+positivos. Evidencia adicional: los 10 testigos que **sí** se evalúan en `soundness` [9] son
+todos no negativos, y los 29 valores del testigo parcial de la cadena también.
+
+#### El test que probaba el defecto sigue probándolo
+
+`test_dioph_soundness` [8] estuvo **en rojo a propósito** toda la reparación. Ahora está verde,
+pero no se limita a comprobar la versión arreglada: **primero vuelve a enumerar la versión rota y
+exige que siga exhibiendo los valores espurios** (`3² = 9 → c ∈ {1,3,5,7,9}`). Un test que solo
+mira la versión buena no demuestra que sepa detectar el fallo. Este lo detecta delante de quien
+lo lee, y solo después comprueba que el anclaje por `L_psi` lo cierra.
 
 ### 3.2d El ataque al récord por la vía LIMPIA: optimizar el aplanado de JSWW
 
@@ -488,10 +575,18 @@ nuestro aplanado a *su* sistema y comparar con su 42.
 | Skolem por árbol, **sobre la forma factorizada** | **+27** | (53, 5) |
 | **JSWW 1976, a mano** | **+16** | **(42, 5)** |
 
-**Vamos 11 incógnitas por detrás de lo que ellos hicieron a mano en 1976.** Nuestro generador de
-primos queda por debajo de 42 **por partir de una representación mucho más barata** (31 incógnitas
-y grado 4, frente a sus 25 y grado 12), **no por aplanar mejor**. El aplanado es hoy la pieza
-floja, y ahora la brecha es un número medido en un test, no una impresión.
+**Vamos 11 incógnitas por detrás de lo que ellos hicieron a mano en 1976.** El aplanado era
+entonces la pieza floja, y la brecha pasó a ser un número medido en un test en vez de una
+impresión. *(Esa brecha se cerró después: el aplanado óptimo de §3.2d llega a **+20** sobre el
+sistema de JSWW, y su +16 resultó no ser comparable — ver §3.2e.)*
+
+> **Aviso sobre una cifra retirada.** Esta sección decía además que nuestro generador «queda por
+> debajo de 42 por partir de una representación mucho más barata (31 incógnitas)». Aquella
+> representación tenía el índice anclado por congruencia y **admitía valores espurios**: no
+> representaba los primos, así que no había nada por debajo de 42. Reconstruida sobre `L_psi`
+> (§3.2c-bis) la representación propia cuesta **49** incógnitas y su generador es **(68, 5)**.
+> El mejor punto del proyecto, **(46, 5)**, viene de aplanar el sistema *publicado* de JSWW, no
+> de nuestra cadena.
 
 *Detalle que cambia el resultado:* expandir destruye el árbol. `flatten_tree` sobre la forma
 factorizada gasta 27; sobre la misma expresión expandida, 41. Como `dioph_lemmas` construye
@@ -562,7 +657,9 @@ varias veces, una sola incógnita sirve a todas.
 ## 6. Frontera abierta (dónde retomar)
 
 ### 6.1 Hacia pocas incógnitas (esquina de 9)
-- **Bloqueante:** la compartición por exponente común está **agotada**. Bajar de 29 exige
+- **Punto de partida real: 49 incógnitas** en la representación propia (la anclada por `L_psi`;
+  el esqueleto de 29 no representa los primos y no cuenta como punto de partida).
+- **Bloqueante:** la compartición por exponente común está **agotada**. Bajar de ahí exige
   reestructurar la construcción, no encadenar Wilson→factorial→binomial.
 - **El motor real, aún NO implementado:** *Teorema de Combinación de Relaciones*
   (Matiyasevich–Robinson): para todo q>0 existe M_q tal que
@@ -571,27 +668,42 @@ varias veces, una sola incógnita sirve a todas.
   reduce el conteo.
 - **Aviso:** debe implementarse como constructor **simbólico** (straight-line program), nunca
   expandiendo monomios: el grado resultante es ~10⁴⁵.
+- **Observación nueva, y prometedora para esta esquina.** `L_psi` cuesta 11 incógnitas por
+  exponente distinto, y la cadena usa dos exponentes. Si la reestructuración logra **un solo
+  exponente**, no ahorra un contexto de Pell (3) sino **13**. El anclaje del índice, que en la
+  esquina de grado bajo es un gasto molesto, en la esquina de pocas incógnitas es la palanca
+  principal: el coste está concentrado, no repartido.
 
 ### 6.2 Hacia grado bajo — **la esquina está cerrada; queda validarla**
 - El grado ya está en la esquina mínima (5 como generador) y **ahí se queda**: aplanar a grado 2
   siempre es posible, y por debajo de 2 el conjunto sería semilineal. Toda la partida en esta
   esquina es **número de variables**.
-- **Punto actual: (40, 5). Récord citado: (42, 5).** Dos variables por debajo. Con las salvedades
-  de §3.2c y §7 — que son las que impiden llamarlo récord.
-- **Qué queda del gasto** (31 incógnitas de la representación): 8 valores de la cadena
-  (m, Eᵥ, A, Tᵥ, W, P, B) + 1 base de Pell + 9 por exponente (x, y, t × 3) + 5 multiplicadores
-  de relación + 3 holguras de desigualdad + 2 restos de división + 1 multiplicador. El aplanado
-  añade 9: tres ecuaciones de Pell (grado 4) y cuatro congruencias de Davis (grado 3).
+- **Dos puntos, y no son el mismo:**
+
+  | ruta | punto | estado |
+  |---|---|---|
+  | aplanar el sistema **publicado** de JSWW 1976 | **(46, 5)** | óptimo demostrado; meseta por tres caminos independientes |
+  | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo demostrado del aplanado (18 nombres, cota 18) |
+
+  La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La
+  segunda mide otra cosa: **lo que cuesta la representación que el cálculo obtiene por su cuenta**.
+  Mezclarlas sería el error de agosto en otra forma.
+- **De dónde vienen las 68.** 49 de la representación + 18 nombres del aplanado + 1 del parámetro.
+  De las 49, **22 son los dos `L_psi`** (11 por exponente): casi la mitad del gasto está en anclar
+  el índice. Eso no es un defecto de la implementación, es el precio del teorema; pero señala
+  dónde mirar.
 - **Palancas que quedan, en orden de rendimiento esperado:**
-  1. **Aplanado óptimo en vez de voraz.** Elegir qué productos nombrar es optimización
-     combinatoria (como *common subexpression elimination*); el mínimo teórico son ~7 y el voraz
-     gasta 9.
-  2. **Menos exponenciaciones.** Son cinco (Eᵥ, A, Tᵥ, W, P) y cada una cuesta x,y,t o un
-     multiplicador. Una ruta al factorial que no pase por el binomial de Robinson las reduciría.
-  3. **Teorema de Combinación de Relaciones** (§6.1): la pieza que reduce el conteo de verdad,
-     y sigue sin implementar. Es la vía a la OTRA esquina (pocas incógnitas), no a esta.
+  1. **Menos exponentes distintos.** No menos exponenciaciones —compartir por exponente común ya
+     está hecho— sino menos *exponentes*: cada uno cuesta un `L_psi` entero. Ya se ganó uno al
+     tomar `E = n^(n-1)` y `R = n·E+1` en vez de `E = n^n`. Queda uno.
+  2. **Una ruta al factorial que no pase por el binomial de Robinson**, que es quien introduce el
+     segundo exponente (`r`, con `T = 2^r` y `W = (u+1)^r`).
+  3. **Un anclaje del índice más barato que `L_psi`.** La construcción clásica de Davis (1973)
+     ronda las mismas 11–12 incógnitas, así que no hay ganancia evidente — y `L_psi` tiene a su
+     favor estar **formalizado en Mizar**, que en un resultado así vale más que una incógnita.
 - **Regla no negociable:** ninguna cifra vale sin su veredicto de `dioph_soundness`. La (41,5)
-  de agosto venía de un sistema que Z3 refuta.
+  de agosto venía de un sistema que Z3 refuta, y la (40,5) que la siguió venía de un lema
+  exponencial que admitía valores espurios.
 
 ### 6.3 Puente entre las dos islas del repo
 El proyecto tiene dos subsistemas maduros **sin un solo import entre ellos**: el colapso de

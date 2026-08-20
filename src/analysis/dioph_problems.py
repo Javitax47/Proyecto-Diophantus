@@ -38,7 +38,7 @@ class DiophProblem:
     """Un conjunto S dado por (representacion diofantica, oraculo independiente)."""
 
     def __init__(self, name, param, system, oracle, referencia="", search_bound=None,
-                 soundness="exhaustivo"):
+                 soundness="exhaustivo", testigo="completo"):
         self.name = name
         self.param = param          # simbolo del parametro (la entrada)
         self.system = system        # Dioph que representa la pertenencia
@@ -58,6 +58,18 @@ class DiophProblem:
         # de los primos admitia 4, 9, 15 y 25. Toda cifra de coste deberia venir
         # acompanada de su veredicto.
         self.soundness = soundness
+        # MODO DE TESTIGO (honestidad, otra vez, y por un motivo nuevo):
+        #  'completo' -> el testigo se construye entero y ANULA el sistema.
+        #  'parcial'  -> el testigo no es evaluable entero. Ocurre desde que la
+        #                cadena de primos ancla el indice con `L_psi`, cuyo
+        #                testigo sale del rango de aparicion de un K astronomico.
+        #                Se comprueban las ecuaciones que el testigo alcanza y se
+        #                DECLARA cuantas son; la completitud del resto descansa en
+        #                el teorema, no en una evaluacion.
+        # El intercambio esta anotado: la cadena gano correccion (el anclaje por
+        # congruencia admitia valores espurios) y perdio verificabilidad por
+        # evaluacion. Fingir que no lo perdio seria justo el error de 2025.
+        self.testigo = testigo
 
     def cost(self):
         return self.system.cost()
@@ -85,9 +97,15 @@ def verify_problem(prob, valores, exhaustivo=True):
     fallos = []
     for v in valores:
         esperado = prob.oracle(v)
-        ok, _ = prob.system.check_witness({n: v})
-        if esperado and not ok:
-            fallos.append(f"{v} pertenece pero el testigo no anula el sistema")
+        if prob.testigo == "parcial":
+            ok, cub, tot = prob.system.check_witness_parcial({n: v})
+            if esperado and not ok:
+                fallos.append(f"{v} pertenece pero el testigo parcial falla "
+                              f"({cub}/{tot} ecuaciones evaluables)")
+        else:
+            ok, _ = prob.system.check_witness({n: v})
+            if esperado and not ok:
+                fallos.append(f"{v} pertenece pero el testigo no anula el sistema")
         if not esperado and ok:
             fallos.append(f"{v} NO pertenece pero se construyo testigo valido")
         if (not esperado) and exhaustivo and prob.soundness == "exhaustivo" \
@@ -234,10 +252,11 @@ def _p_power_of_two():
 def _p_prime():
     n = sympy.Symbol('n', integer=True)
     return DiophProblem(
-        "primo", n, L_prime_shared(n, over_N=True),
+        "primo", n, L_prime_shared(n, over_N=True, testigo_psi=False),
         lambda v: bool(sympy.isprime(v)),
-        "Wilson + factorial + binomial + Pell (cadena completa)",
-        soundness="teorema")
+        "Wilson + factorial + binomial + Pell, indice anclado por L_psi "
+        "(Pak-Kaliszyk ITP 2022, Teorema 1 / Mizar HILB10_8:19)",
+        soundness="teorema", testigo="parcial")
 
 
 # Rango verificable por problema: en 'primo' el testigo explota (n=5 exige 4!,

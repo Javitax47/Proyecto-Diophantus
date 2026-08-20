@@ -119,6 +119,13 @@ certificadas y minimiza el coste**.
     cuadrado, no-negatividad, ecuación de Pell, `L_psi` (el valor B-ésimo de la sucesión de Pell,
     del Teorema 1 de Pąk–Kaliszyk / Matiyasevich–Robinson), exponenciación, binomial, factorial y
     Wilson. Cada uno declara **su coste en incógnitas** y trae **testigo construido**, no buscado.
+*   **Cadena de primalidad anclada (`L_prime_shared`):** Wilson → factorial → binomial →
+    exponenciación, con las exponenciaciones agrupadas por exponente común y **una sola base de
+    Pell** para todas. El índice se ancla con `L_psi`, no con una congruencia: la versión barata
+    (`anclaje_psi=False`) fija el *residuo* del exponente y admite valores espurios, y se conserva
+    solo como esqueleto aritmético comprobable. El intercambio está medido: la versión correcta
+    cuesta más incógnitas y **deja de tener testigo evaluable**, porque el testigo de `L_psi` sale
+    de un rango de aparición astronómico.
 *   **Arsenal de Pell verificado (`dioph_pell.py`):** propiedades P1–P5 y el crecimiento de Julia
     Robinson, comprobadas en 14.752 casos.
 *   **Catálogo universal y verificador único (`dioph_problems.py`):** un solo verificador valida

@@ -66,7 +66,8 @@ def test_equisatisfacibilidad(stats):
             continue
         f = flatten_to_degree(s, 2)
         plano = DiophProblem(p.name + " [aplanado]", p.param, f, p.oracle,
-                             p.referencia, p.search_bound, soundness=p.soundness)
+                             p.referencia, p.search_bound, soundness=p.soundness,
+                             testigo=p.testigo)
         ok, fallos = verify_problem(plano, rango_de(p), exhaustivo=False)
         if ok:
             stats.ok()
@@ -114,8 +115,10 @@ def test_honestidad_comparacion(stats):
     print(f"  si son comparables (ver [10]). Las cifras de representacion NO lo son.")
     print(f"  {Colors.WARN}El (42,5) YA esta cotejado (JSWW 1976, ver test_dioph_jsww), y")
     print(f"  resulta ser su polinomio (1) pasado por la sustitucion de Skolem: nadie")
-    print(f"  lo optimizo. Lo que sigue faltando es verificar la cadena mas alla de")
-    print(f"  n=3 y una revision experta.{Colors.ENDC}")
+    print(f"  lo optimizo -- y el metodo que citan da un minimo demostrado de 51.")
+    print(f"  Lo que sigue faltando: (i) la COMPLETITUD de la cadena propia, que")
+    print(f"  desde el anclaje por L_psi ya no se puede evaluar ni para n=2 y")
+    print(f"  descansa en el teorema; (ii) una revision experta de todo.{Colors.ENDC}")
     stats.ok()
     print(f"  {Colors.OKGREEN}✓{Colors.ENDC} alcance declarado sin sobreafirmar")
 
@@ -152,7 +155,8 @@ def test_voraz_correcto(stats):
             stats.fail(f"{p.name}: el voraz dejo grado {max_equation_degree(fg)}")
             continue
         plano = DiophProblem(p.name + " [voraz]", p.param, fg, p.oracle,
-                             p.referencia, p.search_bound, soundness=p.soundness)
+                             p.referencia, p.search_bound, soundness=p.soundness,
+                             testigo=p.testigo)
         ok, fallos = verify_problem(plano, rango_de(p), exhaustivo=False)
         if ok:
             stats.ok()
@@ -192,6 +196,23 @@ def test_generador(stats):
         Q, info = to_generator(f, p.param)
         vals = [v for v in rango_de(p) if p.oracle(v)][:2]
         ok_todos = True
+        if p.testigo == "parcial":
+            # `Q(testigo) = n` no se puede evaluar: el testigo no esta completo
+            # (el rango de aparicion de L_psi es astronomico). Se comprueba la
+            # OTRA mitad, que si es evaluable y es la que protege del defecto de
+            # agosto: una asignacion arbitraria no debe dar un valor positivo.
+            basura = {p.param: vals[0] if vals else 2}
+            basura.update({u: 1 for u in f.unknowns})
+            valor = int(Q.subs(basura))
+            if valor > 0 and f.unknowns:
+                stats.fail(f"{p.name}: asignacion arbitraria da Q = {valor} > 0")
+            else:
+                stats.ok()
+                print(f"  {Colors.OKGREEN}~{Colors.ENDC} {p.name:22s} generador "
+                      f"({info['variables']} variables, grado {info['grado']}) — "
+                      f"basura -> Q<=0; {Colors.WARN}Q(testigo)=n NO evaluable "
+                      f"(testigo parcial){Colors.ENDC}")
+            continue
         for nv in vals:
             w = f.witness({p.param: nv})
             if w is None or not witness_is_nonnegative(f, {p.param: nv}):
@@ -215,47 +236,65 @@ def test_generador(stats):
 
 
 def test_situacion_frente_al_record(stats):
-    """[10] Marcador honesto frente al record, DESPUES de corregir el defecto.
+    """[10] Marcador honesto frente al record. Tres cifras que NO son la misma.
 
-    HISTORIA (importante, para que nadie confunda las dos cifras): este test
-    afirmo una vez (41 variables, grado 5) frente al record citado de (42, 5).
-    Era falso: el sistema no era SOUND -- en modo N las condiciones laterales del
-    lema exponencial no imponian nada y Z3 encontraba testigo para n = 4, 9, 15 y
-    25. Aquel generador habria emitido compuestos.
+    HISTORIA, para que nadie confunda ninguna de las tres: este test afirmo una
+    vez (41 variables, grado 5) frente al record citado de (42, 5). Era falso por
+    dos motivos distintos, y los dos se han cerrado desde entonces:
 
-    Corregido el defecto, el punto se fue a (62, 5). Optimizando DONDE se paga el
-    coste (cota por ecuacion lineal en vez de sustitucion, base de Pell compartida
-    entre exponentes distintos, desplazamiento de origen) volvio a bajar. La cifra
-    de ahora sale de un sistema que pasa el control SMT; la de agosto, no.
+      * `L_nonneg_N` declaraba coste 0 para cualquier expresion, asi que en modo N
+        las condiciones laterales no imponian NADA y Z3 hallaba testigo para
+        n = 4, 9, 15 y 25;
+      * el indice se anclaba con `Y == k (mod a-1)`, que fija el RESIDUO del
+        exponente y no el exponente: el lema exponencial admitia valores espurios
+        (3^2 = 9 admitia c en {1,3,5,7,9}).
+
+    Lo primero se arreglo con el criterio de coeficientes no negativos; lo segundo
+    exigio reconstruir la cadena sobre `L_psi`. Ambas cifras de agosto quedaron
+    retiradas, y este marcador imprime desde entonces solo lo medido.
+
+    LAS TRES CIFRAS, que miden cosas distintas:
+      (a) generador PROPIO, de la cadena que este calculo construye por si mismo;
+      (b) generador obtenido aplanando el sistema PUBLICADO de JSWW 1976 -- mejor,
+          porque parte de una construccion que costo un paper entero afinar;
+      (c) los records citados en la literatura.
+    Mezclarlas seria exactamente el error de agosto en otra forma.
     """
     print(f"{Colors.HEADER}[10] SITUACION FRENTE AL RECORD (marcador honesto){Colors.ENDC}")
     p = [x for x in build_catalog() if x.name == 'primo'][0]
     f = flatten_greedy(p.system, 2)
     _, info = to_generator(f, p.param)
-    print(f"  Nuestro generador de primos : ({info['variables']} variables, grado {info['grado']})")
-    print(f"  Record de menor grado citado: (42 variables, grado 5)")
-    print(f"  Jones-Sato-Wada-Wiens 1976  : (26 variables, grado 25)")
-    print(f"  Matiyasevich (menos vars)   : (10 variables, grado ~1.6e45)")
-    print(f"  {Colors.WARN}ESTO NO ES UN RECORD. Para serlo faltan las tres cosas de abajo.")
-    print(f"  Y recuerda: en agosto esta cifra fue (41,5) sobre un sistema INSOUND.")
-    print(f"  SALVEDADES QUE SIGUEN EN PIE:")
-    print(f"   1. La correccion de la cadena solo se verifica hasta n=3: el testigo")
-    print(f"      explota. Para n>=5 no es computable, asi que descansa en los teoremas.")
-    print(f"   2. La soundness se comprueba ahora por SMT, pero solo en los valores")
-    print(f"      del rango y con los estados que Z3 concluye ('unknown' no prueba nada).")
-    print(f"   3. (RESUELTA) El (42,5) esta cotejado en fuente primaria: Jones-Sato-Wada-")
-    print(f"      Wiens, Amer. Math. Monthly 83:6 (1976) 449-464, p. 450. Es su propio")
-    print(f"      polinomio (1) pasado por la sustitucion de Skolem -- ver test_dioph_jsww.")
+    print(f"  (a) generador propio, aplanado voraz : ({info['variables']} variables, "
+          f"grado {info['grado']})")
+    print(f"      el mismo con aplanado OPTIMO      : (68 variables, grado 5) "
+          f"-- ver test_dioph_calculus [18]")
+    print(f"  (b) aplanando el sistema publicado de JSWW 1976 : (46 variables, grado 5)")
+    print(f"      -- optimo demostrado, ver test_dioph_jsww")
+    print(f"  (c) literatura: JSWW 1976 (26, 25) construido | (42, 5) ANUNCIADO sin")
+    print(f"      construccion publicada | Matiyasevich (10, ~1.6e45)")
+    print(f"  {Colors.WARN}QUE SE PUEDE AFIRMAR Y QUE NO:")
+    print(f"   1. La cadena esta anclada por L_psi y pasa el control SMT (firma")
+    print(f"      a in {{0,1}} refutada sin cota + barrido). Su SOUNDNESS se comprueba.")
+    print(f"   2. Su COMPLETITUD ya NO se comprueba por evaluacion: el testigo de")
+    print(f"      L_psi sale de un rango de aparicion astronomico y no es calculable")
+    print(f"      ni para n=2. Descansa en el Teorema 1 de Pak-Kaliszyk (Mizar).")
+    print(f"      Se gano correccion y se perdio verificabilidad; esta anotado.")
+    print(f"   3. El (42,5) esta cotejado en fuente primaria --JSWW, Amer. Math.")
+    print(f"      Monthly 83:6 (1976) 449-464, p. 450-- y es una FRASE: el metodo que")
+    print(f"      citan (Davis, AMM 80, p. 263) da un minimo demostrado de 51.")
     print(f"   4. Nada de esto ha pasado revision experta.{Colors.ENDC}")
     # El test NO exige estar por debajo de 42: exige que la cifra sea la MEDIDA y
     # que las salvedades esten impresas. Un test que solo pase cuando el numero
     # mejora deja de ser un marcador y se vuelve una profecia.
-    if info['grado'] == 5:
+    if info['grado'] == 5 and p.testigo == "parcial":
         stats.ok()
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} punto medido ({info['variables']}, 5); "
-              f"distancia al record citado: {info['variables'] - 42:+d} variables")
-    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} punto propio medido ({info['variables']}, 5) "
+              f"sobre cadena anclada por L_psi; mejor punto del proyecto: (46, 5)")
+    elif info['grado'] != 5:
         stats.fail(f"grado inesperado: {info}")
+    else:
+        stats.fail("la cadena de primos no declara testigo parcial: o el anclaje "
+                   "por L_psi se ha desactivado, o el modo de testigo miente")
 
 
 def main():

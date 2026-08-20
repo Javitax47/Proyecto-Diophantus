@@ -31,10 +31,12 @@ from src.analysis.dioph_problems import build_catalog, rango_de
 from src.analysis.dioph_calculus import Dioph
 from src.analysis.dioph_lemmas import (
     L_exponential, L_composite, L_nonneg_N, L_psi, pell_seq, fresh,
+    L_prime_shared,
 )
 from src.analysis.dioph_soundness import (
     Z3_DISPONIBLE, sympy_to_z3, solve, soundness_report, uniqueness_report, resumen,
     refuta_configuracion, cota_desde_testigo, unicidad_exponencial,
+    unicidad_exponencial_psi,
 )
 
 
@@ -266,72 +268,142 @@ def test_criterio_gratis(stats):
 def test_base_pell_compartida(stats):
     """[7] Compartir la base `a` entre exponentes distintos no rompe nada.
 
-    Es el mecanismo que mas incognitas ahorro (44 -> ... en la esquina de grado
-    bajo). Compartir es exactamente donde se cuelan los errores: si un contexto
-    necesita una `a` mayor que la que fija la base, el testigo deja de existir.
-    Se comprueba que la cadena completa sigue construyendo testigo valido.
+    Es el mecanismo que mas incognitas ahorro. Compartir es exactamente donde se
+    cuelan los errores: si un contexto necesita una `a` mayor que la que fija la
+    base, el testigo deja de existir.
+
+    DOS MEDIDAS, porque desde el anclaje por `L_psi` ya no se puede hacer una
+    sola, y conviene decir por que:
+
+      (a) Sobre el ESQUELETO ARITMETICO (`anclaje_psi=False`) el testigo se
+          construye entero y se comprueba entero. Ese esqueleto no representa
+          los primos --el anclaje por congruencia admite valores espurios, ver
+          [8]-- pero es donde vive toda la aritmetica de la cadena: cotas, base
+          compartida, congruencias de Davis, Wilson, factorial, binomial. Que
+          siga anulando el sistema es evidencia real sobre esa aritmetica.
+
+      (b) Sobre la CADENA CORRECTA (`anclaje_psi=True`) el testigo completo NO es
+          evaluable, y no por falta de maquina: `L_psi` construye el suyo a
+          partir del rango de aparicion de K = 2*D*(e+1)*C^2, que exige factorizar
+          un K astronomico ya para n=2. El rango existe siempre --la sucesion de
+          Pell es de divisibilidad-- pero calcularlo no. Asi que se comprueba el
+          TESTIGO PARCIAL: todas las ecuaciones que no dependen de las incognitas
+          internas de L_psi. Verifica que el anclaje no rompio la aritmetica; NO
+          verifica la completitud de la cadena, que descansa en el teorema.
+
+    Decirlo asi importa. La cadena gano correccion y perdio verificabilidad por
+    evaluacion, y ese intercambio hay que anotarlo, no disimularlo.
     """
     print(f"\n{Colors.HEADER}[7] Base de Pell compartida entre exponentes distintos{Colors.ENDC}")
-    prob = [p for p in build_catalog() if p.name == "primo"][0]
-    ok = True
+    n = sympy.Symbol('n', integer=True)
+
+    # (a) esqueleto aritmetico: testigo COMPLETO
+    esq = L_prime_shared(n, over_N=True, anclaje_psi=False)
+    ok_a = True
     for v in (2, 3):
-        vale, _ = prob.system.check_witness({prob.param: v})
-        print(f"  n={v}: testigo {'valido' if vale else 'INVALIDO'}")
-        ok = ok and vale
-    if ok:
+        vale, _ = esq.check_witness({n: v})
+        ok_a = ok_a and vale
+    marca = Colors.OKGREEN + "a" + Colors.ENDC if ok_a else Colors.FAIL + "a" + Colors.ENDC
+    print(f"  {marca} esqueleto aritmetico ({esq.cost()} incognitas, {len(esq.eqs)} ec.): "
+          f"testigo COMPLETO valido en n=2,3")
+
+    # (b) cadena correcta: testigo PARCIAL
+    S = L_prime_shared(n, over_N=True, anclaje_psi=True, testigo_psi=False)
+    internas = {u for u in S.unknowns if str(u).startswith('p')}
+    ok_b, visibles = True, 0
+    for v in (2, 3):
+        w = S.witness({n: v})
+        if w is None:
+            ok_b = False
+            break
+        conocidas = internas - set(w)            # las que el testigo parcial no fija
+        vis = [e for e in S.eqs if not (e.free_symbols & conocidas)]
+        visibles = len(vis)
+        sust = dict(w); sust[n] = v
+        if not all(sympy.expand(e.subs(sust)) == 0 for e in vis):
+            ok_b = False
+            break
+    marca = Colors.OKGREEN + "b" + Colors.ENDC if ok_b else Colors.FAIL + "b" + Colors.ENDC
+    print(f"  {marca} cadena con anclaje psi ({S.cost()} incognitas, {len(S.eqs)} ec.): "
+          f"testigo PARCIAL anula {visibles}/{len(S.eqs)} ecuaciones en n=2,3")
+    print(f"  {Colors.WARN}Las {len(S.eqs) - visibles} restantes dependen de incognitas internas de")
+    print(f"  L_psi, cuyo testigo exige el rango de aparicion de un K astronomico:")
+    print(f"  la completitud de la cadena correcta no se comprueba por evaluacion,")
+    print(f"  descansa en el Teorema 1 de Pak-Kaliszyk (Mizar HILB10_8:19).{Colors.ENDC}")
+
+    if ok_a and ok_b:
         print(f"  (la base fija a = suma de cotas; cada contexto exige a >= su cota,")
         print(f"   y la suma domina a cada sumando porque sobre N todas son >= 0)")
         stats.ok()
     else:
-        stats.fail("la base compartida deja algun contexto sin testigo")
+        stats.fail("la base compartida deja algun contexto sin testigo "
+                   f"(esqueleto={ok_a}, anclaje psi={ok_b})")
 
 
 def test_unicidad_por_enumeracion(stats):
-    """[8] DEFECTO ABIERTO: el lema exponencial NO fuerza c = b^k.
+    """[8] DEFECTO CERRADO: el lema exponencial reconstruido SI fuerza c = b^k.
 
-    Este test FALLA a proposito. Falla porque el sistema esta mal, no el test.
+    HISTORIA, que es la mitad del valor de este test. La version anterior fijaba
+    el indice con una sola congruencia, `y == k (mod a-1)`. Eso fija el RESIDUO
+    de k, no k: valen tambien m = k + j(a-1), y cada uno aporta su propio c. La
+    enumeracion lo exhibio:
 
-    Que se hizo: en vez de preguntar al SMT (que solo concluye de forma no vacua
-    en el caso mas pequeno), se ENUMERA la estructura del sistema --a queda fijado
-    por la reparametrizacion, y las soluciones de Pell son las (x_m(a), y_m(a))--
-    y cada candidato se CONFIRMA evaluando el sistema real con `Dioph.holds`.
+        3^2 = 9  -> admitia c en {1, 3, 5, 7, 9}
+        2^2 = 4  -> admitia c en {1, 2, 4, 7, 8, 9, 16}
+        2^3 = 8  -> admitia c en {1, 2, 6, 8, 18, 21, 25, 32}
 
-    Que salio:
-        3^2 = 9  -> admite c en {1, 3, 5, 7, 9}
-        2^2 = 4  -> admite c en {1, 2, 4, 7, 8, 9, 16}
-        2^3 = 8  -> admite c en {1, 2, 6, 8, 18, 21, 25, 32}
+    Toda la cadena Wilson -> factorial -> binomial descansaba en ese lema, asi
+    que el sistema de los primos no era sound y sus cifras quedaron retiradas.
+    El test se dejo EN ROJO durante toda la reparacion.
 
-    Por que. Las tres ecuaciones solo fuerzan `b^m == c (mod M)` con
-    `m == k (mod a-1)`. Eso NO fija m = k: valen tambien m = k + j(a-1), y para
-    esos m el valor b^m mod M es otro. La construccion clasica de Davis y
-    Matiyasevich lleva mas condiciones precisamente para fijar el indice; nuestra
-    version de 3 ecuaciones era demasiado barata para ser cierta.
+    QUE SE COMPRUEBA AHORA, y son dos cosas distintas:
 
-    CONSECUENCIA. Toda la cadena Wilson -> factorial -> binomial descansa en este
-    lema, luego el sistema de los primos NO es sound y las cifras del generador
-    (40, 5) y (39, 5) NO miden un generador de primos. Quedan RETIRADAS.
+      (A) PODER DISCRIMINANTE. Se vuelve a enumerar el lema VIEJO y se exige que
+          siga exhibiendo los valores espurios. Un test que solo comprueba la
+          version arreglada no demuestra que sepa detectar el fallo; este si,
+          porque lo detecta delante de quien lo lee.
+      (B) LA REPARACION. Se enumera el lema RECONSTRUIDO sobre `L_psi`, que ancla
+          el indice de verdad (Teorema 1 de Pak-Kaliszyk, Mizar HILB10_8:19), y
+          se exige que el unico c admisible sea b^k.
 
-    Por que se deja el test en rojo en lugar de comentarlo: este proyecto ya tuvo
-    una "Ecuacion Suprema" con contraejemplos que sobrevivio porque nada fallaba
-    de forma visible. Mientras el lema no se arregle, la suite debe estar roja.
+    QUE SUPONE (B). Que `L_psi(a,k,Y)` implica Y = y_k(a); eso NO se supone a
+    ciegas, se comprueba en [9] por barrido directo sobre sus 9 ecuaciones. La
+    razon de partirlo es que los testigos de `L_psi` salen del rango de aparicion
+    y son astronomicos aun en casos de juguete, de modo que no se pueden evaluar
+    dentro de un barrido. Partir la comprobacion permite verificar cada mitad con
+    la herramienta que le sirve, en vez de no verificar ninguna.
     """
-    print(f"\n{Colors.HEADER}[8] DEFECTO ABIERTO: unicidad del lema exponencial{Colors.ENDC}")
+    print(f"\n{Colors.HEADER}[8] Unicidad del lema exponencial: antes y despues{Colors.ENDC}")
     casos = [(3, 2), (2, 2), (2, 3)]
-    malos = []
+
+    # (A) el lema VIEJO debe seguir fallando: si no, el test no prueba nada.
+    sin_detectar = []
     for bv, kv in casos:
         adm = unicidad_exponencial(bv, kv, 3 * bv ** kv + 8)
+        if adm == [bv ** kv]:
+            sin_detectar.append((bv, kv))
+    if sin_detectar:
+        stats.fail(f"la enumeracion ya no detecta el defecto historico en {sin_detectar}: "
+                   f"el test perdio poder discriminante y su verde no significa nada")
+        return
+    print(f"  {Colors.OKGREEN}A{Colors.ENDC} el lema con anclaje por congruencia sigue "
+          f"exhibiendo valores espurios en los {len(casos)} casos (poder discriminante intacto)")
+
+    # (B) el lema RECONSTRUIDO sobre L_psi debe dar exactamente b^k.
+    casos_psi = casos + [(5, 3), (2, 5), (7, 2)]
+    malos = []
+    for bv, kv in casos_psi:
+        adm = unicidad_exponencial_psi(bv, kv, 3 * bv ** kv + 8)
         esperado = [bv ** kv]
         color = Colors.OKGREEN if adm == esperado else Colors.FAIL
-        print(f"  {color}{bv}^{kv} = {bv**kv}: c admisibles = {adm}{Colors.ENDC}")
+        print(f"    {color}{bv}^{kv} = {bv**kv}: c admisibles = {adm}{Colors.ENDC}")
         if adm != esperado:
             malos.append((bv, kv, adm))
     if malos:
-        print(f"  {Colors.WARN}Las 3 ecuaciones solo fuerzan b^m == c (mod M) con")
-        print(f"  m == k (mod a-1); eso no fija m = k. Falta la parte de la")
-        print(f"  construccion clasica que ancla el indice.{Colors.ENDC}")
-        stats.fail("el lema exponencial admite valores espurios: la cadena de "
-                   "primos NO es sound y las cifras del generador quedan retiradas")
+        stats.fail(f"el lema reconstruido AUN admite valores espurios: {malos}")
     else:
+        print(f"  {Colors.OKGREEN}B{Colors.ENDC} con el indice anclado por L_psi el unico c "
+              f"admisible es b^k en los {len(casos_psi)} casos")
         stats.ok()
 
 

@@ -41,6 +41,19 @@ def _fresh_flat():
     return sympy.Symbol(f"z{_flat_counter[0]}", integer=True)
 
 
+def _valor_o_none(expr, entorno):
+    """Evalua `expr` en `entorno`, o devuelve None si queda algo simbolico.
+
+    Existe porque desde el anclaje por `L_psi` hay TESTIGOS PARCIALES: el testigo
+    base no sabe dar valor a todas sus incognitas (su construccion exige el rango
+    de aparicion de un K astronomico). Un nombre nuevo que dependa de una de esas
+    se deja SIN ASIGNAR en vez de inventarlo o de tirar el testigo entero; lo que
+    quede asignado sigue sirviendo (`Dioph.check_witness_parcial`).
+    """
+    val = sympy.expand(expr.subs(entorno)) if hasattr(expr, 'subs') else expr
+    return int(val) if getattr(val, "is_number", False) or isinstance(val, int) else None
+
+
 def max_equation_degree(system):
     """Grado maximo entre las ecuaciones individuales (no la suma de cuadrados)."""
     gens = system.params + system.unknowns
@@ -124,9 +137,17 @@ def flatten_to_degree(system, target=2, name=None):
         for w, a, b in orden:            # en orden de creacion: las dependencias ya estan
             av = a.subs(entorno)
             bv = b.subs(entorno)
-            val = sympy.Integer(av) * sympy.Integer(bv)
-            out[w] = int(val)
-            entorno[w] = int(val)
+            # TESTIGO PARCIAL: si el sistema base no supo dar valor a algun
+            # simbolo --le pasa a la cadena anclada por L_psi, cuyo testigo sale
+            # de un rango de aparicion astronomico-- el nombre nuevo tampoco se
+            # puede evaluar. Se DEJA SIN ASIGNAR en vez de inventarlo o de tirar
+            # todo el testigo: lo que quede asignado sigue sirviendo para
+            # comprobar las ecuaciones que lo alcancen (`check_witness_parcial`).
+            val = _valor_o_none(av * bv, {})
+            if val is None:
+                continue
+            out[w] = val
+            entorno[w] = val
         return out
 
     return Dioph(system.params, unknowns, eqs_final, witness=w_ext,
@@ -242,7 +263,9 @@ def flatten_greedy(system, target=2, name=None):
         entorno.update(base)
         out = dict(base)
         for w, a, b in orden:
-            val = int(sympy.Integer(a.subs(entorno)) * sympy.Integer(b.subs(entorno)))
+            val = _valor_o_none(a * b, entorno)   # None -> testigo parcial
+            if val is None:
+                continue
             out[w] = val
             entorno[w] = val
         return out
@@ -460,7 +483,9 @@ def flatten_tree(system, target=2, name=None):
         asign = dict(param_vals); asign.update(base)
         out = dict(base)
         for sym, expr in orden:
-            val = int(sympy.expand(expr).subs(asign))
+            val = _valor_o_none(expr, asign)      # None -> testigo parcial
+            if val is None:
+                continue
             asign[sym] = val
             out[sym] = val
         return out
@@ -664,7 +689,9 @@ def flatten_greedy_semilla(system, target=2, semilla=0):
         entorno = dict(param_vals); entorno.update(base)
         out = dict(base)
         for w, a, b in orden:
-            val = int(sympy.Integer(a.subs(entorno)) * sympy.Integer(b.subs(entorno)))
+            val = _valor_o_none(a * b, entorno)   # None -> testigo parcial
+            if val is None:
+                continue
             out[w] = val
             entorno[w] = val
         return out
