@@ -581,9 +581,25 @@ son arreglables sin rediseñar:
    (c) expandir — y expandir destruye precisamente el `E²` que el nombre captura. No hay ninguna
    ruta que use un nombre como generador nuevo.
 
-La (3) no es un bug sino un **límite de diseño** del encoding, y arreglarlo es rediseñarlo:
-haría falta cerrar la reducción sobre reescrituras algebraicas en las variables nombradas, no
-solo sobre la sintaxis. Mientras siga así, la palabra «mínimo» no se usa.
+**La (3) se implementó, y la hipótesis era FALSA.** `_division(e,c,gens)` añade justo esa ruta:
+si `e = q·c + r` y `c` está nombrado —luego cuenta como grado 1—, basta pedir `q` de grado ≤ d−1 y
+`r` de grado ≤ d. Funciona: en un caso mínimo reduce `E³(E+2)` a grado 2 (`m1 = m2² + 2m2n + 2m2p`)
+donde el camino anterior fallaba de plano. Pero **no mejora ninguna cifra**: sobre la cadena de
+JSWW la cota sigue en 20, y sobre el sistema del contraejemplo sigue en 21.
+
+Y hay una lección dentro de la lección. Al principio *sí* parecía mejorar —20 → 17 nombres, 21 →
+18—, y esos números eran **falsos**: venían de un **bug latente** que la propia ruta destapó.
+Nombrar una subexpresión la convierte en una incógnita, que tiene **grado 1**; pero tanto el
+optimizador como el materializador permitían nombrar cuando se pedía **grado 0**. Ninguna ruta
+pedía grado 0 hasta que llegó ésta (`intentar(q, d−1)` con d=1). Síntoma: **una única ecuación de
+grado 3** —`16·m6·m9² − 16·m8·m9·r − u² + 1`— en un sistema que debía quedar en 2, y con ella un
+generador de grado 7 en vez de 5. Con el guardarraíl `d >= 1` puesto, el 17 se convierte en 20 y
+el 18 en 21: la mejora entera era el bug.
+
+Es el **quinto** defecto de este encoding y otra vez lo delató un resultado imposible, no la
+lectura del código. Y de paso deja el marcador donde estaba: **el contraejemplo sigue en pie**
+—cota 21 con un aplanado de 20 exhibido—, así que la causa real de esa brecha **sigue sin
+localizar**, y no es la que yo había supuesto. La palabra «mínimo» sigue retirada.
 
 Consecuencias, todas aplicadas:
 

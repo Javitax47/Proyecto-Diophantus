@@ -385,7 +385,14 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     def opciones_de(e, d, permitir_nombre):
         ops = []
-        if permitir_nombre and e in x:
+        # `d >= 1` NO es decorativo. Nombrar una subexpresion la convierte en una
+        # incognita, que tiene GRADO 1; permitirlo cuando se pide grado 0 rompe el
+        # contrato de esta funcion y el error se propaga hacia arriba. Era un bug
+        # LATENTE: ninguna ruta pedia grado 0 hasta que llego la de sustitucion,
+        # que si lo pide (`intentar(q, d-1)` con d=1). Sintoma: una unica ecuacion
+        # de grado 3 --`16*m6*m9**2 - 16*m8*m9*r - u**2 + 1`-- en un sistema que
+        # deberia quedar en 2, y con ella un generador de grado 7 en vez de 5.
+        if permitir_nombre and d >= 1 and e in x:
             ops.append(x[e])
         if e.is_Add:
             ops.append(z3.And(*[R(a, d) for a in e.args]))
@@ -556,7 +563,9 @@ def materializar(system, elegidos, target=2, name=None, sustitucion=False):
         if grado(e) <= d:
             return e
         k = sympy.srepr(sympy.expand(e))
-        if permitir_nombre and k in clave_elegidos:
+        # Mismo `d >= 1` que en el optimizador, y por el mismo motivo: un nombre
+        # es una incognita de grado 1, no de grado 0.
+        if permitir_nombre and d >= 1 and k in clave_elegidos:
             return simbolo(clave_elegidos[k])
         if e.is_Add:
             partes = [intentar(a, d) for a in e.args]
