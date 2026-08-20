@@ -579,8 +579,13 @@ def test_generador_propio(stats):
     cosa: cuanto cuesta la representacion que el compilador OBTIENE POR SI MISMO,
     sin transcribir a nadie. Esa es la magnitud que interesa al proyecto.
 
-    El optimo del aplanado es OPTIMO demostrado (Z3 devuelve la cota inferior y
-    coincide con el numero de nombres elegidos), no una heuristica que se planto.
+    CUIDADO CON LA PALABRA OPTIMO. Z3 alcanza la cota inferior que el mismo
+    deriva, pero esa cota es de SU CODIFICACION, no del problema: existe
+    contraejemplo (ver dioph_optflat y ESTADO_CALCULO_DIOFANTICO 3.2i). Por eso el
+    estado se llama `optimo_del_encoding`. Y su objetivo minimiza NOMBRES con las
+    incognitas de partida congeladas, de modo que tampoco ve las eliminaciones
+    posteriores --que en la cadena de JSWW valen dos variables--. Esta cifra es la
+    mejor CONSTRUIDA por esta ruta, no un minimo.
     """
     print(f"{Colors.HEADER}[18] GENERADOR PROPIO (cadena anclada por L_psi){Colors.ENDC}")
     from src.analysis.dioph_degree import to_generator, max_equation_degree
@@ -611,9 +616,8 @@ def test_generador_propio(stats):
     if grado_f > 2 or info["grado"] != 5:
         stats.fail(f"el aplanado no llego a grado 2 por ecuacion (grado {grado_f})")
         return
-    if r["estado"] != "optimo":
-        stats.fail(f"la cifra no es un optimo demostrado sino '{r['estado']}': "
-                   f"no debe publicarse como minimo")
+    if r["estado"] != "optimo_del_encoding":
+        stats.fail(f"el optimizador no alcanzo su propia cota: '{r['estado']}'")
         return
 
     # Los valores del testigo PARCIAL deben ser >= 0: el generador n*(1-sum P^2)
@@ -627,7 +631,7 @@ def test_generador_propio(stats):
         stats.fail(f"testigo con valores negativos: {negativos[:3]} "
                    f"(el generador sobre N no seria valido)")
         return
-    print(f"  {Colors.OKGREEN}✓{Colors.ENDC} optimo DEMOSTRADO, grado 5, y los "
+    print(f"  {Colors.OKGREEN}✓{Colors.ENDC} cota del encoding alcanzada, grado 5, y los "
           f"{0 if w is None else len(w)} valores del testigo parcial son >= 0")
     stats.ok()
 

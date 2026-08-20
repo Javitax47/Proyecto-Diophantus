@@ -33,6 +33,7 @@ from src.analysis.dioph_jsww import (
 )
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
+    eliminar_lineales,
 )
 from src.analysis.dioph_optflat import (
     Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar, no_negativo_sobre_N,
@@ -125,10 +126,20 @@ def test_grado_menor_que_5(stats):
 def test_aplanado_optimo(stats):
     """[4] El aplanado OPTIMO, con cota inferior demostrada y sistema materializado.
 
-    Las heuristicas dicen "he encontrado 46". Esto dice "46 es el minimo, y aqui
-    esta el sistema". La diferencia importa: sin cota inferior no se sabe si vale
-    la pena seguir buscando, y sin materializar la cifra es un numero de un
-    solucionador, no un resultado.
+    Las heuristicas dicen "he encontrado 46"; el optimizador dice ademas cuanto
+    es lo mejor que SU codificacion sabe certificar, y `materializar` convierte
+    esa eleccion en un sistema real. Sin materializar, la cifra es un numero de un
+    solucionador y no un resultado.
+
+    OJO CON LA PALABRA MINIMO. Este test decia "46 es el minimo" y era falso por
+    dos motivos distintos, ambos hallados por revision adversarial:
+      * la cota que devuelve el optimizador es de su CODIFICACION, no del
+        problema -- hay contraejemplo, ver el comentario en `dioph_optflat`;
+      * su objetivo minimiza NOMBRES con las incognitas originales congeladas, de
+        modo que ni siquiera puede representar "eliminar una incognita", que es
+        justo lo que baja la cifra de 46 a 44 al final de este mismo test.
+    Lo que se afirma ahora es: esta es la mejor cifra CONSTRUIDA, y sigue abierto
+    que se pueda bajar.
 
     Se comprueba: el optimizador alcanza su cota (optimo demostrado), el sistema
     materializado tiene grado <= 2 por ecuacion, y las cifras salen donde deben.
@@ -150,17 +161,39 @@ def test_aplanado_optimo(stats):
     r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
                                   demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     print(f"  optimizador: {r['estado']}, {r['nombres']} nombres (cota inferior {r['cota']})")
-    if r["estado"] != "optimo":
+    if r["estado"] != "optimo_del_encoding":
         stats.fail(f"no se alcanzo la cota: {r['estado']}")
         return
     M = materializar(S, r["elegidos"], 2)
     grado = max_equation_degree(M)
-    _, g = to_generator(M, FACTOR)
+    _, g_plano = to_generator(M, FACTOR)
     usadas = sum(1 for u in INCOGNITAS if u in M.unknowns)
     print(f"  materializado: {M.cost()} incognitas ({usadas} originales + "
           f"{M.cost()-usadas} nombres), grado maximo {grado}")
-    print(f"  GENERADOR: ({g['variables']} variables, grado {g['grado']})"
-          f"     JSWW 1976: (42, 5)")
+    print(f"  tras aplanar: ({g_plano['variables']} variables, grado {g_plano['grado']})")
+
+    # POST-ELIMINACION, y es la jugada que el optimizador NO PUEDE VER. Su
+    # objetivo minimiza NOMBRES con las incognitas originales congeladas: no hay
+    # ningun termino que premie borrar una. Pero `q = h + j + w*z` (ec. alpha_0) e
+    # `y = l + n + v` (ec. alpha_8) son definiciones lineales cuyos miembros
+    # derechos tienen TODOS los coeficientes positivos, luego son >= 0 sobre N
+    # automaticamente y la equisatisfacibilidad vale en las dos direcciones sin
+    # ninguna suposicion. Y el grado no sube: en el sistema YA aplanado, q e y
+    # solo multiplican cosas de grado 1.
+    #
+    # Lo encontro una revision adversarial, y lo incomodo es que el mecanismo ya
+    # estaba implementado en el repo (`eliminar_lineales`, usado en
+    # `L_prime_shared`): simplemente nunca se habia conectado a esta cadena, que
+    # es donde esta la cifra de portada. Eliminar ANTES de aplanar es peor
+    # (medido); lo que paga es eliminar DESPUES.
+    E = eliminar_lineales(M, 2, solo=['q', 'y'])
+    grado = max_equation_degree(E)
+    _, g = to_generator(E, FACTOR)
+    quitadas = [str(a) for a, _ in getattr(E, "eliminadas", [])]
+    print(f"  + post-eliminacion de {quitadas}: {E.cost()} incognitas, grado {grado}")
+    print(f"  {Colors.BOLD}GENERADOR: ({g['variables']} variables, grado "
+          f"{g['grado']}){Colors.ENDC}     JSWW 1976: (42, 5)")
+    M = E
     sin_probar = [c for c in r["elegidos"]
                   if not no_negativo_sobre_N(sympy.sympify(
                       c, locals={str(x): x for x in S.params + S.unknowns}))
@@ -173,9 +206,13 @@ def test_aplanado_optimo(stats):
         stats.fail(f"generador de grado {g['grado']}, se esperaba 5")
     else:
         distancia = g["variables"] - 42
-        print(f"  {Colors.WARN}Distancia al record: {distancia:+d} variables. Y esta demostrado")
-        print(f"  que aplanar mejor es IMPOSIBLE: la cota inferior se alcanza. Lo que")
-        print(f"  falta tiene que salir de reestructurar el sistema, no de optimizar.{Colors.ENDC}")
+        print(f"  {Colors.WARN}Distancia al (42,5) anunciado: {distancia:+d} variables.")
+        print(f"  Y NO esta demostrado que no se pueda mejorar. La cota que devuelve")
+        print(f"  el optimizador es de su CODIFICACION, no del problema: hay")
+        print(f"  contraejemplo --sobre el sistema con `e` eliminada dice 21 y existe")
+        print(f"  un aplanado de 20--. Ademas su objetivo minimiza NOMBRES con las")
+        print(f"  incognitas originales congeladas, asi que no ve la eliminacion que")
+        print(f"  acaba de quitar dos. Esta cifra es la mejor CONSTRUIDA, no un minimo.{Colors.ENDC}")
         stats.ok()
 
 
@@ -205,10 +242,16 @@ def test_equivalencia_por_sustitucion(stats):
     # aplanado que no era el de la cifra. Lo detecto una revision adversarial.
     r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
                                   demostrados=NO_NEGATIVOS_DEMOSTRADOS)
-    if r["estado"] != "optimo":
+    if r["estado"] != "optimo_del_encoding":
         stats.fail(f"el optimizador no alcanzo la cota: {r['estado']}")
         return
     M = materializar(S, r["elegidos"], 2)
+    # EL SISTEMA QUE SE PUBLICA, no una etapa intermedia. Antes este test corria
+    # el optimizador con otras opciones y sin la post-eliminacion, o sea verificaba
+    # la equivalencia de un sistema DISTINTO del de la cifra -- y como el optimo no
+    # es unico, ni siquiera del mismo aplanado. Lo detecto una revision adversarial.
+    M = eliminar_lineales(M, 2, solo=['q', 'y'])
+    quitadas = {a: b for a, b in getattr(M, "eliminadas", [])}
 
     nuevas = [u for u in M.unknowns if u not in INCOGNITAS]
     defs = {}
@@ -231,7 +274,14 @@ def test_equivalencia_por_sustitucion(stats):
             e = sympy.expand(e.subs(defs))
         return e
 
-    originales = [sympy.expand(x) for x in S.eqs]
+    # Al eliminar `q` e `y` hay que comparar contra el sistema original CON LA
+    # MISMA SUSTITUCION APLICADA: las demas ecuaciones ya no hablan de `q` sino de
+    # `h+j+w*z`. Sus dos definitorias (alpha_0 y alpha_8) se vuelven `0 == 0`, que
+    # es exactamente lo que significa haberlas consumido para despejar. Si
+    # desapareciera alguna OTRA, eso si seria una perdida y el recuento la delata.
+    originales = [sympy.expand(x.subs(quitadas)) for x in S.eqs]
+    consumidas = [i for i, o in enumerate(originales) if o == 0]
+    originales = [o for o in originales if o != 0]
     no_def = [e for e in M.eqs
               if not any(sympy.expand(e - (w - d)) == 0 for w, d in defs.items())]
     recuperadas = [desnombrar(e) for e in no_def]
@@ -243,6 +293,8 @@ def test_equivalencia_por_sustitucion(stats):
     sobran = [rr for rr in recuperadas if not any(casa(o, rr) for o in originales)]
     print(f"  {len(nuevas)} incognitas nuevas, {len(defs)} definiciones, "
           f"{len(no_def)} ecuaciones no definitorias (originales: {len(originales)})")
+    print(f"  eliminadas por sustitucion: {sorted(str(k) for k in quitadas)} "
+          f"-> consumen las originales {consumidas} (se vuelven 0 == 0)")
     print(f"  originales no recuperadas: {len(faltan)}   recuperadas que no son originales: {len(sobran)}")
     if faltan or sobran:
         stats.fail(f"la sustitucion hacia atras no devuelve el sistema original "
@@ -348,14 +400,15 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.BOLD}({g_est['variables']}, {g_est['grado']}){Colors.ENDC} "
           f"solo >= 0 por estructura -- cero suposiciones, una variable de mas")
     print(f"  {Colors.BOLD}({g_dem['variables']}, {g_dem['grado']}){Colors.ENDC} "
-          f"estructura + la demostrada -- {Colors.OKGREEN}la cifra publicada, "
-          f"y sale gratis{Colors.ENDC}")
+          f"estructura + la demostrada -- {Colors.OKGREEN}sale gratis; es la base "
+          f"de la cifra publicada, que tras post-eliminar q e y queda en "
+          f"({g_dem['variables']-2}, 5){Colors.ENDC}")
 
     problemas = []
     if fallos:
         problemas.append("la demostracion de a+u^2(u^2-a) >= 1 tiene contraejemplos")
     for et, (rr, gg) in medidas.items():
-        if rr["estado"] != "optimo":
+        if rr["estado"] != "optimo_del_encoding":
             problemas.append(f"'{et}' no es un optimo demostrado: {rr['estado']}")
         if gg["grado"] != 5:
             problemas.append(f"'{et}' da grado {gg['grado']}, no 5")

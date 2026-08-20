@@ -370,6 +370,10 @@ cada ecuación *y* monomios del desarrollo— con codificación tipo Tseitin: ca
 | **compuestos ∪ monomios, con partición de exponentes** | **20 nombres** | **(46, 5)** | **20** |
 | JSWW 1976, a mano | — | (42, 5) | — |
 
+> ⚠️ **Retirado.** La palabra «óptimo» de este apartado no se sostiene, y la cifra bajó a **44**.
+> Ver §3.2i. Se conserva el texto porque el razonamiento sobre los dos espacios de búsqueda sigue
+> siendo válido; lo que cae es el superlativo.
+
 **46 variables es el óptimo demostrado del aplanado mecánico**, y no es un número de un
 solucionador: `materializar()` construye el sistema real —45 incógnitas (las 25 originales, todas
 usadas, más 20 nombres), grado 2 por ecuación, 34 ecuaciones—. La materialización está verificada
@@ -448,7 +452,7 @@ en otros.
 | Comprobación | Cómo |
 |---|---|
 | La transcripción de (1) es fiel | Reproduce las **(26 variables, grado 25)** publicadas. Y coincide **carácter a carácter** con la que publica Wikipedia — verificación independiente |
-| El aplanado es el mínimo | `z3.Optimize` alcanza su **cota inferior**: 20 nombres. No es «lo mejor que encontré» |
+| El aplanado alcanza la cota de **su codificación** | `z3.Optimize` alcanza el 20 que él mismo deriva. **No es el mínimo del problema**: hay contraejemplo, §3.2i |
 | El sistema materializado **es** el de JSWW | Sustituyendo cada nombre por su definición en cascada se recuperan **exactamente** las 14 ecuaciones originales: ninguna falta, ninguna sobra |
 | Grado 2 por ecuación ⇒ generador de grado 5 | Medido sobre el sistema materializado |
 | El aplanado preserva la equisatisfacibilidad | Testigo extendido y evaluado en los 8 conjuntos del catálogo con testigo |
@@ -504,13 +508,13 @@ tampoco hace falta.
 
 **Lo que NO tenemos:**
 
-- **No hemos batido el récord publicado.** El récord citado es (42, 5) y estamos en (46, 5).
+- **No hemos batido el récord publicado.** El récord citado es (42, 5) y estamos en **(44, 5)**.
   Lo que sí tenemos es que **el (42, 5) no aparece construido en ningún sitio** y que el método
   que sus autores citan da, como mínimo demostrado, **51**.
 - **Nadie con criterio lo ha revisado.** Sigue siendo la salvedad que más pesa.
 
 **La afirmación honesta, entonces**, no es «tenemos un récord» sino: *este es un polinomio de
-grado 5 representador de primos, explícitamente construido, con 46 variables, cuya reducción es
+grado 5 representador de primos, explícitamente construido, con **44** variables, cuya reducción es
 demostrablemente mínima, cuya equivalencia con el sistema de JSWW está verificada simbólicamente y
 en el que **cada incógnita añadida es demostrablemente no negativa**.* Si el (42, 5) nunca se
 construyó, sería el mejor construido. Eso es exhibible y comprobable por cualquiera; una frase de
@@ -521,6 +525,62 @@ en 1976. No hemos bajado de 5 ni podríamos con esta construcción —el argumen
 para la familia `n·(1−ΣP²)`—. Lo único que puede reclamarse es la **exhibición**: tener escrito un
 polinomio de grado 5 que genera los primos, cosa que hasta donde alcanza la búsqueda nadie había
 publicado.
+
+### 3.2i ⚠️ «Mínimo demostrado» era falso, y la cifra baja a (44, 5)
+
+Dos hallazgos de una revisión adversarial, **ambos reproducidos aquí antes de aceptarlos**.
+
+#### (a) La cifra baja a 44: la post-eliminación
+
+Sobre el sistema **ya aplanado**, dos incógnitas salen sin coste:
+
+```
+q := h + j + w·z      (de α₀)
+y := l + n + v        (de α₈)
+```
+
+Sus miembros derechos tienen **todos los coeficientes positivos**, luego son ≥ 0 sobre ℕ
+automáticamente y la equisatisfacibilidad vale en **las dos direcciones sin ninguna suposición**.
+El grado no sube: en el sistema ya aplanado, `q` e `y` solo multiplican cosas de grado 1.
+
+Resultado: **43 incógnitas, grado 2 por ecuación ⇒ generador (44, 5)**. La distancia al (42,5)
+anunciado baja de +4 a **+2**.
+
+Lo incómodo es que el mecanismo **ya estaba implementado** en el repo —`eliminar_lineales`, en uso
+dentro de `L_prime_shared`— y simplemente nunca se había conectado a la cadena de JSWW, que es
+donde está la cifra de portada. Detalle que importa: **eliminar antes de aplanar es peor** (medido:
+`pre=['q','e','y']` da 23 nombres y vuelve a 46). Lo que paga es eliminar **después**, que es justo
+lo que el modelo de coste del optimizador no puede ver.
+
+#### (b) La «cota inferior demostrada» no es una cota del problema
+
+Contraejemplo, reproducido: sobre el sistema de JSWW con `e` eliminada, `aplanado_minimo_compuesto`
+devuelve **cota inferior 21**, y existe —construido y comprobado, grado 2 por ecuación— un aplanado
+de **20 nombres**. Luego lo que `opt.lower()` devuelve es una cota inferior **de la codificación**,
+no del problema de aplanado.
+
+Es el **cuarto** bug de este encoding, y como los tres anteriores lo delató *un resultado
+imposible*, no la lectura del código. Una causa localizada y corregida: `Mul.args` devuelve
+`(E³, E+2)`, así que la única partición que se generaba era `(E³)|(E+2)`, nunca `(E·E)|(E·(E+2))`
+—`_factores()` despliega ahora las potencias—. Pero **el contraejemplo sobrevive a esa corrección**,
+así que hay al menos una segunda causa sin localizar. Mientras siga así, la palabra «mínimo» no se
+usa.
+
+Consecuencias, todas aplicadas:
+
+| antes | ahora |
+|---|---|
+| `estado == "optimo"` | `estado == "optimo_del_encoding"` |
+| «aplanar mejor es IMPOSIBLE» (test [4]) | «esta cifra es la mejor **construida**, no un mínimo» |
+| (46, 5) | **(44, 5)** |
+
+Y una limitación que hay que decir al lado de la cifra siempre: el objetivo del optimizador
+minimiza **nombres**, con las 25 incógnitas originales **congeladas**. No puede ni representar
+«eliminar una incógnita» —no hay término del objetivo que lo premie—, que es exactamente la jugada
+que quita dos. El espacio de búsqueda son 453 subexpresiones con recortes heurísticos codificados a
+mano. «20 es óptimo» significa: *mínimo número de nombres que esta codificación sabe certificar,
+dentro de ese catálogo, con las originales intactas*. Tres restricciones, ninguna de ellas
+mencionada antes al lado de la cifra.
 
 ### 3.2h Investigación cerrada: qué existe CONSTRUIDO y qué solo está anunciado
 
@@ -564,7 +624,7 @@ con razón. Tres errores, todos comprobables con el código de este repo en segu
    | Davis/Skolem textual | (134, 5) |
    | voraz | (56, 5) |
    | árbol | (52, 5) |
-   | óptimo demostrado | **(46, 5)** |
+   | óptimo del encoding + post-eliminación | **(44, 5)** |
 
    Los cuatro están «construidos y exhibidos» exactamente en el mismo sentido. Cualquier lector de
    JSWW podía obtener un generador explícito de grado 5 en una tarde desde 1976; que nadie gastara
@@ -674,7 +734,7 @@ sistema de JSWW, y su +16 resultó no ser comparable — ver §3.2e.)*
 > representación tenía el índice anclado por congruencia y **admitía valores espurios**: no
 > representaba los primos, así que no había nada por debajo de 42. Reconstruida sobre `L_psi`
 > (§3.2c-bis) la representación propia cuesta **49** incógnitas y su generador es **(68, 5)**.
-> El mejor punto del proyecto, **(46, 5)**, viene de aplanar el sistema *publicado* de JSWW, no
+> El mejor punto del proyecto, **(44, 5)**, viene de aplanar el sistema *publicado* de JSWW, no
 > de nuestra cadena.
 
 *Detalle que cambia el resultado:* expandir destruye el árbol. `flatten_tree` sobre la forma
@@ -771,7 +831,7 @@ varias veces, una sola incógnita sirve a todas.
 
   | ruta | punto | estado |
   |---|---|---|
-  | aplanar el sistema **publicado** de JSWW 1976 | **(46, 5)** | óptimo demostrado; meseta por tres caminos independientes |
+  | aplanar el sistema **publicado** de JSWW 1976 | **(44, 5)** | mejor cifra construida; **no** un mínimo demostrado (§3.2i) |
   | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo demostrado del aplanado (18 nombres, cota 18) |
 
   La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La

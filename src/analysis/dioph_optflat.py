@@ -188,6 +188,32 @@ def _monomio_expr(expo, gens):
     return m
 
 
+def _factores(e, limite=8):
+    """Factores de `e` con las POTENCIAS DESPLEGADAS: `E**3*(E+2)` -> [E,E,E,E+2].
+
+    CUARTO BUG DE ESTE ENCODING, y del mismo tipo que los tres anteriores: lo
+    delato un resultado imposible. Z3 "demostraba" cota inferior 21 para un
+    sistema en el que existe --y se exhibe-- un aplanado de 20 nombres.
+
+    La causa: `Mul.args` devuelve `(E**3, E+2)`, asi que la unica particion que se
+    consideraba era `(E^3)|(E+2)`, nunca `(E*E)|(E*(E+2))`. Por eso no se veia que
+    nombrando `E^2` la ecuacion definitoria `m = E^4+2E^3 = m6^2 + 2*m6*E` ya baja
+    a grado 2. Una particion que no se genera no es una particion que no exista:
+    el "optimo" era optimo del catalogo de opciones, no del problema.
+
+    Devuelve el coeficiente numerico aparte, porque no afecta al grado.
+    """
+    coef, resto = e.as_coeff_Mul()
+    brutos = list(resto.args) if resto.is_Mul else [resto]
+    fs = []
+    for f in brutos:
+        if f.is_Pow and f.args[1].is_Integer and 0 < int(f.args[1]) <= limite:
+            fs.extend([f.args[0]] * int(f.args[1]))
+        else:
+            fs.append(f)
+    return coef, fs
+
+
 def no_negativo_sobre_N(e):
     """`e >= 0` para toda asignacion de las variables en N, por ESTRUCTURA.
 
@@ -294,7 +320,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
         cand = {c for c in cand
                 if no_negativo_sobre_N(c) or str(c) in set(demostrados)}
     if not cand:
-        return {"estado": "optimo", "nombres": 0, "total": system.cost(),
+        return {"estado": "optimo_del_encoding", "nombres": 0, "total": system.cost(),
                 "cota": 0, "elegidos": []}
 
     orden = sorted(cand, key=lambda c: (grado(c), sympy.count_ops(c), sympy.srepr(c)))
@@ -359,16 +385,11 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                 ops.append(z3.And(R(_monomio_expr(d1, gens), 1),
                                   R(_monomio_expr(d2, gens), 1)))
         if e.is_Mul or e.is_Pow:
-            if e.is_Pow:
-                base, exp = e.args
-                fs = [base] * int(exp) if exp.is_Integer and int(exp) > 0 else []
-            else:
-                _, resto = e.as_coeff_Mul()
-                fs = list(resto.args) if resto.is_Mul else [resto]
+            _, fs = _factores(e)          # potencias DESPLEGADAS: ver _factores
             if len(fs) == 1:
                 # un solo factor no constante: el coeficiente no cambia el grado
                 ops.append(R(fs[0], d))
-            elif fs and d >= 2 and len(fs) <= 6:
+            elif fs and d >= 2 and len(fs) <= 8:   # 8: desplegar potencias alarga fs
                 for r in range(1, len(fs)):
                     for comb in itertools.combinations(range(len(fs)), r):
                         g1 = sympy.Mul(*[fs[i] for i in comb])
@@ -396,7 +417,20 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
         cota = int(str(opt.lower(objetivo_min)))
     except (ValueError, TypeError):
         cota = None
-    estado = "optimo" if cota is not None and cota == len(elegidos) else "cota_superior"
+    # "optimo_del_encoding", NO "optimo". La distincion no es pedanteria: se
+    # exhibio un CONTRAEJEMPLO. Sobre el sistema de JSWW con `e` eliminada, esta
+    # funcion devuelve cota inferior 21 y existe un aplanado de 20 nombres,
+    # construido a mano y comprobado (grado 2 por ecuacion). Luego el numero que
+    # sale de `opt.lower()` es una cota inferior de ESTA CODIFICACION --de su
+    # catalogo de candidatos y de las particiones que sabe generar-- y no del
+    # problema de aplanado. Llamarlo "optimo" a secas llevo a escribir en un test
+    # que "aplanar mejor es IMPOSIBLE", que es falso.
+    #
+    # Ademas el objetivo minimiza NOMBRES con las incognitas originales
+    # CONGELADAS: no puede ni representar "eliminar una incognita", que es
+    # justamente la jugada que baja de 46 a 44 variables (ver dioph_jsww).
+    estado = ("optimo_del_encoding" if cota is not None and cota == len(elegidos)
+              else "cota_superior")
     return {"estado": estado, "nombres": len(elegidos),
             "total": system.cost() + len(elegidos), "cota": cota,
             "elegidos": [str(c) for c in elegidos]}
@@ -487,14 +521,9 @@ def materializar(system, elegidos, target=2, name=None):
                 coef = sympy.expand(ex / _monomio_expr(expo, gens))
                 return coef * r1 * r2
         if e.is_Mul or e.is_Pow:
-            if e.is_Pow:
-                base, exp = e.args
-                fs = [base] * int(exp) if exp.is_Integer and int(exp) > 0 else []
-                coef = sympy.Integer(1)
-            else:
-                coef, resto = e.as_coeff_Mul()
-                fs = list(resto.args) if resto.is_Mul else [resto]
-            if len(fs) == 1:
+            coef, fs = _factores(e)       # la MISMA laguna estaba aqui: sin esto
+            if len(fs) == 1:              # el materializador no sabe construir el
+                                          # sistema que el optimizador ya eligio
                 r = intentar(fs[0], d)
                 if r is not None:
                     return coef * r

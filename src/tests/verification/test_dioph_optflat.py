@@ -156,11 +156,11 @@ def test_optimo_de_davis(stats):
     fallos = []
     for p in _problemas():
         r = aplanado_minimo(p.system, 2, timeout_s=90)
-        if r["estado"] == "optimo":
+        if r["estado"] in ("optimo", "optimo_del_encoding"):
             continue
         if r["estado"] == "cota_superior":
             fallos.append((p.name, r["nombres"], r["cota"]))
-        elif r["estado"] not in ("optimo",):
+        elif r["estado"] not in ("optimo", "optimo_del_encoding"):
             fallos.append((p.name, r["estado"], None))
     print(f"  {len(_problemas())} conjuntos, {len(_problemas())-len(fallos)} con optimo demostrado")
     if fallos:
