@@ -366,10 +366,10 @@ def L_exponential(b, k, c, over_N=False):
     core = Dioph(
         params=sorted((b.free_symbols | k.free_symbols | c.free_symbols), key=str),
         unknowns=[A0, X, Y0, t, s],
-        eqs=[
-            sympy.expand(X ** 2 - (A ** 2 - 1) * Y ** 2 - 1),
-            sympy.expand(Y - k - (A - 1) * t),
-            sympy.expand((X - (A - b) * Y) - c - M * s),
+        eqs=[                                   # sin expandir: ver PellContext.build
+            X ** 2 - (A ** 2 - 1) * Y ** 2 - 1,
+            Y - k - (A - 1) * t,
+            (X - (A - b) * Y) - c - M * s,
         ],
         witness=None, name="nucleo exponencial")
 
@@ -674,12 +674,16 @@ class PellContext:
             cota = cota + b + c
         self.cota = cota
 
-        eqs = [sympy.expand(X ** 2 - (A ** 2 - 1) * Y ** 2 - 1),   # Pell
-               sympy.expand(Y - k - (A - 1) * t)]                   # indice
+        # SIN expandir: se conserva el ARBOL, que es lo que explota la sustitucion
+        # de Skolem (`flatten_tree`). Expandir aqui abarata nada y encarece el
+        # generador: medido sobre el sistema de JSWW, aplanar la forma factorizada
+        # cuesta +27 incognitas y la expandida +41.
+        eqs = [X ** 2 - (A ** 2 - 1) * Y ** 2 - 1,                  # Pell
+               Y - k - (A - 1) * t]                                 # indice
         unknowns = [X, Y, t]
         if self.base is None:
             u = fresh("cu")                 # holgura propia: a = cota + u
-            eqs.append(sympy.expand(A - cota - u))
+            eqs.append(A - cota - u)
             unknowns = [A] + unknowns + [u]
         else:
             self.base.require(cota)         # la impone la base compartida
@@ -691,7 +695,7 @@ class PellContext:
 
         for b, c, s in self.rels:
             M = 2 * A * b - b ** 2 - 1
-            eqs.append(sympy.expand((X - (A - b) * Y) - c - M * s))
+            eqs.append((X - (A - b) * Y) - c - M * s)
             unknowns.append(s)
             extras.append(ineq(b - 2))                              # base >= 2
 
@@ -789,19 +793,28 @@ def L_prime_shared(n, over_N=True):
     #     T = Tv + 1  (T = 2^R >= 2)
     # Con eso  R = Ev + 2  y  u = Tv + 2: `R - 2 = Ev` y `u - 2 = Tv` tienen todos
     # los coeficientes >= 0. Antes costaban una holgura cada una.
-    E = Ev + 1
+    E = Ev + 1                       # E = n^(n-1)
     T = Tv + 1
     u = T + 1                        # = Tv + 2
-    R = E + 1                        # = Ev + 2. ELIMINACION: R no necesita ser
-                                     # incognita, es una EXPRESION. Segundo
-                                     # mecanismo, complementario a la comparticion.
+    R = n * E + 1                    # = n * n^(n-1) + 1 = n^n + 1
+
+    # UN CONTEXTO DE PELL MENOS (ahorro: 3 incognitas, coste 0).
+    # Antes E = n^n, con exponente n: eso obligaba a un TERCER contexto de Pell
+    # solo para esa relacion. Pero lo unico que se necesita de E es que
+    # R = n^n + 1 supere la cota (n-1+1)^(n-1+1) = n^n del lema del factorial.
+    # Tomando E = n^(n-1) y R = n*E + 1 se obtiene EXACTAMENTE el mismo R, y la
+    # relacion pasa al contexto del exponente n-1, que ya existia. Multiplicar por
+    # n es gratis; una exponenciacion nueva cuesta x, y, t.
+    # Las condiciones laterales tampoco empeoran: como exponente, k-1 = n-2 ya
+    # estaba en el pool; como base de R, b-2 = n*E-1 cuesta la misma holgura que
+    # costaba E-1.
 
     # SEMILLA DEL POOL: se impone `n >= 2` ANTES que nada para que `n >= 1`
     # (exponente n de la primera relacion) quede IMPLICADA y no gaste holgura.
     # La regla de implicacion del pool se queda con la primera cota registrada.
     pool(n - 2)
 
-    rel(n, n, E)                     # E = n^n     [= (nn+1)^(nn+1)]
+    rel(n, nn, E)                    # E = n^(n-1)  -> mismo contexto que A y P
     rel(R, nn, A)                    # A = R^nn
     rel(sympy.Integer(2), R, T)      # T = 2^R
     rel(u + 1, R, W)                 # W = (u+1)^R
@@ -810,7 +823,7 @@ def L_prime_shared(n, over_N=True):
     ineq = pool
     partes = [
         L_value(m, lambda v: sympy.factorial(int(n.subs(v)) - 1)),
-        L_value(Ev, lambda v: int(n.subs(v)) ** int(n.subs(v)) - 1),
+        L_value(Ev, lambda v: int(n.subs(v)) ** (int(n.subs(v)) - 1) - 1),
         L_value(A, lambda v: int(R.subs(v)) ** (int(n.subs(v)) - 1)),
         L_value(Tv, lambda v: 2 ** int(R.subs(v)) - 1),
         L_value(W, lambda v: (int(u.subs(v)) + 1) ** int(R.subs(v))),

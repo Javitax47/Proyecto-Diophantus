@@ -418,7 +418,12 @@ def flatten_tree(system, target=2, name=None):
         return nombrar(e)
 
     def _termino(e):
-        """Expresion de grado <= target igual a `e` (nivel superior)."""
+        """Expresion de grado <= target igual a `e` (nivel superior).
+
+        Diferencia con `_lineal`, y no es menor: aqui se permite llegar hasta
+        grado `target`, no hasta 1. Forzar todo a grado 1 nombra de mas -- un
+        factor unico de grado 2 ya cumple el objetivo y no hace falta partirlo.
+        """
         e = sympy.sympify(e)
         if grado(e) <= target:
             return e
@@ -427,8 +432,10 @@ def flatten_tree(system, target=2, name=None):
         if e.is_Mul:
             coef, resto = e.as_coeff_Mul()
             factores = list(resto.args) if resto.is_Mul else [resto]
+            if len(factores) == 1:
+                # un solo factor: se le permite el grado objetivo entero
+                return coef * _termino(factores[0])
             partes = [_lineal(f) for f in factores]
-            # se pliega hasta que queden `target` factores lineales
             while len(partes) > target:
                 partes = [nombrar(sympy.expand(partes[0] * partes[1]))] + partes[2:]
             return coef * sympy.Mul(*partes)

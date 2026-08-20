@@ -32,7 +32,7 @@ from src.analysis.dioph_calculus import Dioph
 from src.analysis.dioph_lemmas import L_exponential, L_composite, L_nonneg_N, fresh
 from src.analysis.dioph_soundness import (
     Z3_DISPONIBLE, sympy_to_z3, solve, soundness_report, uniqueness_report, resumen,
-    refuta_configuracion,
+    refuta_configuracion, cota_desde_testigo, unicidad_exponencial,
 )
 
 
@@ -167,32 +167,46 @@ def test_unicidad_exponencial(stats):
     """[4] UNICIDAD: el subsistema de b^k debe FORZAR el valor, no solo admitirlo.
 
     Es el riesgo real de una cadena larga: si un eslabon admite un valor espurio,
-    todo lo que venga detras hereda el defecto. Se pregunta por
-    `sistema AND c != b^k` y se exige unsat.
+    todo lo que venga detras hereda el defecto.
+
+    ESTE TEST DABA UN FALSO POSITIVO. Antes preguntaba `sistema AND c != b^k` con
+    una cota fija de 200 y contaba el 'unsat' como exito. Pero los testigos de
+    Pell crecen exponencialmente en el indice: para 2^3 la solucion buena ya vale
+    ~13.000, queda FUERA de la caja, y entonces "no hay solucion con otro valor"
+    es trivialmente cierto porque no hay NINGUNA solucion. Dos de los tres casos
+    que el test declaraba 'unico' eran vacuos.
+
+    La correccion es doble:
+      * la cota se deriva del TESTIGO REAL (`cota_desde_testigo`), no se elige;
+      * `uniqueness_report` comprueba ADEMAS que el valor correcto es alcanzable
+        en esa caja, y devuelve 'vacuo' cuando no lo es. 'vacuo' NO es exito.
     """
-    print(f"\n{Colors.HEADER}[4] UNICIDAD del lema exponencial{Colors.ENDC}")
+    print(f"\n{Colors.HEADER}[4] UNICIDAD del lema exponencial (con guardia de vacuidad){Colors.ENDC}")
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
-    b, k = sympy.symbols('b k', integer=True, positive=True)
-    c = fresh("cval")
-    sistema = L_exponential(b, k, c, over_N=True)
-    sistema = Dioph(params=[b, k], unknowns=sistema.unknowns + [c],
-                    eqs=sistema.eqs, witness=None, name="c = b^k")
-    filas = []
-    for bv, kv in [(2, 2), (2, 3), (3, 2)]:
-        # Con cota: sin ella Z3 devuelve 'unknown' (aritmetica entera no lineal).
-        # 'unico' aqui significa "no hay valor espurio con las incognitas en [0,200]".
-        r = uniqueness_report(sistema, {b: bv, k: kv}, c, bv ** kv,
-                              over_N=True, bound=200, timeout_ms=20000,
-                              rlimit=8_000_000)
-        filas.append((bv, kv, r["veredicto"]))
+    casos = [(2, 2), (3, 2), (2, 3)]
+    veredictos = []
+    for bv, kv in casos:
+        c = fresh("val")
+        S0 = L_exponential(sympy.Integer(bv), sympy.Integer(kv), c, over_N=True)
+        cota = cota_desde_testigo(S0, {c: bv ** kv}, factor=2)
+        S = Dioph(params=[], unknowns=S0.unknowns + [c], eqs=S0.eqs,
+                  witness=None, name="c = b^k")
+        r = uniqueness_report(S, {}, c, bv ** kv, over_N=True, bound=cota,
+                              timeout_ms=25000, rlimit=8_000_000)
+        veredictos.append((bv, kv, r["veredicto"]))
         color = {"unico": Colors.OKGREEN, "ESPURIO": Colors.FAIL}.get(r["veredicto"], Colors.WARN)
-        print(f"  {color}{bv}^{kv}: {r['veredicto']} (dentro de [0,200]){Colors.ENDC}"
-              + (f"  modelo={r['modelo']}" if r["veredicto"] == "ESPURIO" else ""))
-    espurios = [f for f in filas if f[2] == "ESPURIO"]
+        print(f"  {color}{bv}^{kv}: {r['veredicto']}{Colors.ENDC} "
+              f"(caja [0,{cota}] derivada del testigo; alcanzable={r['alcanzable']})")
+    espurios = [v for v in veredictos if v[2] == "ESPURIO"]
+    utiles = [v for v in veredictos if v[2] == "unico"]
     if espurios:
         stats.fail(f"valor espurio admitido en {espurios}")
+    elif not utiles:
+        stats.fail("ningun caso concluyo de forma NO vacua: el test no prueba nada")
     else:
+        print(f"  {Colors.WARN}Los casos 'vacuo' o 'unknown' no aportan evidencia; "
+              f"solo cuentan los {len(utiles)} marcados 'unico'.{Colors.ENDC}")
         stats.ok()
 
 
@@ -270,6 +284,55 @@ def test_base_pell_compartida(stats):
         stats.fail("la base compartida deja algun contexto sin testigo")
 
 
+def test_unicidad_por_enumeracion(stats):
+    """[8] DEFECTO ABIERTO: el lema exponencial NO fuerza c = b^k.
+
+    Este test FALLA a proposito. Falla porque el sistema esta mal, no el test.
+
+    Que se hizo: en vez de preguntar al SMT (que solo concluye de forma no vacua
+    en el caso mas pequeno), se ENUMERA la estructura del sistema --a queda fijado
+    por la reparametrizacion, y las soluciones de Pell son las (x_m(a), y_m(a))--
+    y cada candidato se CONFIRMA evaluando el sistema real con `Dioph.holds`.
+
+    Que salio:
+        3^2 = 9  -> admite c en {1, 3, 5, 7, 9}
+        2^2 = 4  -> admite c en {1, 2, 4, 7, 8, 9, 16}
+        2^3 = 8  -> admite c en {1, 2, 6, 8, 18, 21, 25, 32}
+
+    Por que. Las tres ecuaciones solo fuerzan `b^m == c (mod M)` con
+    `m == k (mod a-1)`. Eso NO fija m = k: valen tambien m = k + j(a-1), y para
+    esos m el valor b^m mod M es otro. La construccion clasica de Davis y
+    Matiyasevich lleva mas condiciones precisamente para fijar el indice; nuestra
+    version de 3 ecuaciones era demasiado barata para ser cierta.
+
+    CONSECUENCIA. Toda la cadena Wilson -> factorial -> binomial descansa en este
+    lema, luego el sistema de los primos NO es sound y las cifras del generador
+    (40, 5) y (39, 5) NO miden un generador de primos. Quedan RETIRADAS.
+
+    Por que se deja el test en rojo en lugar de comentarlo: este proyecto ya tuvo
+    una "Ecuacion Suprema" con contraejemplos que sobrevivio porque nada fallaba
+    de forma visible. Mientras el lema no se arregle, la suite debe estar roja.
+    """
+    print(f"\n{Colors.HEADER}[8] DEFECTO ABIERTO: unicidad del lema exponencial{Colors.ENDC}")
+    casos = [(3, 2), (2, 2), (2, 3)]
+    malos = []
+    for bv, kv in casos:
+        adm = unicidad_exponencial(bv, kv, 3 * bv ** kv + 8)
+        esperado = [bv ** kv]
+        color = Colors.OKGREEN if adm == esperado else Colors.FAIL
+        print(f"  {color}{bv}^{kv} = {bv**kv}: c admisibles = {adm}{Colors.ENDC}")
+        if adm != esperado:
+            malos.append((bv, kv, adm))
+    if malos:
+        print(f"  {Colors.WARN}Las 3 ecuaciones solo fuerzan b^m == c (mod M) con")
+        print(f"  m == k (mod a-1); eso no fija m = k. Falta la parte de la")
+        print(f"  construccion clasica que ancla el indice.{Colors.ENDC}")
+        stats.fail("el lema exponencial admite valores espurios: la cadena de "
+                   "primos NO es sound y las cifras del generador quedan retiradas")
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== SOUNDNESS POR SMT: LA DIRECCION QUE FALTABA ==={Colors.ENDC}")
     if not Z3_DISPONIBLE:
@@ -283,6 +346,7 @@ def main():
     test_unknown_no_es_prueba(stats)
     test_criterio_gratis(stats)
     test_base_pell_compartida(stats)
+    test_unicidad_por_enumeracion(stats)
 
     total = stats.passed + stats.failed
     print()

@@ -110,79 +110,60 @@ son expresiones), y se resuelven con el desplazamiento de origen de §3.2b.
 | Corrección ingenua (1 holgura por condición) | 53 | Sí |
 | **Diseño final** | **31** | Sí |
 
-### 3.2b El marcador, después de corregir **y** de cerrar la esquina
+### 3.2b ⛔ LAS CIFRAS DEL GENERADOR QUEDAN RETIRADAS
 
-| Conjunto | Representación (incógnitas, grado combinado) | **Generador (variables, grado)** |
-|---|---|---|
-| cuadrado, triangular, Pell D=2, Pell D=3 | (1, 4) | (2, 5) |
-| compuesto, suma de 2 cuadrados | (2, 4) | (3, 5) |
-| Fibonacci | (2, 16) | (12, 5) |
-| potencia de 2 | (7, 8) | (14, 5) |
-| **primo** | **(31, 8)** | **(40, 5)** |
+**El lema exponencial no es sound.** Se descubrió al intentar *validar* el récord, no al
+intentar mejorarlo, y invalida (40, 5) y (39, 5).
 
-Frente a los récords publicados de generadores de primos:
+```
+3^2 = 9  -> el sistema admite c ∈ {1, 3, 5, 7, 9}
+2^2 = 4  -> admite c ∈ {1, 2, 4, 7, 8, 9, 16}
+2^3 = 8  -> admite c ∈ {1, 2, 6, 8, 18, 21, 25, 32}
+```
 
-| | Variables | Grado |
-|---|---|---|
-| **Nuestro generador (sound)** | **40** | **5** |
-| Récord de menor grado — **JSWW 1976, cotejado en fuente primaria** | 42 | 5 |
-| Jones–Sato–Wada–Wiens 1976 | 26 | 25 |
-| Matiyasevich (menos variables) | 10 | ~1,6×10⁴⁵ |
+Cada uno de esos valores viene con una asignación completa que **anula el sistema real**
+(`Dioph.holds`), no con una heurística.
 
-**Trayectoria completa de esta esquina.** Completitud verificada con testigo real y todos los
-valores no negativos; soundness comprobada por SMT (§3.2d).
+**Por qué.** Las tres ecuaciones del lema solo fuerzan
 
-| Paso | Repr. | Generador | Qué cambió |
-|---|---|---|---|
-| «(41,5)» de agosto | 29 | (41, 5) | **insound**: no medía nada |
-| corrección ingenua | 53 | — | una holgura por condición |
-| reparametrización `a := a' + cota` | 39 | (65, 5) | coste 0 en la repr., **carísimo al aplanar** |
-| pool de desigualdades | 36 | (62, 5) | deduplicación universal |
-| **cota por ecuación lineal** | 39 | **(51, 5)** | `a` vuelve a ser un símbolo: −11 |
-| **base de Pell compartida** | 35 | **(44, 5)** | una sola `a` para los tres exponentes |
-| desplazamiento de origen + implicación | 32 | (41, 5) | `E=Ev+1`, `T=Tv+1`: 3 holguras menos |
-| `a` = suma de cotas (igualdad) | 31 | (40, 5) | la holgura de la base sobra |
-| ~~eliminación de `Q`~~ | ~~30~~ | (40, 5) | **descartada**: −1 en la repr., 0 en el generador, y dispara el coste SMT |
+```
+b^m ≡ c (mod M)     con     m ≡ k (mod a−1)
+```
 
-**Una optimización descartada a propósito.** Sustituir `Q` por su forma general `B + u·c`
-ahorra una incógnita en la representación y **ninguna** en el generador —el aplanado la vuelve
-a gastar, porque `P·u·c` es un producto de tres incógnitas—. A cambio, la comprobación de
-soundness pasó de **~84 s a más de 28 minutos sin concluir**. Se revierte: *la verificabilidad
-vale más que una incógnita que no se traduce en nada.* Es un criterio de diseño, no un accidente:
-en este proyecto el SMT es el único instrumento que detecta los errores que importan, y una
-optimización que lo ciega es una mala optimización aunque el número baje.
+y eso **no fija `m = k`**: valen también `m = k + j(a−1)`, y para esos `m` el valor `b^m mod M`
+es otro. La construcción clásica de Davis y Matiyasevich lleva más condiciones precisamente
+para anclar el índice. Nuestra versión de tres ecuaciones era demasiado barata para ser cierta.
 
-**La lección de ingeniería, que vale para cualquier problema:** la reparametrización
-`a := a' + cota` es óptima en la representación y **pésima en el generador**. `a` aparece al
-cuadrado en la ecuación de Pell, y elevar al cuadrado una suma de seis símbolos genera decenas
-de monomios de grado 4 que luego hay que nombrar uno a uno. Imponer la misma cota con una
-**ecuación lineal aparte** cuesta una incógnita y ahorra once. *Dónde se paga el coste importa
-tanto como cuánto se paga.*
+**Alcance.** Toda la cadena Wilson → factorial → binomial descansa en este lema, así que el
+sistema de los primos **no es sound** y su conversión a generador no mide un generador de
+primos. Las cifras de §3.2b anteriores —(62, 5), (51, 5), (44, 5), (40, 5), (39, 5)— **no
+miden lo que decían medir**. Lo que sí sobrevive es la maquinaria: los conjuntos elementales del
+catálogo (cuadrado, triangular, compuesto, suma de dos cuadrados, Fibonacci, Pell) están
+verificados en ambas direcciones y no usan el lema exponencial.
 
-### 3.2d Veredicto SMT del sistema final (lo que respalda la cifra)
+**Por qué no lo cazaron las comprobaciones anteriores.** Tres razones, y las tres son lecciones:
 
-Ocho compuestos — 4, 9, 15, 21, 25, 27, 33, 35 — contra el sistema de primos (31 incógnitas):
+1. **Las comprobaciones SMT del sistema de primos eran ACOTADAS** (cajas [0,20] y [0,200]).
+   Las soluciones espurias viven muy por encima. Un `unsat` en una caja no dice nada fuera.
+2. **El guardarraíl `a ∈ {0,1}` era demasiado específico.** Cubría la firma del defecto
+   *anterior*, no una familia nueva. Un guardarraíl protege del error que ya conoces.
+3. **El test de unicidad daba un falso positivo por vacuidad.** Preguntaba «¿hay solución con
+   `c ≠ b^k`?» dentro de una caja donde **ni siquiera cabía la solución correcta**, y contaba
+   el `unsat` como éxito. Dos de sus tres casos eran vacuos. Ahora `uniqueness_report`
+   comprueba primero que el valor correcto es alcanzable y devuelve `'vacuo'` cuando no lo es.
 
-| Comprobación | Resultado | Coste |
-|---|---|---|
-| **`a = 0` y `a = 1`, SIN COTA** (la firma exacta del defecto) | **`unsat` en las 16 consultas** | instantáneo |
-| barrido en la caja [0, 20] | `unsat` en los 8 | 0 s |
-| escalada completa [0,200] → [0,20] | `unsat` en los 8 | ~213 s |
+**Lo que funcionó.** Preguntar «¿para qué valores de `c` tiene solución el sistema?» en vez de
+«¿es único?». La estructura fija casi todo —`a` queda determinado por la reparametrización y las
+soluciones de Pell son las `(x_m(a), y_m(a))`— así que se enumera en segundos y **cada candidato
+se confirma evaluando el sistema real**. Está en `dioph_soundness.unicidad_exponencial`, y el
+test [8] de `test_dioph_soundness.py` **deja la suite en rojo a propósito** hasta que el lema se
+arregle: este proyecto ya tuvo una «Ecuación Suprema» con contraejemplos que sobrevivió
+precisamente porque nada fallaba de forma visible.
 
-**Por qué la primera fila vale más que las otras dos.** Es una consulta **global**: no dice
-«no hay solución pequeña», dice «no hay solución con la base de Pell degenerada», que es
-exactamente el fallo que se coló en agosto. *Un guardarraíl debe apuntar al defecto, no a su
-vecindario.* Las cajas cubren además configuraciones degeneradas no anticipadas, pero solo
-dentro de la caja.
-
-**Dónde deja de concluir Z3** (medido, no estimado): caja 20 → los 8 en 0 s; caja 50 → 7 de 8;
-caja 100 → 5 de 8. La aritmética entera no lineal es indecidible y `unknown` **no es evidencia
-de nada**; por eso la suite usa la firma + caja 20, y la escalada larga queda para ejecución
-manual.
-
-**Lo que esto NO demuestra.** Que ningún compuesto tenga testigo *en general*. Eso sigue
-descansando en Wilson y en los teoremas de la cadena. Lo demostrado es: (a) la firma del defecto
-conocido está excluida globalmente, y (b) no hay soluciones espurias pequeñas en ocho compuestos.
+**Qué haría falta para volver a tener una cifra.** Implementar la caracterización completa de la
+exponenciación (Davis 1973, o Jones–Matiyasevich), que ancla el índice con ecuaciones
+adicionales. Costará incógnitas —el lema pasará de 7 a bastante más— y **todas las cifras de la
+esquina de grado bajo habrá que volver a medirlas desde cero**.
 
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
@@ -334,8 +315,9 @@ se evalúa en vez de eliminarse. Construir ese puente es trabajo pendiente.
 
 ## 7. Lo que NO se puede afirmar (para no repetir la historia de la "Ecuación Suprema")
 
-- **No se ha batido ningún récord, y decir lo contrario sería repetir la historia.** El punto
-  medido es (40, 5) frente al (42, 5) *citado*. Para que eso fuera un récord harían falta tres
+- **No se ha batido ningún récord, y ahora sabemos que ni siquiera se medía lo que parecía.**
+  El lema exponencial admite valores espurios (§3.2b): la cadena de primos no es sound y las
+  cifras del generador quedan retiradas. Para que eso fuera un récord harían falta tres
   cosas que NO tenemos: (a) ~~el (42, 5) cotejado contra fuente primaria~~ **hecho** (§3.2c); (b) la corrección de la cadena verificada más allá de n=3, donde el testigo deja de ser
   computable; (c) revisión experta. Mientras falte cualquiera de las tres, es **un punto medido
   en nuestra curva**, no un resultado.

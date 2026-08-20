@@ -102,7 +102,7 @@ def sympy_to_z3(expr, varmap):
 # ---------------------------------------------------------------------------
 
 def solve(system, param_vals, over_N=True, bound=None, timeout_ms=10000,
-          extra=None, rlimit=20_000_000, fijar=None):
+          extra=None, rlimit=20_000_000, fijar=None, igualdades=None):
     """Pregunta a Z3 si `system` tiene solucion con los parametros fijados.
 
     over_N   : anade x >= 0 para toda incognita (el dominio en que vive todo
@@ -142,6 +142,8 @@ def solve(system, param_vals, over_N=True, bound=None, timeout_ms=10000,
             solver.add(sympy_to_z3(prep(e), varmap) == 0)
         for e in (extra or []):
             solver.add(sympy_to_z3(prep(e), varmap) != 0)
+        for e in (igualdades or []):      # deben anularse ADEMAS de las del sistema
+            solver.add(sympy_to_z3(prep(e), varmap) == 0)
     except TraduccionImposible as exc:
         return {"estado": "no_traducible", "modelo": str(exc),
                 "acotado": bound is not None}
@@ -231,19 +233,33 @@ def uniqueness_report(system, param_vals, objetivo, valor_esperado,
                       rlimit=20_000_000):
     """El sistema, ademas de admitir `objetivo = valor_esperado`, lo FUERZA?
 
-    Se pregunta por `system AND objetivo != valor_esperado`:
-        unsat   -> el valor es UNICO: el subsistema calcula, no solo admite.
-        sat     -> DEFECTO: existe un valor espurio (el modelo lo exhibe).
-        unknown -> no concluye.
+    DOS consultas, y la segunda existe para que la primera no mienta:
 
-    `objetivo` es un simbolo (o expresion) del sistema; `valor_esperado`, un int.
-    Es la pregunta que decide si una cadena larga es sound: un solo eslabon que
-    admita un valor espurio deja pasar todo lo que venga detras.
+      (1) ALCANZABILIDAD: `sistema AND objetivo == valor_esperado` debe ser SAT.
+      (2) UNICIDAD:       `sistema AND objetivo != valor_esperado` debe ser UNSAT.
+
+    Sin (1), un 'unsat' en (2) es VACUO: si dentro de la caja no hay ninguna
+    solucion --ni siquiera la buena, porque los testigos reales son astronomicos--
+    entonces "no hay solucion con un valor distinto" es trivialmente cierto y no
+    dice nada. Ese es exactamente el tipo de falso consuelo que ya costo caro en
+    este proyecto, asi que el veredicto lo declara:
+
+      'unico'   -> alcanzable Y sin alternativas: el subsistema CALCULA el valor
+      'ESPURIO' -> hay una solucion con otro valor (el modelo lo exhibe)
+      'vacuo'   -> ni siquiera el valor correcto es alcanzable en la caja: la
+                   comprobacion no prueba nada
+      'unknown' -> Z3 no concluye
     """
     dif = sympy.expand(objetivo - sympy.Integer(int(valor_esperado)))
+    alcanzable = solve(system, param_vals, over_N=over_N, bound=bound,
+                       timeout_ms=timeout_ms, rlimit=rlimit,
+                       fijar=None, extra=None, igualdades=[dif])
     r = solve(system, param_vals, over_N=over_N, bound=bound,
               timeout_ms=timeout_ms, extra=[dif], rlimit=rlimit)
-    if r["estado"] == "unsat":
+    r["alcanzable"] = alcanzable["estado"]
+    if alcanzable["estado"] != "sat":
+        r["veredicto"] = "vacuo"
+    elif r["estado"] == "unsat":
         r["veredicto"] = "unico"
     elif r["estado"] == "sat":
         r["veredicto"] = "ESPURIO"
@@ -281,3 +297,92 @@ def refuta_configuracion(system, param_vals, fijar, timeout_ms=10000,
     r = solve(system, param_vals, over_N=over_N, bound=None,
               timeout_ms=timeout_ms, rlimit=rlimit, fijar=fijar)
     return r
+
+
+def cota_desde_testigo(system, param_vals, factor=4, minimo=50):
+    """Cota para la caja de Z3 derivada del TESTIGO REAL, no elegida a ojo.
+
+    Motivo, aprendido a base de un falso positivo: una cota fija deja fuera la
+    solucion buena en cuanto los testigos crecen (los de Pell crecen
+    exponencialmente en el indice), y entonces la comprobacion de unicidad se
+    vuelve VACUA -- 'no hay solucion con otro valor' es trivialmente cierto si no
+    hay ninguna solucion. `uniqueness_report` lo detecta y lo llama 'vacuo'; esta
+    funcion sirve para evitarlo desde el principio.
+
+    Devuelve `factor * max(valores del testigo)`, o None si no hay testigo.
+    """
+    if system.witness is None:
+        return None
+    w = system.witness(param_vals)
+    if not w:
+        return None
+    mayor = max(int(v) for v in w.values()) if w else 0
+    return max(minimo, factor * mayor)
+
+
+# ---------------------------------------------------------------------------
+#   PREGUNTA 4: UNICIDAD POR ENUMERACION ESTRUCTURADA (donde el SMT no llega)
+# ---------------------------------------------------------------------------
+
+def unicidad_exponencial(b, k, c_max, m_max=300, a0_max=0):
+    """Para que valores de c tiene solucion REALMENTE el sistema de `c = b^k`?
+
+    POR QUE NO BASTA EL SMT. Medido: `uniqueness_report` sobre este lema solo
+    concluye de forma no vacua en el caso mas pequeno (2^2). Los testigos de Pell
+    crecen exponencialmente en el indice, la caja necesaria se dispara, y Z3
+    devuelve 'unknown' o la solucion buena se queda fuera de la caja. Una busqueda
+    ciega tampoco sirve: 7 incognitas en cajas de decenas de miles.
+
+    POR QUE ESTA ENUMERACION SI. El sistema no es una caja negra; su estructura
+    fija casi todo:
+
+        a  = a0 + k + b + c + 2       (la reparametrizacion lo determina)
+        (x, y) = (x_m(a), y_m(a))     unicas soluciones de x^2-(a^2-1)y^2 = 1
+                                       con a >= 2   [teorema clasico de Pell]
+        y >= k,  y == k (mod a-1)     ecuacion del indice, con t >= 0
+        x - (a-b)y - c == 0 (mod M)   congruencia de Davis, con s >= 0
+
+    Se recorre c en [0, c_max] y m en [0, m_max], y **cada candidato se confirma
+    evaluando el sistema real** (`Dioph.holds`), no la enumeracion. Devuelve la
+    lista de c admisibles: si sale [b^k], el lema calcula el valor; si sale mas,
+    hay valores espurios.
+
+    ESTADO CONOCIDO (agosto 2026): SALE MAS. Ver `test_dioph_soundness.py` [8].
+    """
+    import sympy
+    from src.analysis.dioph_lemmas import L_exponential, pell_seq
+
+    bs, ks, cs = sympy.symbols('b k c', integer=True)
+    S = L_exponential(bs, ks, cs, over_N=True)
+    A0, X, Y0, t, sl = S.unknowns[:5]
+    holguras = S.unknowns[5:]
+
+    admisibles = []
+    for c in range(0, c_max + 1):
+        encontrado = False
+        for a0 in range(a0_max + 1):
+            a = a0 + k + b + c + 2
+            if a < 2:
+                continue
+            M = 2 * a * b - b * b - 1
+            if M <= 0:
+                continue
+            for m in range(0, m_max + 1):
+                x, y = pell_seq(a, m)
+                if y < 1 or y < k or (y - k) % (a - 1) != 0:
+                    continue
+                r = (x - (a - b) * y) - c
+                if r < 0 or r % M != 0:
+                    continue
+                asign = {bs: b, ks: k, cs: c, A0: a0, X: x, Y0: y - 1,
+                         t: (y - k) // (a - 1), sl: r // M}
+                for h, val in zip(holguras, (k - 1, b - 2)):
+                    asign[h] = val
+                if S.holds(asign):        # confirmacion contra el sistema REAL
+                    encontrado = True
+                    break
+            if encontrado:
+                break
+        if encontrado:
+            admisibles.append(c)
+    return admisibles
