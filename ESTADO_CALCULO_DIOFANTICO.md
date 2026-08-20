@@ -219,6 +219,49 @@ implementación**. Consecuencia metodológica: *la cadena completa nunca se podr
 evaluación más allá de casos diminutos*. La verificación por testigo constructivo —el pilar de
 este proyecto— tiene aquí su techo, y lo que quede por encima descansa en el teorema citado.
 
+### 3.2d El ataque al récord por la vía LIMPIA: optimizar el aplanado de JSWW
+
+**Por qué esta vía y no la nuestra.** Con el lema exponencial roto, cualquier cifra que salga de
+nuestra cadena hay que retirarla. Pero el (42, 5) de JSWW es **su propio polinomio (1)** —26
+variables, grado 25, publicado en 1976, con medio siglo de escrutinio y linaje de formalización
+en Mizar/Coq/Isabelle— pasado por la sustitución de Skolem. Está transcrito en
+`src/analysis/dioph_jsww.py` y **verificado** (reproduce (26, 25) exactamente). Si mejoramos el
+aplanado sobre *su* sistema, el riesgo de corrección desaparece: la aportación es puramente la
+optimización, que es para lo que sirve esta maquinaria.
+
+| Estrategia de aplanado sobre el sistema de JSWW | Generador |
+|---|---|
+| voraz sobre la forma expandida | (56, 5) |
+| árbol (Skolem) sobre la forma factorizada | (52, 5) |
+| árbol→8 encadenado con voraz→2 | (49, 5) |
+| **+ búsqueda sobre el desempate del voraz** | **(47, 5)** |
+| **JSWW 1976, a mano** | **(42, 5)** |
+
+**Nueve variables recuperadas de las catorce que separaban. Faltan cinco, y ahí hay meseta.**
+
+**Lo que se probó y NO funcionó, que también es resultado:**
+
+- **Eliminar incógnitas definidas linealmente.** Quita `q`, `z`, `e`, `y` (25 → 21 incógnitas) y
+  **empeora el generador en todos los casos**: `q` → 64, `z` → 66, `y` → 85, frente a 49 sin
+  eliminar. Es el mismo patrón que la cota de Pell: *sustituir sale barato en la representación y
+  ruinoso en el generador*; la incógnita ahorrada se paga multiplicada al aplanar.
+- **Aplanado híbrido** (árbol + reescritura con monomios ya nombrados). La idea era buena —el
+  método por árbol nombra `(a+1)²` y `a²` por separado, cuando `(a+1)² = w+2a+1` es de grado 1 si
+  `w = a²` ya existe— pero la implementación se atasca: `subs` no reduce potencias dentro de
+  monomios. Arreglarlo exige trabajar con vectores de exponentes.
+- **Otros criterios de puntuación del voraz** (priorizar monomios de exceso alto, priorizar
+  cuadrados `x·x`, mezcla): ninguno mejora a la frecuencia simple.
+
+**Cifras de la búsqueda:** ~2.000 reinicios sobre 8 objetivos intermedios, más 1.220 ejecuciones
+sobre 5 objetivos × 4 criterios. Todas convergen a 46 incógnitas (47 variables). *Los reinicios
+aleatorios están agotados.*
+
+**Siguiente paso concreto.** Para bajar de 47 hace falta algo con MEMORIA, no más muestreo ciego:
+búsqueda por haz sobre la secuencia de nombres, o —lo que encaja con la maquinaria que ya hay—
+**codificar el aplanado mínimo como problema de optimización y pasárselo a Z3 o al exportador
+QUBO**. «Elegir el conjunto mínimo de productos que reduce todos los monomios a grado ≤ 2» es un
+problema tipo cobertura, y el proyecto ya tiene ambos backends.
+
 ### 3.2c Cotejo del récord: **hecho, con fuente primaria**
 
 Con el egreso a arXiv abierto, el (42, 5) queda cotejado. **Jones–Sato–Wada–Wiens,
