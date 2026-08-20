@@ -738,3 +738,80 @@ def flatten_hybrid(system, target=2, name=None):
                  unknowns=list(system.unknowns) + [w for w, _ in orden],
                  eqs=eqs_out, witness=w_ext,
                  name=name or f"{system.name} (hibrido, grado<={target})")
+
+
+def eliminar_lineales(system, target=2, solo=None, name=None):
+    """Elimina incognitas definidas por una ecuacion lineal, ANTES de aplanar.
+
+    Si una ecuacion tiene la forma `u = expr` con `u` de grado 1 y coeficiente
+    +-1, y `u` no aparece en `expr`, entonces `u` sobra: se sustituye en todo el
+    sistema y desaparecen la incognita Y su ecuacion.
+
+    CONDICION DE SOUNDNESS SOBRE N, que no es opcional: `u >= 0` es una
+    restriccion real del sistema, asi que solo se puede eliminar si `expr` tiene
+    TODOS los coeficientes >= 0 y por tanto es automaticamente >= 0. En el sistema
+    de Jones-Sato-Wada-Wiens eso deja eliminar `q = wz+h+j`, `z = (gk+2g+k+1)(h+j)+h`
+    y `e = 2n+p+q+z`, pero NO `v = y-n-l` ni `l = ai+k+1-i`, que llevan signos
+    mezclados: ahi `v >= 0` y `l >= 0` codifican desigualdades que se perderian.
+
+    Compensacion: la sustitucion SUBE el grado donde `u` aparecia, asi que puede
+    salir cara al aplanar despues. `solo` permite fijar que incognitas eliminar
+    (por nombre) para medir cada una por separado en vez de aplicarlas a ciegas.
+    """
+    params = list(system.params)
+    unknowns = list(system.unknowns)
+    eqs = [sympy.expand(e) for e in system.eqs]
+    eliminadas = []
+
+    cambiado = True
+    while cambiado:
+        cambiado = False
+        gens = params + unknowns
+        for idx, e in enumerate(eqs):
+            for u in list(unknowns):
+                if solo is not None and str(u) not in solo:
+                    continue
+                coef = e.coeff(u, 1)
+                if coef not in (1, -1) or e.coeff(u, 2) != 0:
+                    continue
+                resto = sympy.expand(e - coef * u)
+                if u in resto.free_symbols:
+                    continue
+                valor = sympy.expand(-resto / coef)
+                if not _coeficientes_no_negativos_expr(valor):
+                    continue          # u >= 0 dejaria de estar garantizado
+                nuevas = [sympy.expand(q.subs(u, valor))
+                          for k, q in enumerate(eqs) if k != idx]
+                eqs = nuevas
+                unknowns = [x for x in unknowns if x is not u]
+                eliminadas.append((u, valor))
+                cambiado = True
+                break
+            if cambiado:
+                break
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        return {u: v for u, v in base.items() if u in unknowns}
+
+    out = Dioph(params, unknowns, eqs, witness=w_ext,
+                name=name or f"{system.name} [sin lineales]")
+    out.eliminadas = eliminadas
+    return out
+
+
+def _coeficientes_no_negativos_expr(e):
+    """True si todo monomio de `e` tiene coeficiente >= 0 (constante incluida)."""
+    e = sympy.expand(e)
+    if getattr(e, "is_number", False):
+        return e >= 0
+    try:
+        syms = sorted(e.free_symbols, key=str)
+        poly = sympy.Poly(e, *syms)
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+        return False
+    return all(c >= 0 for c in poly.coeffs())
