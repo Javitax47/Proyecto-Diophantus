@@ -168,6 +168,26 @@ def _nodos(e, acc):
     return acc
 
 
+def _como_monomio(e, gens):
+    """Vector de exponentes si `e` es un monomio sobre `gens`; None si no lo es."""
+    e = sympy.expand(e)
+    if getattr(e, "is_number", False):
+        return None
+    try:
+        poly = sympy.Poly(e, *gens)
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+        return None
+    monoms = poly.monoms()
+    return monoms[0] if len(monoms) == 1 else None
+
+
+def _monomio_expr(expo, gens):
+    m = sympy.Integer(1)
+    for g, k in zip(gens, expo):
+        m *= g ** k
+    return m
+
+
 def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
@@ -268,6 +288,27 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600):
         ex = sympy.expand(e)
         if ex != e and ex.is_Add and len(ex.args) <= 60:
             ops.append(z3.And(*[R(a, d) for a in ex.args]))
+        # RUTA MONOMIAL: si el nodo desarrollado es UN monomio, hay que partir su
+        # VECTOR DE EXPONENTES, no sus factores sintacticos. Sin esto, `a**2*y**2`
+        # solo se partia como (a^2)*(y^2) --dos nombres-- y no como (a*y)*(a*y),
+        # que resuelve `(a^2-1)y^2 + 1 - x^2` con UNO. Fue lo que delato que el
+        # encoding fallaba: nuestro "optimo" (21) era MAYOR que las 16 de JSWW, y
+        # su metodo es mecanico, luego su cifra tiene que ser una cota SUPERIOR.
+        expo = _como_monomio(ex, gens)
+        # GUARDA `d >= 2`, imprescindible: partir en dos factores da grado 2, no 1.
+        # Sin ella el encoding declaraba `k**2` reducible a grado 1 partiendolo en
+        # k*k, y entonces TODO era satisfacible con cero nombres. Otro resultado
+        # imposible que delata el instrumento.
+        if expo is not None and sum(expo) > d and d >= 2:
+            for d1 in itertools.product(*[range(a + 1) for a in expo]):
+                s1 = sum(d1)
+                if s1 == 0 or s1 == sum(expo):
+                    continue
+                d2 = _dividir(expo, d1)
+                if d2 is None or s1 > sum(d2):
+                    continue
+                ops.append(z3.And(R(_monomio_expr(d1, gens), 1),
+                                  R(_monomio_expr(d2, gens), 1)))
         if e.is_Mul or e.is_Pow:
             if e.is_Pow:
                 base, exp = e.args
