@@ -605,9 +605,16 @@ localizar**, y no es la que yo había supuesto. La palabra «mínimo» sigue ret
 
 - El sistema de 20 nombres **existe**: 24 incógnitas originales + 20 nombres, 33 ecuaciones,
   grado 2 por ecuación. Construido a mano y comprobado.
-- Nuestro `materializar` **no lo encuentra**: sin la ruta de sustitución falla de inmediato
-  (`no se pudo reducir a grado 2: (2n+p+q+z)³(2n+p+q+z+2)`); con ella, no devuelve en más de
-  diez minutos.
+- Nuestro `materializar` **no lo encuentra**, y falla **con la ruta de sustitución y sin ella**,
+  siempre en la misma expresión: `no se pudo reducir a grado 2: (2n+p+q+z)³(2n+p+q+z+2)`.
+  (Con la ruta activa tarda ~20 min en agotar las alternativas, pero acaba fallando: no es un
+  problema de tiempo.)
+- Y la causa concreta de ese fallo **sí** está localizada: `_division` usa `sympy.div`, que
+  devuelve cociente y resto **desarrollados**. Así que el `E²` que el nombre captura se pierde
+  otra vez en el cociente, y `intentar` no lo reconoce dentro. Es la misma lección de siempre
+  —expandir destruye el árbol— apareciendo por tercera vez, ahora dentro de la propia ruta que
+  se añadió para esquivarla. En el caso mínimo se salva porque la recursión vuelve a dividir y
+  el resto ya es de grado 1; en el sistema grande, no.
 - Luego la brecha **no es solo del optimizador**: optimizador y materializador comparten el
   mismo juego de reglas de reducción y **los dos** se quedan cortos ante ese conjunto. Es una
   limitación de capacidad compartida, no un error de contabilidad en la cota.
