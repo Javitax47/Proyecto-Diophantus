@@ -601,6 +601,21 @@ lectura del código. Y de paso deja el marcador donde estaba: **el contraejemplo
 —cota 21 con un aplanado de 20 exhibido—, así que la causa real de esa brecha **sigue sin
 localizar**, y no es la que yo había supuesto. La palabra «mínimo» sigue retirada.
 
+**Caracterización precisa de lo que queda abierto**, que es más útil que una hipótesis:
+
+- El sistema de 20 nombres **existe**: 24 incógnitas originales + 20 nombres, 33 ecuaciones,
+  grado 2 por ecuación. Construido a mano y comprobado.
+- Nuestro `materializar` **no lo encuentra**: sin la ruta de sustitución falla de inmediato
+  (`no se pudo reducir a grado 2: (2n+p+q+z)³(2n+p+q+z+2)`); con ella, no devuelve en más de
+  diez minutos.
+- Luego la brecha **no es solo del optimizador**: optimizador y materializador comparten el
+  mismo juego de reglas de reducción y **los dos** se quedan cortos ante ese conjunto. Es una
+  limitación de capacidad compartida, no un error de contabilidad en la cota.
+
+Eso acota dónde buscar: no en cómo Z3 deriva la cota, sino en el repertorio de reducciones que
+`opciones_de` / `intentar` saben aplicar. Y descarta la vía que ya se probó: añadir la división
+por un nombre no basta.
+
 Consecuencias, todas aplicadas:
 
 | antes | ahora |
