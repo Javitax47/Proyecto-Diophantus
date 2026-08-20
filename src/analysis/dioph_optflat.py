@@ -188,32 +188,45 @@ def _monomio_expr(expo, gens):
     return m
 
 
-def _division(e, c, gens):
-    """(q, r) con  e == q*c + r  como identidad polinomica exacta, o None.
+def _reescribir(e, c, gens, marca):
+    """`e` reescrita como polinomio en `marca`, donde `marca` representa a `c`. O None.
 
-    LA RUTA QUE FALTABA. El encoding sabia reducir una expresion partiendo su
-    ARBOL en grupos de factores, partiendo el vector de exponentes de un monomio
-    sobre los generadores ORIGINALES, o expandiendo. Ninguna de las tres sabe usar
-    un nombre ya elegido como GENERADOR NUEVO, y esa es justo la jugada que hace
-    falta a menudo: con `m = E^2` nombrado, reducir `E^3(E+2)` exige la identidad
-    `E^3(E+2) = m^2 + 2*m*E`. Expandir, que era el unico recurso, destruye
-    precisamente el `E^2` que el nombre captura.
+    ESTE ES EL MECANISMO QUE FALTABA, y su ausencia mantuvo la brecha entre la
+    cota certificable (21 nombres) y el aplanado exhibible (20).
 
-    Dividiendo se obtiene esa identidad sin adivinarla: si `e = q*c + r` y `c`
-    esta nombrado --luego cuenta como grado 1--, entonces `e` tiene grado
-    `max(deg(q)+1, deg(r))`. Basta pedir `q` de grado <= d-1 y `r` de grado <= d.
+    Las rutas anteriores --partir el arbol en grupos de factores, partir el vector
+    de exponentes de un monomio, desarrollar-- comparten una limitacion: ninguna
+    sabe **reescribir** una expresion en terminos de los nombres ya elegidos. Y
+    hay casos donde no queda otra. Con `m = E^2` nombrado,
 
-    Se exige que AMBOS bajen de grado estrictamente respecto de `e`: en division
-    multivariante el resto no lo garantiza, y sin esa guarda la recursion no
-    termina.
+        E^3*(E+2)  =  E^4 + 2*E^3  =  m^2 + 2*m*E
+
+    baja a grado 2, pero NO por ninguna particion de factores: `E^3*(E+2)` tiene
+    factores [E,E,E,E+2] y ningun reparto en dos grupos deja ambos en grado 1.
+    Hace falta la identidad algebraica.
+
+    Se obtiene por reduccion polinomica con la regla `c -> marca`, orientada
+    poniendo los generadores ANTES que la marca en grevlex: asi el termino
+    principal de `c - marca` es `c`, y cada aparicion de `c` dentro de `e` se
+    sustituye. Dividir con `sympy.div` NO sirve --se probo--: devuelve el cociente
+    DESARROLLADO y vuelve a destruir la estructura que el nombre captura, que es
+    la misma leccion de siempre apareciendo dentro de la propia ruta que se anadio
+    para esquivarla.
+
+    La identidad se COMPRUEBA antes de devolverla (`r|marca=c == e`): una
+    reescritura mal orientada da un resto que no representa a `e`, y eso seria un
+    aplanado que no preserva el sistema.
     """
     try:
-        q, r = sympy.div(sympy.expand(e), sympy.expand(c), *gens)
-    except (sympy.PolynomialError, sympy.GeneratorsNeeded, ZeroDivisionError):
+        _, r = sympy.reduced(sympy.expand(e), [sympy.expand(c) - marca],
+                             *(list(gens) + [marca]), order='grevlex')
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded, ValueError, TypeError):
         return None
-    if q == 0:
-        return None
-    return q, r
+    if marca not in r.free_symbols:
+        return None                      # no se uso el nombre: no hay progreso
+    if sympy.expand(r.subs(marca, c) - sympy.expand(e)) != 0:
+        return None                      # la identidad no se sostiene
+    return r
 
 
 def _factores(e, limite=8):   # el tope de particiones lo pone quien llama
@@ -277,8 +290,16 @@ def no_negativo_sobre_N(e):
 
 def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                               solo_no_negativos=False, demostrados=(),
-                              sustitucion=False, tope_sustitucion=12):
+                              reescritura=False, tope_reescritura=8):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
+
+    AVISO DE COHERENCIA, aprendido a base de romperlo dos veces: `reescritura`
+    tiene que valer LO MISMO aqui y en `materializar`. Si el optimizador certifica
+    un conjunto usando una regla que el materializador no tiene, el conjunto no se
+    puede construir --error real: `no se pudo reducir a grado 2: q + s*(2ap+2a-
+    p^2-2p-2) - x + y*(a-p-1)`-- y si la tiene el materializador pero no el
+    optimizador, sale un sistema de grado mayor que el certificado. Un certificado
+    solo vale para el juego de reglas con el que se emitio.
 
     Es la generalizacion que faltaba. `aplanado_minimo` demostro que 46 es el
     optimo nombrando monomios, y que JSWW llegan a 41 porque nombran cosas como
@@ -309,12 +330,26 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     gens = list(system.params) + list(system.unknowns)
 
+    # Un MARCADOR por candidato: el simbolo que lo representa cuando se reescribe
+    # una expresion en terminos de el. Debe contar como GRADO 1, que es lo que
+    # cuesta un nombre, y por eso entra en los generadores del calculo de grado.
+    marca = {}
+
     def grado(e):
         e = sympy.expand(e)
         if getattr(e, "is_number", False):
             return 0
         try:
-            return sympy.Poly(e, *gens).total_degree()
+            # Los generadores se toman de la PROPIA expresion, no de la lista
+            # global. Meter los ~600 marcadores en cada `Poly` hacia que calcular
+            # un grado costase mas que resolver el problema: la funcion se llama
+            # constantemente y el encoding dejaba de construirse. Todo simbolo
+            # libre --generador original o marcador de un nombre-- cuenta 1, que
+            # es justo lo que se quiere.
+            libres = sorted(e.free_symbols, key=str)
+            if not libres:
+                return 0
+            return sympy.Poly(e, *libres).total_degree()
         except (sympy.PolynomialError, sympy.GeneratorsNeeded):
             return 99
 
@@ -354,6 +389,12 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     orden = sorted(cand, key=lambda c: (grado(c), sympy.count_ops(c), sympy.srepr(c)))
     x = {c: z3.Bool("c%d" % i) for i, c in enumerate(orden)}
+    for i, c in enumerate(orden):
+        marca[c] = sympy.Symbol("_m%d" % i)
+    # Candidatos ordenados por grado DESCENDENTE: reescribir con el nombre mas
+    # grande que encaje es lo que mas baja el grado, y `_reescribir` es caro
+    # (reduccion polinomica), asi que se prueban pocos y los mejores primero.
+    orden_reesc = sorted(orden, key=lambda c: -grado(c))
 
     opt = z3.Optimize()
     opt.set("timeout", timeout_s * 1000)
@@ -436,32 +477,35 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                         g2 = sympy.Mul(*[fs[i] for i in range(len(fs)) if i not in comb])
                         ops.append(z3.And(R(g1, 1), R(g2, 1)))
         # RUTA DE SUSTITUCION: usar un nombre ya elegido como GENERADOR NUEVO.
-        # Por defecto DESACTIVADA por coste, no por dudas: da cotas estrictamente
-        # mejores --medido: 21 -> 18 nombres en el sistema del contraejemplo-- y
-        # cuesta un orden de magnitud mas de tiempo (27 s -> 203 s ahi mismo),
-        # porque anade una division polinomica por cada par (nodo, candidato).
-        # Quien quiera la cota buena la pide; quien quiera la cifra rapida, no.
-        # Ver `_division`. Sin esto el encoding no podia certificar conjuntos de
-        # nombres VALIDOS --se exhibio uno de 20 para un sistema donde declaraba
-        # cota inferior 21-- porque su unico recurso de reescritura era expandir,
-        # que destruye la subexpresion que el nombre captura.
-        if sustitucion and d >= 1:
-            ge = e.free_symbols
+        # RUTA DE REESCRITURA: expresar `e` como polinomio en un nombre elegido.
+        # Es la que faltaba, y su ausencia mantenia la brecha entre la cota que se
+        # sabia certificar (21 nombres) y el aplanado que se sabia exhibir (20):
+        # `E^3*(E+2)` con `E^2` nombrado baja a grado 2 por la identidad
+        # `m^2 + 2*m*E`, y ninguna particion de factores llega a eso.
+        if reescritura and d >= 1 and ops is not None:
             gd = grado(e)
-            vistos = 0
-            for c in orden:
-                if vistos >= tope_sustitucion:
+            fs_e = e.free_symbols
+            # EL TOPE CUENTA INTENTOS, NO EXITOS. Contando exitos, un nodo para el
+            # que casi ningun candidato encaja escaneaba los ~600 y llamaba a
+            # `sympy.reduced` en cada uno: construir el encoding no terminaba en
+            # 40 minutos. Con el tope sobre intentos el coste queda acotado de
+            # verdad, a cambio de que la ruta sea INCOMPLETA -- y eso hay que
+            # decirlo, porque significa que la cota resultante sigue siendo del
+            # encoding y no del problema.
+            intentos = 0
+            for c in orden_reesc:
+                if intentos >= tope_reescritura:
                     break
-                if c is e or not (c.free_symbols <= ge) or grado(c) > gd:
+                if c is e or not (c.free_symbols <= fs_e):
                     continue
-                par = _division(e, c, gens)
-                if par is None:
+                gc = grado(c)
+                if gc < 2 or gc > gd:
                     continue
-                q, rr = par
-                if grado(q) >= gd or grado(rr) >= gd:
-                    continue          # sin esta guarda la recursion no termina
-                vistos += 1
-                ops.append(z3.And(x[c], R(q, d - 1), R(rr, d)))
+                intentos += 1
+                r = _reescribir(e, c, gens, marca[c])
+                if r is None or grado(r) >= gd:
+                    continue          # sin progreso: la recursion no terminaria
+                ops.append(z3.And(x[c], R(r, d)))
         return z3.Or(ops) if ops else z3.BoolVal(False)
 
     raiz = [R(e, target) for e in system.eqs]
@@ -503,7 +547,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
             "elegidos": [str(c) for c in elegidos]}
 
 
-def materializar(system, elegidos, target=2, name=None, sustitucion=False):
+def materializar(system, elegidos, target=2, name=None, reescritura=False):
     """Construye el sistema REAL a partir del conjunto de nombres que eligio Z3.
 
     El optimizador devuelve un NUMERO y un conjunto; eso no es un sistema. Sin
@@ -612,40 +656,46 @@ def materializar(system, elegidos, target=2, name=None, sustitucion=False):
                         if r2 is None:
                             continue
                         return coef * r1 * r2
-        # RUTA DE SUSTITUCION, la misma que en el optimizador. Tiene que estar en
-        # los dos sitios: si el optimizador puede certificar un conjunto de
-        # nombres que el materializador no sabe construir, la cifra no existe.
+        # RUTA DE REESCRITURA: expresar `e` como polinomio en un nombre ya
+        # elegido. Es la unica que resuelve casos como `E^3*(E+2)` con `E^2`
+        # nombrado, donde ninguna particion de factores deja los dos grupos en
+        # grado 1 y hace falta la identidad `E^3(E+2) = m^2 + 2*m*E`.
         #
-        # DESACTIVADA POR DEFECTO, y no por gusto: activarla produjo un sistema de
-        # GRADO 3 por ecuacion donde el camino de siempre da 2 --generador de
-        # grado 7 en vez de 5--. O la contabilidad de grado de esta ruta esta mal,
-        # o gana una reduccion peor a otra mejor por probarse en mal orden. Hasta
-        # que se sepa cual de las dos, la cifra publicada sale del camino que si
-        # esta verificado. Un atajo que no entiendo no entra en la cifra.
-        if sustitucion and d >= 1:
-            ge = e.free_symbols
+        # Sustituye a un intento anterior basado en `sympy.div`, que devolvia el
+        # cociente DESARROLLADO y volvia a destruir la estructura que el nombre
+        # captura. `_reescribir` reduce con la regla `c -> marca` y comprueba la
+        # identidad antes de devolverla.
+        # OPT-IN, y por una razon medida: activarla deja de terminar sobre el
+        # sistema completo de JSWW (>20 min sin materializar, frente a ~20 s por
+        # el camino de siempre). La ruta es CORRECTA --resuelve el caso que
+        # ninguna otra sabe hacer-- pero explora demasiado. Mientras siga asi, la
+        # cifra publicada sale del camino rapido y verificado; se activa para los
+        # sistemas pequenos donde hace falta. Un atajo que no puedo ejecutar no
+        # entra en la cifra.
+        if reescritura and d >= 1:
             gd = grado(e)
-            for c in elegidos_expr:
-                if c is e or sympy.expand(c - e) == 0:
+            fs_e = e.free_symbols
+            # Candidatos por grado DESCENDENTE y filtrados antes de llamar a
+            # `_reescribir`, que es caro. Sin esto, materializar el sistema de
+            # JSWW no terminaba: se reducia con candidatos triviales primero y
+            # se reintentaba el trabajo caro una y otra vez.
+            for c in sorted(elegidos_expr, key=lambda t: -grado(t)):
+                if c is e or not (c.free_symbols <= fs_e):
                     continue
-                if not (c.free_symbols <= ge) or grado(c) > gd:
-                    continue
-                par = _division(e, c, gens)
-                if par is None:
-                    continue
-                q, rr = par
-                if grado(q) >= gd or grado(rr) >= gd:
+                gc = grado(c)
+                if gc < 2 or gc > gd or sympy.expand(c - e) == 0:
                     continue
                 nc = intentar(c, 1)
                 if nc is None:
                     continue
-                r1 = intentar(q, d - 1)
-                if r1 is None:
-                    continue
-                r2 = intentar(rr, d)
-                if r2 is None:
-                    continue
-                return r1 * nc + r2
+                r = _reescribir(e, c, gens, nc)
+                if r is None or grado(r) >= gd:
+                    continue          # sin progreso: la recursion no terminaria
+                if grado(r) <= d:
+                    return r
+                rr = intentar(r, d)
+                if rr is not None:
+                    return rr
         return None
 
     def reducir(e, d, permitir_nombre=True):

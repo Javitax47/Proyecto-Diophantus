@@ -665,6 +665,61 @@ Eso acota dónde buscar: no en cómo Z3 deriva la cota, sino en el repertorio de
 `opciones_de` / `intentar` saben aplicar. Y descarta la vía que ya se probó: añadir la división
 por un nombre no basta.
 
+### 3.2j El mecanismo que faltaba: REESCRITURA. Implementado, y no baja la cifra
+
+Se implementó lo que §3.2i señalaba, y el resultado es limpio en las dos direcciones: **cierra la
+brecha conocida y no mejora el (44, 5)**.
+
+**Qué es.** Las tres rutas del aplanado —partir el árbol en grupos de factores, partir el vector de
+exponentes de un monomio, desarrollar— comparten una limitación: ninguna sabe **reescribir** una
+expresión en términos de los nombres ya elegidos. Y hay casos donde no queda otra. Con `m = E²`
+nombrado:
+
+```
+E³·(E+2) = E⁴ + 2E³ = m² + 2·m·E          (grado 2)
+```
+
+pero **ninguna partición de factores llega ahí**: `E³(E+2)` tiene factores `[E,E,E,E+2]` y ningún
+reparto en dos grupos deja ambos en grado 1. Hace falta la identidad algebraica.
+
+`_reescribir` la obtiene por **reducción polinómica** con la regla `c → marca`, orientada poniendo
+los generadores antes que la marca en grevlex; así el término principal de `c − marca` es `c` y cada
+aparición de `c` dentro de `e` se sustituye. La identidad se comprueba (`r|marca=c == e`) antes de
+devolverla.
+
+**Diagnóstico previo, que fue lo que lo hizo posible.** Con los 20 nombres del contraejemplo fijados,
+se materializó cada ecuación por separado: **falla exactamente una**, la de `E³(E+2)(a+1)²+1−o²`.
+No era una laguna de catálogo —los 20 nombres **sí** están entre los 640 candidatos— sino de reglas.
+
+**Resultados medidos:**
+
+| | Antes | Con reescritura |
+|---|---|---|
+| Cota sobre el sistema con `e` eliminada | 21 nombres | **19** |
+| Materializar los 20 nombres del contraejemplo | falla | **grado 2, OK** |
+| Cota sobre el sistema completo de JSWW | 20 nombres | **20 — sin cambio** |
+
+**El contraejemplo de §3.2i queda RESUELTO**: donde el encoding declaraba 21 y existía un aplanado
+de 20, ahora certifica 19. Pero **la cifra publicada no se mueve**: sobre el sistema completo la cota
+sigue en 20, luego **(44, 5)** se mantiene.
+
+**Dos costes que hay que anotar.**
+
+1. **Coherencia obligatoria.** `reescritura` debe valer lo mismo en `aplanado_minimo_compuesto` y en
+   `materializar`. Se rompió dos veces: con la regla solo en el materializador salía un sistema de
+   grado mayor que el certificado; con la regla solo en el optimizador, el conjunto elegido no se
+   podía construir (`no se pudo reducir a grado 2: q + s(2ap+2a−p²−2p−2) − x + y(a−p−1)`).
+   **Un certificado solo vale para el juego de reglas con el que se emitió.**
+2. **Impracticable en el materializador del sistema completo**: más de 20 minutos sin terminar,
+   frente a ~20 s por el camino de siempre. Por eso la ruta queda **opt-in y desactivada por
+   defecto** en ambos sitios: la cifra publicada sale del camino rápido y verificado. Un atajo que
+   no se puede ejecutar no entra en la cifra.
+
+**Y el tope cuenta INTENTOS, no éxitos.** Contando éxitos, un nodo para el que casi ningún candidato
+encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el encoding no
+terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
+ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
+
 **Y la siguiente vía, ya sondeada y descartada tal cual.** Se probó sustituir en el ÁRBOL en vez de
 dividir, que era lo natural tras ver que `sympy.div` desarrolla. No funciona por sí sola:
 `E³.subs(E², s)` **no dispara** —sympy no sustituye potencias parciales— y `e.subs(E, s)` sí, pero
