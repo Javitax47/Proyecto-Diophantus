@@ -720,6 +720,43 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
+### 3.2m ¿Está agotada la esquina de grado 5? **No.** Rutas abiertas, con su estado medido
+
+Pregunta directa —«¿seguro que hemos acabado?»— y respuesta directa: **no**. Lo que sigue es el
+inventario de lo que queda, con lo que se ha llegado a medir de cada cosa. Ninguna está descartada;
+varias están sin resolver por **coste de cómputo**, no por imposibilidad.
+
+| Ruta | Qué podría dar | Estado medido |
+|---|---|---|
+| **Demostrar las 5 no-negatividades restantes** | el óptimo *libre* es de **17 nombres** ⇒ (43,5) ⇒ **(41,5)** tras post-eliminar | Z3 **no concluye** sobre el sistema de grado 12 en 26 variables |
+| **Eliminación completa** (no solo `q` e `y`) | cada incógnita extra eliminada = −1 variable | la búsqueda exhaustiva **no termina** (medido: >40 min sobre las 43 incógnitas) |
+| **Objetivo del optimizador = variables, no nombres** | podría preferir 19 nombres con 4 eliminaciones a 18 con 2 | **sin implementar** |
+| **Forma agrupada del paper** (`ECUACIONES_AGRUPADAS`) | expone `(n+1)` y `(n+1)²` como nombrables | **sin medir** con reescritura |
+| **Eliminar `e` antes de aplanar** | otro punto de partida | **sin medir** tras corregir el sexto defecto |
+| **Hacer converger la reescritura en `materializar`** | convierte cotas en cifras | identificado, **sin resolver** |
+
+**La más prometedora, y por qué.** El óptimo *sin* la restricción de no-negatividad es de **17
+nombres**, uno menos que los 18 publicables. La diferencia son cinco expresiones que no son ≥ 0 por
+estructura y que habría que **demostrar**, igual que se hizo con `a + u²(u²−a) ≥ 1`:
+
+```
+a² − 1        2ap − p² − 1        2a(n+1) − (n+1)² − 1        y⁴(a²−1)        (a+u²(u²−a))² − 1
+```
+
+Dos observaciones que las hacen plausibles: la última **ya está demostrada** —es el cuadrado de algo
+que probamos ≥ 1, menos 1—, y la tercera es el **módulo de Davis** de la ecuación (12), que en la
+construcción de JSWW es positivo por definición. Las tres primeras se reducen esencialmente a
+`a ≥ 1`. Si caen, la cifra baja de 42.
+
+**Por qué no están resueltas.** El intento por SMT se atasca: preguntar «¿admite el sistema una
+solución sobre ℕ con esta expresión negativa?» exige a Z3 razonar sobre 14 ecuaciones de hasta grado
+12 en 26 variables, y no concluye ni expandiendo ni sin expandir. La vía razonable no es fuerza
+bruta sino **derivarlas a mano de las ecuaciones del propio sistema**, como se hizo con
+`a + u²(u²−a)`, y dejar la comprobación numérica como respaldo.
+
+**Regla que no cambia:** mientras una de esas cinco no esté demostrada, el nombre correspondiente no
+entra, y la cifra publicada es la restringida. Igual que en agosto.
+
 ### 3.2l ✅ (42, 5) CONSTRUIDO Y VERIFICADO — se iguala la cifra anunciada en 1976
 
 **La cifra publicada pasa de (44, 5) a (42, 5)**, que es exactamente el par que JSWW anunciaron en
