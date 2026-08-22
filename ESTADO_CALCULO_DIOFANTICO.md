@@ -49,7 +49,321 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 
 ---
 
-## 3. Números medidos (el marcador)
+## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
+
+> Esta sección es **autocontenida**: se puede leer sin el resto del documento. Las secciones 3.2x que
+> vienen después son el registro cronológico —incluidos los errores y las cifras retiradas— y siguen
+> siendo la fuente para los detalles. Esto es el informe.
+
+### Qué es el problema, en una página
+
+Un **generador** de un conjunto `S ⊆ ℕ` es un polinomio `Q` cuyos **valores positivos** sobre
+variables no negativas son exactamente `S`. Para los primos existe desde 1976. Se construye siempre
+igual: se parte de una **representación**
+
+```
+n ∈ S   ⟺   ∃x₁…x_v :  P₁ = ⋯ = P_m = 0
+```
+
+y se envuelve en un solo polinomio:
+
+```
+Q = W · (1 − Σᵢ Pᵢ²)        ⟹        deg Q = 1 + 2·máx deg Pᵢ
+```
+
+La igualdad del grado es exacta (la forma de cabeza de `ΣPᵢ²` es suma de cuadrados de polinomios
+reales no nulos y no puede cancelarse). De ahí salen **dos ejes en tensión**:
+
+* **aplanar** — nombrar subexpresiones para bajar `deg Pᵢ` — *añade* variables;
+* **eliminar** — quitar una incógnita determinada linealmente — *sube* el grado.
+
+Por eso **el récord no es un número: es una frontera de Pareto (variables, grado)**. Ese encuadre es
+el que evita perder el tiempo, y es de §1.
+
+### El marcador: qué había y qué hay
+
+**Lo que había en la literatura**, cotejado contra fuente primaria (§3.2h-bis):
+
+| Par | Fuente | Estado |
+|---|---|---|
+| **(26, 25)** | JSWW, *Amer. Math. Monthly* 83:6 (1976) 449–464, sistema (1) | **exhibido** |
+| (42, 5) | JSWW 1976, p. 450 — **una frase** | anunciado, nunca escrito |
+| (19, 29) | JSWW 1976, p. 450 — la misma frase | anunciado |
+| (12, 13.697) | JSWW 1976 Teor. 2; grado exacto en Pąk–Kaliszyk (ITP 2022) | anunciado |
+| (10, >6.000) | Matiyasevich, *J. Soviet Math.* 15 (1981) 33–44 | exhibido, formalizado en Mizar |
+
+**Lo que hay ahora.** Todos los puntos parten del **sistema (1) publicado** de JSWW —no de una
+construcción propia— y todos están construidos, materializados y con el grado medido sobre el
+sistema real:
+
+| variables | grado | receta | equivalencia verificada |
+|---:|---:|---|---|
+| **33** | **5** | `a=A+2` + aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0 faltan / 0 sobran |
+| **32** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0 / 0 |
+| **28** | **9** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0 / 0 |
+| **27** | **11** | aplanar a 5 + eliminar `e,q,y,z` | ✅ 0 / 0 |
+| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ 0 / 0 |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0 / 0 |
+| 22 | 37 | sin aplanar + eliminar `e,q,y,z` | ✅ 0 / 0 |
+
+Sobre el sistema **sin desplazar** el punto de grado 5 sale en (36, 5); la reparametrización de
+`a = A+2` lo lleva a 33. Los demás puntos son del sistema sin desplazar y con `k_optimos=1`:
+**bajarían aplicando las tres palancas**, y por eso la frontera es una **cota superior**.
+
+> **La comprobación de equivalencia no siempre estuvo en esta tabla, y conviene decirlo.** Hasta esta
+> ronda solo se le pasaba al punto de grado 5. Los demás estaban materializados y con el grado medido
+> —eso es real— pero **sin verificar que fueran el mismo objeto** que el sistema (1). Publicarlos en
+> la misma tabla, sin distinguir, era exactamente la clase de mezcla que este proyecto ya cometió una
+> vez. Ahora `barrido_pareto` verifica **cada punto que publica**, y la columna de arriba es su
+> veredicto.
+
+### Los dos resultados, y por qué son de tipo distinto
+
+Conviene separarlos, porque no dicen lo mismo:
+
+**(33, 5) — nueve por debajo de una cifra anunciada.** El (42, 5) de JSWW es *una frase* en la página
+450; nunca escribieron el polinomio. Sobre la recta de grado 5, 33 variables es el menor valor que
+consta en ninguna parte. Es el punto más llamativo, pero lo que bate es una cifra **no exhibida**.
+
+**(25, 13) — domina en LOS DOS EJES a una cifra publicada.** El (26, 25) es el polinomio que JSWW
+sí imprimieron, el que se cita desde hace cincuenta años. `25 < 26` y `13 < 25`: no hay que elegir
+eje, es mejor en ambos. **Es el único punto de esta frontera que domina estrictamente a un par
+exhibido**, y en ese sentido es un resultado de una clase distinta —y probablemente más sólida— que
+el de grado 5.
+
+**Lo que (25, 13) NO es: «el récord overall».** En una frontera de Pareto esa expresión no está
+definida, y aquí concretamente no domina a `(19, 29)` (19 < 25) ni a `(10, >6.000)` (10 < 25). Sigue
+habiendo pares con **menos variables**; lo que no hay es ninguno que gane a la vez en variables y
+grado al (26, 25).
+
+**Y su garantía tuvo que ponerse al día.** Hasta esta ronda, el (25, 13) estaba materializado y con
+el grado medido, pero **la comprobación de equivalencia solo se le pasaba al punto de grado 5**. O
+sea: figuraba en la misma tabla que una cifra verificada teniendo una garantía menor, sin que la
+tabla lo dijera. Corregido en dos pasos: `verificar_equivalencia` se extrajo a función reutilizable,
+y `barrido_pareto` la aplica ahora a **cada punto que publica**. Veredicto del (25, 13): **0 faltan,
+0 sobran** — mismo nivel que el de grado 5.
+
+### Cómo se hizo: cinco palancas
+
+Ninguna es «buscar mejor». Todas son **cambiar el espacio en el que se busca**, que es donde ha
+estado siempre el problema.
+
+**1. Aplanado como optimización exacta, no como heurística.** Aplanar es elegir qué subexpresiones
+nombrar. Se codifica en SMT (Tseitin sobre los nodos del árbol y los monomios) y `z3.Optimize` da
+modelo **y cota inferior**. Antes había ~2.000 reinicios aleatorios que encontraban 46; el
+optimizador demostró que 46 era el mínimo *de esa base* y con eso quedó claro que el problema no era
+la búsqueda sino la **formulación**.
+
+**2. Reescritura: expresar en términos de los nombres ya elegidos.** Con `m = E²` nombrado,
+`E³(E+2) = m² + 2mE` baja a grado 2 — y **ninguna partición** de `[E,E,E,E+2]` deja los dos grupos en
+grado 1. Hacía falta la identidad algebraica, que se obtiene por reducción polinómica con la regla
+orientada `c → marca` bajo grevlex. (`sympy.div` no sirve: devuelve el cociente desarrollado y
+destruye la estructura que el nombre captura. `subs` tampoco: no dispara en potencias parciales.)
+
+**3. Subsumas en el catálogo.** `g·k + k + 1` dentro de `g·k + 2g + k + 1` no es nodo del árbol ni
+monomio de ningún desarrollo: no estaba en **ninguno** de los dos espacios de candidatos. Añadirlas
+—con su regla espejo en optimizador y materializador— bajó el óptimo de 17 a 15 nombres.
+
+**4. Cota demostrada `a ≥ 2`, usada REPARAMETRIZANDO.** Se demuestra (§3.2o) que toda solución del
+sistema (1) cumple `n ≥ 2` y `a ≥ 2`. La forma limpia de aprovecharlo **no** es aflojar el criterio
+de no-negatividad —que es lo único que impide aceptar sistemas falsos— sino escribir `a = A + 2` con
+`A ∈ ℕ`, que es un cambio de variable biyectivo. Entonces `l = k+1+i(A+1)` pasa el criterio **sin
+tocarlo**.
+
+**5. Forzar las definiciones para que la eliminación salga gratis.** Regla general:
+
+> si una ecuación dice `u = R` con `R ≥ 0`, y se **nombra** `R` como `m`, la ecuación pasa a ser
+> `m − u = 0`; entonces eliminar `u` la sustituye por **un símbolo**, a coste de grado cero.
+
+Sin ese nombre, sustituir `u` mete `R` entera donde `u` aparecía: eliminar `z` sin nombrar su
+definición sube las ecuaciones de grado 2 a grado 4 y la eliminación se descarta. El optimizador no
+puede descubrir esto solo — su objetivo cuenta **nombres** con las incógnitas originales congeladas,
+así que nunca gastará un nombre para habilitar una eliminación aunque el balance neto sea favorable.
+
+### Qué garantiza cada cifra (y qué no)
+
+Cada punto publicado pasa **cinco comprobaciones**. Ninguna es un muestreo:
+
+| # | Comprobación | Qué descartaría |
+|---|---|---|
+| 0 | el sistema de partida **es** el (1) de JSWW (con `a = A+2` si se desplaza) | trabajar sobre otro objeto |
+| 1 | grado ≤ *target* por ecuación en el sistema **materializado** | una cifra de solucionador sin sistema detrás |
+| 2 | cada nombre nuevo es **≥ 0 sobre ℕ** (estructural o con demostración escrita) | pérdida de **completitud**: el primo deja de emitirse |
+| 3 | **equivalencia simbólica**: al deshacer los nombres, las definitorias se anulan y el resto recupera *exactamente* las originales, 0 faltan y 0 sobran | que el sistema aplanado no sea el mismo objeto |
+| 4 | cada post-eliminación tiene miembro derecho con **todos los coeficientes ≥ 0** | pérdida de completitud en la dirección de vuelta |
+
+**Por qué la [3] es una identidad polinómica y no un muestreo:** el sistema de JSWW se transcribe
+**sin testigo** —sus valores son astronómicos y encontrar uno es el reto abierto del propio paper—,
+así que no se puede verificar por evaluación. Sustituir cada nombre por lo que representa, en
+cascada hasta punto fijo, y exigir que reaparezcan las 14 ecuaciones originales es más fuerte que
+cualquier barrido.
+
+**Lo que descansa en terceros y no se demuestra aquí:** que el sistema (1) de JSWW represente los
+primos. Es resultado de 1976, con cincuenta años de citas y linaje de formalización. Se **cita**.
+
+**Lo que NO se afirma:**
+
+* **No es un mínimo.** La cota que devuelve el optimizador es de **su codificación**, y ha caído
+  tres veces al ampliar el catálogo: 46 → 17 → 15 nombres. Ese historial es la prueba, no una
+  precaución retórica.
+* **No es un récord de grado.** El 5 lo anunciaron JSWW y es alcanzable mecánicamente; es una
+  **meseta compartida**. Toda la partida ahí es número de variables.
+* **Nadie externo lo ha revisado.** Es la salvedad que más pesa y la única que no se puede levantar
+  desde dentro.
+
+### El método que produjo todo esto: el resultado imposible como informe de error
+
+Es la parte transferible, y la única lección que sobreviviría aunque las cifras se retirasen.
+**Ninguno de los siete defectos se encontró leyendo el código.** Los siete los delató un resultado
+que no podía ser cierto:
+
+| # | Defecto | El imposible que lo delató |
+|---|---|---|
+| 1 | una desigualdad sobre ℕ costaba 0 para *cualquier* expresión | el sistema admitía 4, 9, 15 y 25 como primos |
+| 2 | índice anclado por congruencia, no por valor | `3² = 9` admitía `c ∈ {1,3,5,7,9}` |
+| 3 | nombres que podían ser negativos | *ninguno* — rompe completitud, no soundness. Se encontró razonando, no midiendo |
+| 4 | expandir destruye el árbol | los nodos útiles caían de 40 a 13 y la «cota» dejaba de significar nada |
+| 5 | nombrar en grado 0 | una ruta nueva «mejoraba» de 20 a 17 nombres; la mejora entera era el bug |
+| 6 | `sympy.Poly` lee los marcadores como coeficientes | el optimizador certificaba 16 donde el materializador construía 18 |
+| 7 | al catálogo le faltaban las subsumas | **cota inferior 17 > construcción publicada 16**. Una resta |
+
+**Tres de los siete comparten causa raíz**, y no está en el código propio: `sympy.Poly(e, *gens)` no
+falla cuando `e` contiene símbolos ajenos a `gens` — los trata como **coeficientes**, en silencio y
+con resultado plausible.
+
+**Y dos de los imposibles apuntaban a cifras MEJORES que la publicada.** El defecto 6 daba 16 nombres
+y habría dado (40, 5); no se sostuvo y hubo que retirarlo. La misma disciplina que retiró el (41,5)
+y el (40,5) en agosto, aplicada a números que favorecían.
+
+**Los comprobadores también fallan, y han fallado tres veces**, siempre por lo mismo: **comparar dos
+fotos tomadas en momentos distintos**. Un detector de definiciones que encontraba 15 de 18. Unas
+definiciones tomadas *antes* de eliminar comparadas con ecuaciones tomadas *después*. Y en esta
+ronda, un lado con nombres comparado contra otro sin ellos, que dio un «NO VERIFICADO» sobre un
+sistema impecable.
+
+### El único cambio metodológico que hubo que hacer al pipeline
+
+Dos tests llamaban al optimizador con **los mismos argumentos** y publicaban **(36,5)** y **(38,5)**.
+Un óptimo exacto no puede hacer eso.
+
+El diagnóstico: el tamaño del óptimo *sí* es estable (15 nombres, cota 15, con cualquier `timeout`),
+pero **el óptimo no es único** y el número de nombres **no es la cifra final** — después viene la
+post-eliminación, que el objetivo no puede ver. Dos aplanados de 15 nombres admiten distinto número
+de eliminaciones.
+
+Se corrigió de raíz: el pipeline enumera varios óptimos (cláusula de bloqueo + semilla) **y** corre
+dos tandas (libre y forzando definiciones), y se queda con el mejor. La cifra pasa a depender de un
+**parámetro declarado** (`k_optimos`) y no del modelo que devuelva Z3 esa vez. Sigue siendo una cota
+superior: subir `k_optimos` solo puede mejorarla.
+
+> Anotación honesta: la cláusula de bloqueo fuerte —«omite al menos uno de los ya usados»— **puede
+> saltarse óptimos legítimos**. Es una fuente de diversidad, no un recorrido exhaustivo.
+
+### Lo que se descubrió y no es una cifra
+
+Tres cosas que salieron de cotejar la literatura contra **fuente primaria**, y que circulan mal:
+
+**1. El «(10, ~1,6·10⁴⁵) de Matiyasevich» funde dos objetos distintos.** El 1,638·10⁴⁵ es el grado
+del par **universal** (9, ·)ℕ de Jones (1982). El polinomio de primos de 10 variables que construyó
+Matiyasevich tiene grado **> 6.000**, cifra de quienes lo formalizaron en Mizar.
+
+**2. El (12, «grado enorme») tiene grado exacto: 13.697.** Lo publican Pąk–Kaliszyk (arXiv:2204.12311,
+ITP 2022, introducción: *«the rank of the polynomial is 13,697»*). Test de consistencia:
+`13.697 = 1 + 2·6.848`, impar, luego se lee como **generador** — todo grado de generador citado en la
+literatura es impar, y eso sirve para detectar confusiones de unidades.
+
+**3. El (58, 4) no es de primos ni es un generador.** Es un par **universal** y como
+**representación**. Instanciado para primos daría 59 variables y, como generador, **grado 9** —
+dominado en ambos ejes. (Ningún par universal puede bajar de grado 2: las ecuaciones cuadráticas son
+decidibles.)
+
+**Y el patrón de fondo, que es lo que hace posible todo esto:** en esta literatura **se anuncian
+cifras que no se exhiben**. No es una hipótesis excéntrica; está documentado por los propios autores.
+JSWW escriben (42, 5) y (19, 29) en una frase sin construcción. Y en 2025, Bayer y David publican
+deliberadamente un par **peor** para no depender de uno de esos anuncios:
+
+> «the second pair depends on Jones' universal pair (32, 12)ℕ of which there is no published proof in
+> the literature»
+> — Bayer–David, ITP 2025 (verificado palabra por palabra en arXiv:2505.16963)
+
+Ahí está la explicación de por qué se puede mejorar el (42, 5) con operaciones elementales: **no es
+que nadie supiera hacerlo, es que nadie lo escribió**. Escribir un polinomio de 42 variables y grado
+5 en el *Monthly* de 1976 significaba componer del orden de mil monomios, y la matemática está en la
+reducción, no en el polinomio. Era una barrera **tipográfica**, no matemática.
+
+Lo que sí es nuevo hoy: que la equivalencia esté **verificada a máquina** y que exista un marco de
+optimización con cotas. Eso no se podía hacer a mano.
+
+### Qué queda abierto
+
+Ninguna ruta está **refutada**; todas están bloqueadas por matemática que falta o por herramienta.
+Inventario detallado en §3.2r. Los dos cuellos reales:
+
+**El obstáculo matemático es uno solo, y bloquea tres eliminaciones.** Los dos **módulos de Davis**
+`2a(n+1)−(n+1)²−1` y `2a(p+1)−(p+1)²−1` de las ecuaciones (12) y (13). Son positivos en la
+construcción de JSWW porque un módulo lo es, pero eso descansa en *su* construcción. Demostrarlos
+desde las ecuaciones exige `a > n` y `a > p`: relaciones **entre incógnitas**, que ningún cambio de
+variable arregla —a diferencia de `a ≥ 2`, que sí se demostró y sí se absorbió reparametrizando—. El
+SMT no concluye con 7 ecuaciones de grado 12 en 26 variables.
+
+**Lo desbloquearía el texto de la demostración de JSWW**, que diría si `a > n` se *deriva* de las
+ecuaciones o es solo condición de su construcción. Los dos PDF localizados (`math.umd.edu`,
+`ericzheng.org`) **los rechaza la política de red de este entorno**; no se ha intentado rodear el
+bloqueo.
+
+**Y la advertencia que este propio informe justifica:** cada vez que se dijo «esto está agotado», no
+lo estaba. El «óptimo» del optimizador ha caído tres veces —46 → 17 → 15 nombres— y las tres por
+**ampliar el catálogo**, nunca por buscar mejor. La frase honesta no es «no queda nada», sino **«no
+queda nada que sepamos formular hoy»**.
+
+### Cómo se reproduce, en cuatro líneas
+
+Todo el pipeline está en dos funciones. No hay pasos manuales ni números escritos a mano:
+
+```python
+from src.analysis.dioph_jsww import sistema_desplazado, COTA_A, no_negativos_desplazados
+from src.analysis.dioph_optflat import aplanado_y_eliminacion, barrido_pareto, verificar_equivalencia
+
+S    = sistema_desplazado(COTA_A)                       # el (1) de JSWW con a = A+2
+best = aplanado_y_eliminacion(S, 2, k_optimos=1,        # aplana, materializa y post-elimina
+                              demostrados=no_negativos_desplazados(COTA_A))
+ver  = verificar_equivalencia(S, best["materializado"], best["sistema"])
+print(best["variables"], best["grado"], ver["ok"])      # -> 33 5 True
+```
+
+Y la frontera entera, con veredicto de equivalencia en cada punto publicado:
+
+```python
+for v, g, receta, ver in barrido_pareto(S, grados=(2,3,4,5,6), k_optimos=1,
+                                        demostrados=no_negativos_desplazados(COTA_A)):
+    print(v, g, ver["ok"], receta)
+```
+
+Piezas y responsabilidad:
+
+| Función | Módulo | Qué hace |
+|---|---|---|
+| `sistema()` / `sistema_desplazado()` | `dioph_jsww` | el sistema (1) transcrito; el desplazado usa la cota demostrada `a ≥ 2` y **rechaza** cualquier desplazamiento sin demostración |
+| `aplanado_minimo_compuesto()` | `dioph_optflat` | el SMT: elige qué nombrar y devuelve **cota inferior de su codificación** |
+| `materializar()` | `dioph_optflat` | convierte la elección en un **sistema real**; sin esto una cifra es un número de un solucionador |
+| `definiciones_lineales()` | `dioph_degree` | los miembros derechos a **forzar** para que la eliminación salga gratis |
+| `eliminar_maximo()` | `dioph_degree` | post-elimina explorando **todos los órdenes**, exigiendo que el grado no suba |
+| `aplanado_y_eliminacion()` | `dioph_optflat` | el pipeline completo: K óptimos × 2 tandas, se queda con el mejor |
+| `verificar_equivalencia()` | `dioph_optflat` | el veredicto: 0 faltan / 0 sobran, o no vale |
+| `barrido_pareto()` | `dioph_optflat` | la frontera entera, cada punto con su veredicto |
+
+Los tests que lo bloquean todo: `src/tests/verification/test_dioph_jsww.py` — [4] la cifra, [5] la
+equivalencia **sobre el mismo objeto que publica [4]**, [8] la demostración de `a ≥ 2`, [9] la
+frontera con su comprobación de dominancia contra la literatura.
+
+---
+
+## 3.bis Registro cronológico — los números, con su historia
+
+> Lo que sigue es el **registro**, escrito según fue ocurriendo: incluye las cifras que hubo
+> que retirar y los defectos que las retiraron. El informe de arriba es la lectura; esto es la
+> fuente. Las referencias `§3.2x` de todo el documento apuntan aquí.
+
 
 ### 3.1 Coste de los lemas (sobre ℕ) — **cifras corregidas**
 

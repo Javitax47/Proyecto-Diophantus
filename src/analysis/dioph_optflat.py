@@ -1015,6 +1015,84 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     return salida
 
 
+def verificar_equivalencia(system, materializado, final, verbose=False):
+    """¿Es `final` el mismo objeto matematico que `system`, escrito de otra forma?
+
+    ESTA ES LA COMPROBACION QUE CONVIERTE UNA CIFRA EN UN RESULTADO, y hasta ahora
+    solo se le pasaba al punto de grado 5. Los demas puntos de la frontera estaban
+    materializados y con el grado medido --que es real-- pero **sin verificar la
+    equivalencia**, o sea a un nivel de garantia distinto. Publicarlos en la misma
+    tabla sin decirlo era la clase de mezcla que este proyecto ya cometio una vez.
+
+    QUE HACE. Cada incognita nueva `w` viene con su ecuacion definitoria `w = d`.
+    Sustituyendo en cascada hacia atras hasta punto fijo, las definitorias deben
+    anularse (`0 == 0`, no dicen nada por si mismas) y las demas deben devolver
+    EXACTAMENTE las ecuaciones originales: ninguna de menos, ninguna de mas. Es una
+    identidad polinomica, no un muestreo -- y es lo unico posible aqui, porque el
+    sistema de JSWW se transcribe sin testigo (sus valores son astronomicos).
+
+    TRES TRAMPAS, las tres pisadas ya:
+
+     1. Las definiciones se PIDEN (`materializado.definiciones`), no se adivinan
+        leyendo las ecuaciones: con la reescritura activa una definicion puede
+        expresarse en terminos de otros nombres y el detector encontraba 15 de 18.
+     2. Se aplica la MISMA sustitucion de la post-eliminacion a las definiciones,
+        y hasta punto fijo: una definicion puede mencionar una incognita eliminada
+        despues.
+     3. Las ORIGINALES tambien se desnombran. Si la post-eliminacion mapeo una
+        incognita a un NOMBRE (`z -> m1`), el lado "original" lleva un nombre que
+        el lado recuperado ya no tiene, y la comparacion falla sin que el sistema
+        tenga nada malo.
+
+    Y el emparejamiento es 1 A 1, no "existe alguna que case": dos ecuaciones vivas
+    iguales taparian que falta una original distinta.
+    """
+    quitadas = {u: v for u, v in getattr(final, "eliminadas", [])}
+    for _ in range(len(quitadas)):
+        quitadas = {u: sympy.expand(v.subs(quitadas)) for u, v in quitadas.items()}
+
+    defs = {w: sympy.expand(c.subs(quitadas))
+            for w, c in getattr(materializado, "definiciones", [])}
+
+    def desnombrar(e):
+        prev = None
+        while prev != e:
+            prev = e
+            e = sympy.expand(e.subs(defs))
+        return e
+
+    desnombradas = [desnombrar(e) for e in final.eqs]
+    definitorias = [x for x in desnombradas if x == 0]
+    vivas = [x for x in desnombradas if x != 0]
+    originales = [o for o in (desnombrar(sympy.expand(x.subs(quitadas)))
+                              for x in system.eqs) if o != 0]
+
+    def casa(u, v):
+        return sympy.expand(u - v) == 0 or sympy.expand(u + v) == 0
+
+    pendientes, faltan = list(vivas), []
+    for o in originales:
+        for i, vv in enumerate(pendientes):
+            if casa(o, vv):
+                pendientes.pop(i)
+                break
+        else:
+            faltan.append(o)
+
+    veredicto = {
+        "ok": not faltan and not pendientes,
+        "definitorias": len(definitorias), "vivas": len(vivas),
+        "originales": len(originales),
+        "faltan": len(faltan), "sobran": len(pendientes),
+        "eliminadas": sorted(str(u) for u in quitadas),
+    }
+    if verbose:
+        print(f"    equivalencia: {veredicto['definitorias']} definitorias se anulan, "
+              f"{veredicto['vivas']} vivas vs {veredicto['originales']} originales "
+              f"-> faltan {veredicto['faltan']}, sobran {veredicto['sobran']}", flush=True)
+    return veredicto
+
+
 def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
                            timeout_s=900, solo_no_negativos=True, demostrados=(),
                            reescritura=True, sumas_parciales=True,
@@ -1129,9 +1207,9 @@ def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
     eliminables = set(eliminables)
     puntos = {}
 
-    def registrar(v, g, receta):
+    def registrar(v, g, receta, base, cur):
         if g not in puntos or v < puntos[g][0]:
-            puntos[g] = (v, receta)
+            puntos[g] = (v, receta, base, cur)
             if verbose:
                 print(f"    ({v:3d} variables, grado {g:3d})  {receta}", flush=True)
 
@@ -1143,11 +1221,14 @@ def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
                 continue
             vistos.add(frozenset(hechas))
             registrar(len(cur.unknowns) + 1, 1 + 2 * max_equation_degree(cur),
-                      f"{receta} + eliminar {sorted(hechas)}")
+                      f"{receta} + eliminar {sorted(hechas)}", M, cur)
             for c in [str(u) for u in cur.unknowns if str(u) in eliminables]:
                 E = eliminar_lineales(cur, tope, solo=[c])
                 nuevas = tuple(str(t) for t, _ in getattr(E, "eliminadas", []))
                 if nuevas:
+                    # `eliminadas` ACUMULADA: la verificacion necesita el camino
+                    # entero, no solo el ultimo paso.
+                    E.eliminadas = list(getattr(cur, "eliminadas", [])) + list(E.eliminadas)
                     pila.append((E, hechas + nuevas))
 
     explorar(system, "sin aplanar", 99)
@@ -1170,11 +1251,21 @@ def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
                   f"{best['optimos_vistos']} optimos", flush=True)
         explorar(best["materializado"], f"aplanado a {d}", d)
 
+    # VERIFICAR SOLO LOS PUNTOS DE LA FRONTERA. Comprobar la equivalencia de cada
+    # nodo del DFS costaria expandir polinomios de grado 25 cientos de veces sin
+    # aportar nada: los puntos dominados no se publican. Pero los que SI se
+    # publican van todos con veredicto -- no se vuelve a poner en la misma tabla
+    # una cifra verificada junto a otra que solo esta materializada.
     frontera, mejor = [], None
     for g in sorted(puntos):
-        v, receta = puntos[g]
+        v, receta, base, cur = puntos[g]
         if mejor is None or v < mejor:
-            frontera.append((v, g, receta))
+            ver = verificar_equivalencia(system, base, cur)
+            if verbose:
+                print(f"    verificando ({v}, {g}): "
+                      f"{'EQUIVALENTE' if ver['ok'] else 'NO VERIFICADO'} "
+                      f"(faltan {ver['faltan']}, sobran {ver['sobran']})", flush=True)
+            frontera.append((v, g, receta, ver))
             mejor = v
     return frontera
 

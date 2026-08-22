@@ -643,17 +643,26 @@ def test_frontera_de_pareto(stats):
     literatura = [(26, 25), (42, 5), (19, 29), (12, 13697), (10, 6001)]
     fallos = []
     prev_v, prev_g = None, None
-    for v, g, receta in frontera:
+    for v, g, receta, ver in frontera:
         dominado = [(lv, lg) for lv, lg in literatura if lv <= v and lg <= g
                     and (lv, lg) != (v, g)]
         marca = (Colors.FAIL + f"dominado por {dominado}" + Colors.ENDC if dominado
                  else Colors.OKGREEN + "no dominado" + Colors.ENDC)
-        print(f"  ({v:3d} variables, grado {g:3d})  {marca:<40s} {receta}")
+        sello = (Colors.OKGREEN + "equivalente" + Colors.ENDC if ver["ok"]
+                 else Colors.FAIL + f"NO VERIFICADO ({ver['faltan']}/{ver['sobran']})" + Colors.ENDC)
+        print(f"  ({v:3d} variables, grado {g:3d})  {marca:<40s} {sello:<32s} {receta}")
+        # CADA PUNTO PUBLICADO CON SU VEREDICTO. Antes solo se verificaba el de
+        # grado 5, y los demas figuraban en la misma tabla con una garantia menor
+        # sin que la tabla lo dijera: materializados y con el grado medido, pero
+        # sin comprobar que fueran el mismo objeto que el sistema (1).
+        if not ver["ok"]:
+            fallos.append(f"({v},{g}) no equivale al original: "
+                          f"faltan {ver['faltan']}, sobran {ver['sobran']}")
         if prev_v is not None and not (v < prev_v and g > prev_g):
             fallos.append(f"la frontera no esta ordenada en ({v},{g})")
         prev_v, prev_g = v, g
     # El punto de grado 5 es la cifra de portada y no puede empeorar.
-    g5 = [v for v, g, _ in frontera if g == 5]
+    g5 = [v for v, g, _, _ in frontera if g == 5]
     if not g5 or g5[0] > 42:
         fallos.append(f"el punto de grado 5 salio {g5}, se esperaba <= 42")
     else:
