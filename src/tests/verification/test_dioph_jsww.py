@@ -159,12 +159,13 @@ def test_aplanado_optimo(stats):
         print("  (z3 no disponible: omitido)"); return
     S = sistema(expandir=False)
     r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
-                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS)
+                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS,
+                                  reescritura=True)
     print(f"  optimizador: {r['estado']}, {r['nombres']} nombres (cota inferior {r['cota']})")
     if r["estado"] != "optimo_del_encoding":
         stats.fail(f"no se alcanzo la cota: {r['estado']}")
         return
-    M = materializar(S, r["elegidos"], 2)
+    M = materializar(S, r["elegidos"], 2, reescritura=True)
     grado = max_equation_degree(M)
     _, g_plano = to_generator(M, FACTOR)
     usadas = sum(1 for u in INCOGNITAS if u in M.unknowns)
@@ -241,11 +242,13 @@ def test_equivalencia_por_sustitucion(stats):
     # asi que "el aplanado equivale al original" quedaba comprobado sobre un
     # aplanado que no era el de la cifra. Lo detecto una revision adversarial.
     r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
-                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS)
+                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS,
+                                  reescritura=True)
     if r["estado"] != "optimo_del_encoding":
         stats.fail(f"el optimizador no alcanzo la cota: {r['estado']}")
         return
-    M = materializar(S, r["elegidos"], 2)
+    M0 = materializar(S, r["elegidos"], 2, reescritura=True)
+    M = M0
     # EL SISTEMA QUE SE PUBLICA, no una etapa intermedia. Antes este test corria
     # el optimizador con otras opciones y sin la post-eliminacion, o sea verificaba
     # la equivalencia de un sistema DISTINTO del de la cifra -- y como el optimo no
@@ -253,19 +256,18 @@ def test_equivalencia_por_sustitucion(stats):
     M = eliminar_lineales(M, 2, solo=['q', 'y'])
     quitadas = {a: b for a, b in getattr(M, "eliminadas", [])}
 
-    nuevas = [u for u in M.unknowns if u not in INCOGNITAS]
-    defs = {}
-    for e in M.eqs:
-        ex = sympy.expand(e)
-        for w in nuevas:
-            if ex.coeff(w, 1) == 1 and ex.coeff(w, 2) == 0:
-                resto = sympy.expand(w - ex)
-                if w not in resto.free_symbols:
-                    defs[w] = resto
-                    break
-    if len(defs) != len(nuevas):
-        stats.fail(f"{len(nuevas)} incognitas nuevas pero solo {len(defs)} definiciones")
-        return
+    # LAS DEFINICIONES SE PIDEN, NO SE ADIVINAN. Antes se re-derivaban leyendo las
+    # ecuaciones --buscar una incognita nueva con coeficiente 1 que no aparezca en
+    # el resto--, y eso funciona mientras cada definitoria mencione un solo nombre.
+    # Con la reescritura activa una definicion puede expresarse en terminos de
+    # OTROS nombres (`m5 = m4^2 + 2*e*m4`), el detector encontraba 15 de 18 y el
+    # test fallaba por su propia heuristica, no por el sistema.
+    # Con la MISMA sustitucion aplicada. `eliminar_lineales` sustituye `q` e `y`
+    # en TODAS las ecuaciones, tambien en las definitorias, asi que una definicion
+    # guardada antes de eliminar esta obsoleta: al desnombrar reintroducia `q` e
+    # `y` y el sistema recuperado no casaba. No era un fallo del sistema sino de
+    # comparar dos fotos tomadas en momentos distintos.
+    defs = {w: sympy.expand(c.subs(quitadas)) for w, c in M0.definiciones}
 
     def desnombrar(e):
         prev = None
@@ -274,25 +276,22 @@ def test_equivalencia_por_sustitucion(stats):
             e = sympy.expand(e.subs(defs))
         return e
 
-    # Al eliminar `q` e `y` hay que comparar contra el sistema original CON LA
-    # MISMA SUSTITUCION APLICADA: las demas ecuaciones ya no hablan de `q` sino de
-    # `h+j+w*z`. Sus dos definitorias (alpha_0 y alpha_8) se vuelven `0 == 0`, que
-    # es exactamente lo que significa haberlas consumido para despejar. Si
-    # desapareciera alguna OTRA, eso si seria una perdida y el recuento la delata.
+    # Sustituir cada nombre por lo que representa debe dejar: las definitorias en
+    # 0 = 0 (no dicen nada por si mismas) y el resto en las ecuaciones originales.
+    desnombradas = [desnombrar(e) for e in M.eqs]
+    definitorias = [x for x in desnombradas if x == 0]
+    vivas = [x for x in desnombradas if x != 0]
     originales = [sympy.expand(x.subs(quitadas)) for x in S.eqs]
     consumidas = [i for i, o in enumerate(originales) if o == 0]
     originales = [o for o in originales if o != 0]
-    no_def = [e for e in M.eqs
-              if not any(sympy.expand(e - (w - d)) == 0 for w, d in defs.items())]
-    recuperadas = [desnombrar(e) for e in no_def]
 
     def casa(u, v):
         return sympy.expand(u - v) == 0 or sympy.expand(u + v) == 0
 
-    faltan = [o for o in originales if not any(casa(o, rr) for rr in recuperadas)]
-    sobran = [rr for rr in recuperadas if not any(casa(o, rr) for o in originales)]
-    print(f"  {len(nuevas)} incognitas nuevas, {len(defs)} definiciones, "
-          f"{len(no_def)} ecuaciones no definitorias (originales: {len(originales)})")
+    faltan = [o for o in originales if not any(casa(o, x) for x in vivas)]
+    sobran = [x for x in vivas if not any(casa(o, x) for o in originales)]
+    print(f"  {len(defs)} nombres, {len(definitorias)} ecuaciones se anulan al "
+          f"desnombrar, {len(vivas)} quedan vivas (originales: {len(originales)})")
     print(f"  eliminadas por sustitucion: {sorted(str(k) for k in quitadas)} "
           f"-> consumen las originales {consumidas} (se vuelven 0 == 0)")
     print(f"  originales no recuperadas: {len(faltan)}   recuperadas que no son originales: {len(sobran)}")
@@ -348,6 +347,13 @@ def test_no_negatividad_de_los_nombres(stats):
     from src.analysis.dioph_degree import to_generator
 
     S = sistema(expandir=False)
+    # LAS TRES CONFIGURACIONES DE ESTE TEST VAN SIN REESCRITURA, y a proposito.
+    # Lo que compara es un invariante entre ellas --restringir el espacio no puede
+    # dar un optimo menor-- asi que tienen que ser homogeneas. Con reescritura
+    # activa, `materializar` no converge para el conjunto libre (>20 min), de modo
+    # que la comparacion no se podria completar. La cifra PUBLICADA sale del
+    # pipeline con reescritura y se mide en [4]; aqui se vigila la coherencia del
+    # criterio de no-negatividad, que es otra cosa.
     libre = aplanado_minimo_compuesto(S, 2, timeout_s=600)
     if libre.get("elegidos") is None:
         print("  (el optimizador no concluyo: omitido)"); return
@@ -400,9 +406,9 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.BOLD}({g_est['variables']}, {g_est['grado']}){Colors.ENDC} "
           f"solo >= 0 por estructura -- cero suposiciones, una variable de mas")
     print(f"  {Colors.BOLD}({g_dem['variables']}, {g_dem['grado']}){Colors.ENDC} "
-          f"estructura + la demostrada -- {Colors.OKGREEN}sale gratis; es la base "
-          f"de la cifra publicada, que tras post-eliminar q e y queda en "
-          f"({g_dem['variables']-2}, 5){Colors.ENDC}")
+          f"estructura + la demostrada -- {Colors.OKGREEN}sale gratis{Colors.ENDC}")
+    print(f"  {Colors.WARN}Estas tres van SIN reescritura, para ser homogeneas entre "
+          f"si. La cifra PUBLICADA la mide [4] y es (42, 5).{Colors.ENDC}")
 
     problemas = []
     if fallos:

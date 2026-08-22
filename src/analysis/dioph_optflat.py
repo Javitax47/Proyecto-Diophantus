@@ -169,9 +169,27 @@ def _nodos(e, acc):
 
 
 def _como_monomio(e, gens):
-    """Vector de exponentes si `e` es un monomio sobre `gens`; None si no lo es."""
+    """Vector de exponentes si `e` es un monomio sobre `gens`; None si no lo es.
+
+    SEXTO DEFECTO DE ESTE ENCODING, y otra vez la misma causa raiz:
+    `sympy.Poly(e, *gens)` NO falla cuando `e` contiene simbolos ajenos a `gens`
+    --los trata como COEFICIENTES--. Con la ruta de reescritura activa aparecen
+    marcadores de nombres dentro de las expresiones, y entonces `m4**2*a**2`
+    devolvia el vector de `a**2`: la ruta monomial lo partia en `a|a` y
+    certificaba grado 2 sobre algo que es de grado 4.
+
+    Lo delato, como los cinco anteriores, un resultado imposible: el optimizador
+    certificaba 16 nombres y el materializador construia grado 3 con esos mismos
+    16. Comprobado a mano: `e^3(e+2)(a+1)^2 = m4^2*m5 + 2*e*m4*m5` con `m4 = e^2`
+    y `m5 = (a+1)^2`, y no hay nombre para `e^3`; el grado 3 es inevitable. La
+    cifra de 16 era falsa.
+
+    Se exige explicitamente que no haya simbolos fuera de `gens`.
+    """
     e = sympy.expand(e)
     if getattr(e, "is_number", False):
+        return None
+    if not (e.free_symbols <= set(gens)):
         return None
     try:
         poly = sympy.Poly(e, *gens)
@@ -692,6 +710,8 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     reesc_grado = {c: grado(c) for c in reesc_orden}
     reesc_lider = {c: _monomio_lider(c, gens) for c in reesc_orden}
 
+    cache_intentar = {}
+
     def intentar(e, d, permitir_nombre=True):
         """Reduce `e` a grado <= d, o devuelve None si no puede.
 
@@ -700,8 +720,23 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
         del bucle y abortaba la busqueda en la primera rama muerta, con un mensaje
         enganoso ("no se pudo reducir k**3") sobre una particion que simplemente
         no era la buena.
+
+        MEMOIZADA, y es lo que hace converger la busqueda con reescritura activa.
+        El backtracking re-exploraba las MISMAS ramas fallidas desde particiones
+        distintas: sin cache, materializar el conjunto de 16 nombres no terminaba
+        en mas de ocho minutos. Es sound porque `intentar` es determinista --el
+        conjunto de candidatos esta fijado al entrar-- y porque su unico efecto
+        lateral, crear el simbolo de un nombre, es idempotente.
         """
         e = sympy.sympify(e)
+        clave_memo = (sympy.srepr(e), d, permitir_nombre)
+        if clave_memo in cache_intentar:
+            return cache_intentar[clave_memo]
+        r = _intentar_crudo(e, d, permitir_nombre)
+        cache_intentar[clave_memo] = r
+        return r
+
+    def _intentar_crudo(e, d, permitir_nombre=True):
         if grado(e) <= d:
             return e
         k = sympy.srepr(sympy.expand(e))
@@ -845,8 +880,16 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
             out[w] = val
         return out
 
-    return Dioph(list(system.params), incognitas, eqs, witness=w_ext,
-                 name=name or f"{system.name} [optimo materializado]")
+    salida = Dioph(list(system.params), incognitas, eqs, witness=w_ext,
+                   name=name or f"{system.name} [optimo materializado]")
+    # Se exponen las DEFINICIONES (nombre, expresion original que representa).
+    # Re-derivarlas leyendo las ecuaciones --buscando una incognita nueva que
+    # aparezca linealmente con coeficiente 1-- funciona mientras cada ecuacion
+    # definitoria mencione un solo nombre, y deja de funcionar en cuanto la
+    # reescritura hace que una definicion se exprese en terminos de OTROS
+    # nombres. Quien las conoce sin ambiguedad es quien las creo.
+    salida.definiciones = [(w, sympy.sympify(k)) for k, w in nombres.items()]
+    return salida
 
 
 from src.analysis.dioph_calculus import Dioph          # noqa: E402  (al final: evita ciclo)

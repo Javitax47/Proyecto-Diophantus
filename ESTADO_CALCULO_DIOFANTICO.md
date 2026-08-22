@@ -720,6 +720,64 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
+### 3.2l ✅ (42, 5) CONSTRUIDO Y VERIFICADO — se iguala la cifra anunciada en 1976
+
+**La cifra publicada pasa de (44, 5) a (42, 5)**, que es exactamente el par que JSWW anunciaron en
+una frase y que nadie había exhibido. Ahora está construido, materializado a grado 2 por ecuación y
+verificado equivalente al sistema publicado.
+
+| Paso | Resultado |
+|---|---|
+| Sistema (1) publicado de JSWW | 25 incógnitas, grado 12 |
+| Aplanado óptimo **con reescritura**: 18 nombres | 43 incógnitas, grado 2 ⇒ **(44, 5)** |
+| Post-eliminar `q = h+j+wz` e `y = l+n+v` (gratis sobre ℕ) | 41 incógnitas ⇒ **(42, 5)** |
+
+**Verificación, la misma vara de siempre:**
+
+- **Equivalencia simbólica**: sustituyendo cada nombre por lo que representa, 18 ecuaciones se
+  anulan (las definitorias) y las 12 restantes recuperan exactamente las 12 originales vivas.
+  **0 faltan, 0 sobran.** Identidad polinómica, no muestreo.
+- **No-negatividad sobre ℕ**: los 18 nombres son ≥ 0; 17 por estructura y `a + u²(u²−a)`
+  demostrado ≥ 1 desde la ecuación (7) y comprobado en 3.528 ternas.
+- **Grado 2 por ecuación**, luego el generador es `1 + 2·2 = 5`.
+
+#### El defecto que había que cerrar antes: el SEXTO de este encoding
+
+La reescritura por sí sola daba una cota de 16 nombres — que era **falsa**. El materializador
+construía grado 3 con esos mismos 16, y comprobado a mano: con `m4 = e²` y `m5 = (a+1)²`,
+`e³(e+2)(a+1)² = m4²·m5 + 2·e·m4·m5`, y no hay nombre para `e³`; el grado 3 es inevitable.
+
+Causa: **la misma de siempre**. `sympy.Poly(e, *gens)` no falla cuando `e` contiene símbolos
+ajenos —los trata como **coeficientes**—, así que con marcadores dentro de las expresiones
+`_como_monomio` leía `m4²·a²` como `a²`, la ruta monomial lo partía en `a|a` y certificaba grado 2
+sobre algo de grado 4. Exigiendo explícitamente que no haya símbolos fuera de `gens`, la cota sube
+de los 16 falsos a **18 reales** — y esos 18 sí se materializan.
+
+Es la tercera vez en esta sesión que el mismo comportamiento silencioso de `Poly` produce un
+defecto, y las tres veces lo delató un resultado imposible, no la lectura del código.
+
+#### Y una convergencia que hubo que arreglar para poder verificarlo
+
+`materializar` no terminaba con reescritura activa (>8 min). Lo resolvió **memoizar `intentar`**:
+el backtracking re-exploraba las mismas ramas fallidas desde particiones distintas. Es sound porque
+`intentar` es determinista y su único efecto lateral —crear el símbolo de un nombre— es idempotente.
+Con la caché, 10 s. De paso, el pipeline publicado bajó de 18 s a 5 s.
+
+#### Qué cambia y qué no
+
+**Cambia:** el (42, 5) deja de ser una cifra anunciada y sin construcción publicada para ser un
+objeto exhibible. En el eje de grado bajo, el mejor punto construido pasa de 44 a **42 variables**.
+
+**No cambia:** sigue **sin ser un mínimo demostrado** —la cota es de la codificación, y el
+contraejemplo de §3.2i sigue en pie—; sigue descansando en que el sistema (1) de JSWW represente
+los primos; y sigue sin revisión experta. Igualar el 42 anunciado no lo convierte en récord de
+variables: JSWW ya lo habían anunciado. Lo que aporta es que **ahora existe**.
+
+**Limitación anotada:** la reescritura no siempre converge en `materializar` —para el conjunto
+libre de 17 nombres no termina en 20 minutos—, así que sigue siendo **opt-in**. El pipeline
+publicado la usa porque ahí sí converge y está verificado; el test [6], que compara tres
+configuraciones entre sí, va sin ella para ser homogéneo.
+
 ### 3.2k Reescritura COMPLETA: la cota baja de 20 a 16, y ahí se queda (por ahora)
 
 Se quitó el tope de intentos. Lo que impedía quitarlo eran tres problemas de coste, y el tercero
@@ -743,7 +801,11 @@ resultó ser el dominante y no tener nada que ver con la reescritura:
 |---|---|---|
 | Sin reescritura | 20 | 16 s |
 | Con tope de intentos | 20 | 16 s |
-| **Reescritura completa** | **16** | **24 s** |
+| **Reescritura completa** | ~~16~~ **18** | 24 s |
+
+> ⚠️ **El 16 era falso.** Lo refutó el materializador (grado 3 con esos mismos 16) y la causa fue el
+> sexto defecto del encoding, documentado en §3.2l. Corregido, la cota real es **18**, y esos 18 sí
+> se materializan y verifican: dan **(42, 5)**.
 
 Sobre el sistema con `e` eliminada la cota baja de 21 a **15**. Y **16 nombres sobre 25 incógnitas
 darían (42, 5)**, que tras post-eliminar `q` e `y` sería **(40, 5)** — por debajo del 42 anunciado.
