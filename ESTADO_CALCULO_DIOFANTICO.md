@@ -107,8 +107,24 @@ sistema real:
 | 22 | 37 | sin aplanar + eliminar `e,q,y,z` | ✅ 0 / 0 |
 
 Sobre el sistema **sin desplazar** el punto de grado 5 sale en (36, 5); la reparametrización de
-`a = A+2` lo lleva a 33. Los demás puntos son del sistema sin desplazar y con `k_optimos=1`:
-**bajarían aplicando las tres palancas**, y por eso la frontera es una **cota superior**.
+`a = A+2` lo lleva a 33. Los demás puntos de la tabla son del sistema **sin desplazar** y con
+`k_optimos=1`, así que la frontera es una **cota superior**.
+
+**Y se sabe en cuánto, porque se empezó a medir.** Un barrido con las tres palancas sobre el sistema
+desplazado da, hasta donde llegó antes de agotar el presupuesto de tiempo (cada *solve* del sistema
+desplazado cuesta ~4 min, y los grados 6–7 quedaron sin terminar):
+
+| grado | tabla publicada | con las tres palancas | estado |
+|---:|---:|---:|---|
+| 7 | 32 | **30** | medido, **sin verificar** |
+| 9 | 28 | **27** | medido, **sin verificar** |
+| 11 | 27 | **26** | medido, **sin verificar** |
+| 13 | 25 | **25** | medido, **sin verificar** |
+
+Estas cifras **no entran en la tabla de arriba** y no se presentan como resultado: les falta el
+veredicto de equivalencia, que es justamente la distinción que este apartado acaba de introducir.
+Se anotan porque decir «bajarían» sin números es más vago de lo necesario, y porque marcan dónde
+retomar. Nótese que el (25, 13) **no se mueve**: las tres palancas mejoran los grados 7–11, no el 13.
 
 > **La comprobación de equivalencia no siempre estuvo en esta tabla, y conviene decirlo.** Hasta esta
 > ronda solo se le pasaba al punto de grado 5. Los demás estaban materializados y con el grado medido
