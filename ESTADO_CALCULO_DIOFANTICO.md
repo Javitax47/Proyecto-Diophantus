@@ -1147,6 +1147,43 @@ varias veces, una sola incógnita sirve a todas.
 
 ---
 
+## 5.bis LA ESQUINA DE VARIABLES — arranque
+
+Dual exacto del aplanado: aplanar baja el grado introduciendo nombres; **eliminar quita incógnitas
+a costa de subirlo**. Sobre el sistema (1) de JSWW, cuatro incógnitas están linealmente determinadas
+con miembro derecho de **coeficientes todos positivos** —luego ≥ 0 sobre ℕ automáticamente, y la
+equisatisfacibilidad vale en las dos direcciones sin ninguna suposición—:
+
+```
+e = 2n + p + q + z          (α₂)        y = l + n + v            (α₈)
+q = h + j + w·z             (α₀)        z = (gk+2g+k+1)(h+j) + h  (α₁)
+```
+
+| Eliminaciones | Incógnitas | Grado ec. | **Generador** | Literatura |
+|---|---|---|---|---|
+| `e, q, y` | 22 | 12 | **(23, 25)** | JSWW **publican** (26, 25) — 3 variables menos, mismo grado |
+| `+ z` | 21 | 18 | **(22, 37)** | Matiyasevich 1971 **anuncia** (24, 37) — 2 menos |
+
+**Lo llamativo es lo barato que es.** Son sustituciones lineales: no hay optimización, ni SMT, ni
+nada de la maquinaria que costó esta sesión. Que no estuvieran escritas encaja con el patrón ya
+documentado —estas cifras se anunciaban, no se exhibían—, pero conviene no deducir de ahí más de lo
+que hay: **es una operación elemental**, y si algo dice es que el terreno está menos peinado de lo
+que parece.
+
+**Lo que NO mejora:** el (19, 29) que JSWW también anuncian. Por esta vía se llega a (24, 29), cinco
+por encima. Esa es la cifra a batir en esta esquina.
+
+**Dónde se agota y dónde sigue.** Tras eliminar las cuatro no quedan más eliminaciones gratis. Las
+que quedan —`l`, `m`, `p`, `x`— tienen coeficientes negativos en su miembro derecho, así que
+exigirían **demostrar su no-negatividad**, exactamente el mismo patrón que en la esquina de grado
+(§3.2n), donde una de esas demostraciones resultó ser un corolario de una línea y bajó la cifra.
+
+**Y el marco general, que no cambia:** el récord de esta esquina es **9 incógnitas / 10 variables**
+(Matiyasevich 1977), y a diferencia del (42,5) **está construido y formalizado en Mizar**. Lleva 48
+años sin moverse. Nuestra cadena propia está en 49 incógnitas. El objetivo realista no es batir 9
+sino bajar sustancialmente de ahí, y la palanca identificada sigue siendo el **Teorema de
+Combinación de Relaciones** (§6.1), aún sin implementar.
+
 ## 6. Frontera abierta (dónde retomar)
 
 ### 6.1 Hacia pocas incógnitas (esquina de 9)

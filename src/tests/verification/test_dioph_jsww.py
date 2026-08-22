@@ -436,6 +436,65 @@ def test_no_negatividad_de_los_nombres(stats):
         stats.ok()
 
 
+def test_esquina_de_variables(stats):
+    """[7] LA OTRA ESQUINA: quitar variables pagando grado.
+
+    Es el dual exacto del aplanado. Aplanar baja el grado introduciendo nombres;
+    ELIMINAR quita incognitas a costa de subirlo. El sistema (1) de JSWW tiene
+    incognitas que estan LINEALMENTE determinadas por una ecuacion, y cuatro de
+    ellas con miembro derecho de coeficientes TODOS positivos --luego >= 0 sobre N
+    automaticamente, y la equisatisfacibilidad vale en las dos direcciones sin
+    ninguna suposicion--:
+
+        e = 2n + p + q + z          (alpha_2)
+        q = h + j + w*z             (alpha_0)
+        y = l + n + v               (alpha_8)
+        z = (gk+2g+k+1)(h+j) + h    (alpha_1)
+
+    Dos puntos que salen de ahi, y los dos mejoran cifras de la literatura:
+
+      * eliminando e, q, y  -> 22 incognitas, grado 12 => GENERADOR (23, 25).
+        JSWW PUBLICAN (26, 25): mismo grado, TRES variables menos.
+      * eliminando ademas z -> 21 incognitas, grado 18 => GENERADOR (22, 37).
+        Matiyasevich 1971 anuncia (24, 37): mismo grado, DOS menos.
+
+    Lo llamativo es lo barato que es: son sustituciones lineales, no hay
+    optimizacion ni SMT. Que nadie las escribiera encaja con el patron ya
+    documentado --estas cifras se anunciaban, no se exhibian--, pero conviene no
+    deducir de ahi mas de lo que hay: es una operacion elemental.
+
+    NO mejora el (19, 29) que JSWW tambien anuncian: por esa via se llega a
+    (24, 29), cinco por encima. Esa sigue siendo la cifra a batir en esta esquina.
+    """
+    print(f"{Colors.HEADER}[7] La otra esquina: quitar variables pagando grado{Colors.ENDC}")
+    if not Z3_DISPONIBLE:
+        print("  (z3 no disponible: omitido)")
+    S = sistema(expandir=False)
+    esperado = {("e", "q", "y"): (23, 25), ("e", "q", "y", "z"): (22, 37)}
+    problemas = []
+    for combo, (v_esp, g_esp) in sorted(esperado.items(), key=lambda kv: len(kv[0])):
+        E = eliminar_lineales(S, 99, solo=list(combo))
+        hechas = sorted(str(a) for a, _ in getattr(E, "eliminadas", []))
+        gd = max_equation_degree(E)
+        variables, grado = E.cost() + 1, 1 + 2 * gd
+        ok = (variables, grado) == (v_esp, g_esp) and hechas == sorted(combo)
+        marca = Colors.OKGREEN + "OK" + Colors.ENDC if ok else Colors.FAIL + "MAL" + Colors.ENDC
+        print(f"  {marca} eliminar {'+'.join(sorted(combo)):<9} -> {E.cost()} incognitas, "
+              f"grado {gd} => GENERADOR ({variables}, {grado})")
+        if not ok:
+            problemas.append(f"{combo}: esperado ({v_esp},{g_esp}), medido ({variables},{grado})")
+    print(f"  {Colors.BOLD}(23, 25){Colors.ENDC} frente al (26, 25) PUBLICADO por JSWW: "
+          f"3 variables menos al mismo grado")
+    print(f"  {Colors.BOLD}(22, 37){Colors.ENDC} frente al (24, 37) que anuncia Matiyasevich 1971: "
+          f"2 menos")
+    print(f"  {Colors.WARN}No mejora el (19, 29) que JSWW tambien anuncian: por esta via se")
+    print(f"  llega a (24, 29). Esa sigue siendo la cifra a batir en esta esquina.{Colors.ENDC}")
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -445,6 +504,7 @@ def main():
     test_aplanado_optimo(stats)
     test_equivalencia_por_sustitucion(stats)
     test_no_negatividad_de_los_nombres(stats)
+    test_esquina_de_variables(stats)
 
     total = stats.passed + stats.failed
     print()
