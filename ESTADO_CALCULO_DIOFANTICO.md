@@ -1178,6 +1178,24 @@ que quedan —`l`, `m`, `p`, `x`— tienen coeficientes negativos en su miembro 
 exigirían **demostrar su no-negatividad**, exactamente el mismo patrón que en la esquina de grado
 (§3.2n), donde una de esas demostraciones resultó ser un corolario de una línea y bajó la cifra.
 
+**Intento de desbloquear las cuatro restantes: FALLIDO, con la frontera medida.** Eliminar `m` o
+`x` exigiría demostrar `a > n` y `a > p` —las mismas condiciones que bloquean la esquina de grado—,
+así que se atacó con SMT sobre subsistemas, que es lo tratable:
+
+| Hipótesis | `a > n` | `a > p` |
+|---|---|---|
+| 6 ecuaciones (α₅,α₈,α₉,α₁₀,α₁₁,α₁₂) | contraejemplo `a=0` | contraejemplo `a=0` |
+| las mismas + `a ≥ 2` | contraejemplo `a=2, n=2, p=3` | contraejemplo `a=2, n=0, p=1` |
+| **+ α₃ (7 ecuaciones)** | **Z3 no concluye** | **Z3 no concluye** |
+
+Lectura correcta, que no es «es falso»: los contraejemplos son soluciones **del subsistema**, no del
+sistema completo —el primero viola α₃ de inmediato—. Lo que dicen es que esas seis ecuaciones **no
+bastan** para forzarlo. Y en cuanto se añade la séptima, Z3 deja de concluir en ninguna dirección.
+
+La frontera es nítida: **con 6 ecuaciones hay contraejemplo, con 7 no hay respuesta**. La vía queda
+**bloqueada por herramienta, no refutada**. Si se quiere abrir, hay que derivar `a > n` a mano de las
+ecuaciones del sistema completo, igual que se hizo con `a + u²(u²−a) ≥ 1`.
+
 **Y el marco general, que no cambia:** el récord de esta esquina es **9 incógnitas / 10 variables**
 (Matiyasevich 1977), y a diferencia del (42,5) **está construido y formalizado en Mizar**. Lleva 48
 años sin moverse. Nuestra cadena propia está en 49 incógnitas. El objetivo realista no es batir 9
