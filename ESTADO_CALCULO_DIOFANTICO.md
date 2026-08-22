@@ -5,11 +5,15 @@
 > y cuál es el siguiente paso.
 > Última actualización: agosto 2026.
 
-> **Marcador actual, en una línea:** generador de primos **(33 variables, grado 5)**, construido
-> desde el sistema (1) publicado de Jones–Sato–Wada–Wiens y verificado simbólicamente — **nueve por
-> debajo** del (42, 5) que ellos anunciaron en una frase en 1976 y nunca escribieron. Detalle,
-> demostraciones y frontera completa en **§3.2p** y **§3.2o**. No es un mínimo, y por qué no lo es
-> está escrito ahí mismo.
+> **Marcador actual, en dos líneas.** Una **frontera de nueve pares**, todos construidos desde el
+> sistema (1) publicado de Jones–Sato–Wada–Wiens y **todos verificados simbólicamente** (0 faltan /
+> 0 sobran):
+>
+> `(33,5) (30,7) (27,9) (26,11) (25,13) (24,15) (23,25)` — y `(22,29) (21,37)`, dominados.
+>
+> El **(33, 5)** está **nueve por debajo** del (42, 5) que JSWW anunciaron en una frase y nunca
+> escribieron. El **(25, 13)** y el **(24, 15)** dominan en **los dos ejes** al (26, 25) que sí
+> imprimieron. Ninguno es un mínimo, y por qué no lo es está escrito en el informe (**§3**).
 
 ---
 
@@ -96,68 +100,65 @@ el que evita perder el tiempo, y es de §1.
 construcción propia— y todos están construidos, materializados y con el grado medido sobre el
 sistema real:
 
-| variables | grado | receta | equivalencia verificada |
+| variables | grado | receta | equivalencia |
 |---:|---:|---|---|
-| **33** | **5** | `a=A+2` + aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0 faltan / 0 sobran |
-| **32** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0 / 0 |
-| **28** | **9** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0 / 0 |
-| **27** | **11** | aplanar a 5 + eliminar `e,q,y,z` | ✅ 0 / 0 |
-| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ 0 / 0 |
+| **33** | **5** | aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0 faltan / 0 sobran |
+| **30** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0 / 0 |
+| **27** | **9** | aplanar a 4 + eliminar `q,y,z` | ✅ 0 / 0 |
+| **26** | **11** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0 / 0 |
+| **25** | **13** | aplanar a 4 + eliminar `e,l,q,y,z` | ✅ 0 / 0 |
+| **24** | **15** | aplanar a 6 + eliminar `l,q,y,z` | ✅ 0 / 0 |
 | **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0 / 0 |
-| 22 | 37 | sin aplanar + eliminar `e,q,y,z` | ✅ 0 / 0 |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ 0 / 0 |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ 0 / 0 |
 
-Sobre el sistema **sin desplazar** el punto de grado 5 sale en (36, 5); la reparametrización de
-`a = A+2` lo lleva a 33. Los demás puntos de la tabla son del sistema **sin desplazar** y con
-`k_optimos=1`, así que la frontera es una **cota superior**.
+Todos sobre el sistema **desplazado** (`a = A+2`, con la cota demostrada de §3.2o) y con
+`k_optimos=1`. Las dos últimas filas van sin negrita porque el **(19, 29)** que JSWW anuncian las
+domina en los dos ejes; se dejan porque medirlas costó lo mismo y ocultarlas sería quedarse solo con
+lo que favorece.
 
-**Y se sabe en cuánto, porque se empezó a medir.** Un barrido con las tres palancas sobre el sistema
-desplazado da, hasta donde llegó antes de agotar el presupuesto de tiempo (cada *solve* del sistema
-desplazado cuesta ~4 min, y los grados 6–7 quedaron sin terminar):
-
-| grado | tabla publicada | con las tres palancas | estado |
-|---:|---:|---:|---|
-| 7 | 32 | **30** | medido, **sin verificar** |
-| 9 | 28 | **27** | medido, **sin verificar** |
-| 11 | 27 | **26** | medido, **sin verificar** |
-| 13 | 25 | **25** | medido, **sin verificar** |
-
-Estas cifras **no entran en la tabla de arriba** y no se presentan como resultado: les falta el
-veredicto de equivalencia, que es justamente la distinción que este apartado acaba de introducir.
-Se anotan porque decir «bajarían» sin números es más vago de lo necesario, y porque marcan dónde
-retomar. Nótese que el (25, 13) **no se mueve**: las tres palancas mejoran los grados 7–11, no el 13.
+**Sigue siendo una cota superior**, no un mínimo: subir `k_optimos` solo puede mejorarla, y el
+catálogo del optimizador ya se ha quedado corto tres veces.
 
 > **La comprobación de equivalencia no siempre estuvo en esta tabla, y conviene decirlo.** Hasta esta
 > ronda solo se le pasaba al punto de grado 5. Los demás estaban materializados y con el grado medido
 > —eso es real— pero **sin verificar que fueran el mismo objeto** que el sistema (1). Publicarlos en
 > la misma tabla, sin distinguir, era exactamente la clase de mezcla que este proyecto ya cometió una
-> vez. Ahora `barrido_pareto` verifica **cada punto que publica**, y la columna de arriba es su
-> veredicto.
+> vez. Ahora `barrido_pareto` verifica **cada punto que publica**, `test_dioph_jsww [9]` falla si
+> alguno no equivale, y la última columna es su veredicto.
 
-### Los dos resultados, y por qué son de tipo distinto
+### Los resultados, y por qué son de tipos distintos
 
-Conviene separarlos, porque no dicen lo mismo:
+No todos dicen lo mismo, y mezclarlos sería vender más de lo que hay:
 
-**(33, 5) — nueve por debajo de una cifra anunciada.** El (42, 5) de JSWW es *una frase* en la página
-450; nunca escribieron el polinomio. Sobre la recta de grado 5, 33 variables es el menor valor que
-consta en ninguna parte. Es el punto más llamativo, pero lo que bate es una cifra **no exhibida**.
+**(33, 5) — nueve por debajo de una cifra ANUNCIADA.** El (42, 5) de JSWW es *una frase* en la
+página 450; nunca escribieron el polinomio. Sobre la recta de grado 5, 33 variables es el menor
+valor que consta en ninguna parte. Es el punto más llamativo, pero lo que bate es una cifra **no
+exhibida**.
 
-**(25, 13) — domina en LOS DOS EJES a una cifra publicada.** El (26, 25) es el polinomio que JSWW
-sí imprimieron, el que se cita desde hace cincuenta años. `25 < 26` y `13 < 25`: no hay que elegir
-eje, es mejor en ambos. **Es el único punto de esta frontera que domina estrictamente a un par
-exhibido**, y en ese sentido es un resultado de una clase distinta —y probablemente más sólida— que
-el de grado 5.
+**(24, 15) y (25, 13) — dominan en LOS DOS EJES a una cifra PUBLICADA.** El (26, 25) es el
+polinomio que JSWW sí imprimieron, el que se cita desde hace cincuenta años:
 
-**Lo que (25, 13) NO es: «el récord overall».** En una frontera de Pareto esa expresión no está
-definida, y aquí concretamente no domina a `(19, 29)` (19 < 25) ni a `(10, >6.000)` (10 < 25). Sigue
-habiendo pares con **menos variables**; lo que no hay es ninguno que gane a la vez en variables y
-grado al (26, 25).
+```
+(26, 25) publicado   vs   (25, 13)     una variable menos y doce grados menos
+(26, 25) publicado   vs   (24, 15)     dos variables menos y diez grados menos
+```
 
-**Y su garantía tuvo que ponerse al día.** Hasta esta ronda, el (25, 13) estaba materializado y con
-el grado medido, pero **la comprobación de equivalencia solo se le pasaba al punto de grado 5**. O
-sea: figuraba en la misma tabla que una cifra verificada teniendo una garantía menor, sin que la
-tabla lo dijera. Corregido en dos pasos: `verificar_equivalencia` se extrajo a función reutilizable,
-y `barrido_pareto` la aplica ahora a **cada punto que publica**. Veredicto del (25, 13): **0 faltan,
-0 sobran** — mismo nivel que el de grado 5.
+No hay que elegir eje: son mejores en ambos. **Es una afirmación de clase distinta —y más sólida—
+que la del grado 5**, porque el objeto que superan existe, está impreso y se puede leer.
+
+*(El (23, 25) también lo supera, pero solo en un eje: 23 < 26 con el mismo grado.)*
+
+**Lo que estos puntos NO son: «el récord overall».** En una frontera de Pareto esa expresión no está
+definida, y aquí concretamente ninguno domina a `(19, 29)` ni a `(10, >6.000)`: **siguen existiendo
+pares con menos variables**. Lo que no existe es ninguno que gane a la vez en variables y grado al
+(26, 25).
+
+**Y su garantía tuvo que ponerse al día.** Hasta esta ronda, todos los puntos salvo el de grado 5
+estaban materializados y con el grado medido, pero **sin la comprobación de equivalencia**. O sea:
+figuraban en la misma tabla que una cifra verificada teniendo una garantía menor, sin que la tabla
+lo dijera. Corregido: `verificar_equivalencia` extraída a función reutilizable y aplicada por
+`barrido_pareto` a **cada punto que publica**. Los nueve puntos de la tabla: **0 faltan, 0 sobran**.
 
 ### Cómo se hizo: cinco palancas
 
@@ -313,7 +314,16 @@ optimización con cotas. Eso no se podía hacer a mano.
 ### Qué queda abierto
 
 Ninguna ruta está **refutada**; todas están bloqueadas por matemática que falta o por herramienta.
-Inventario detallado en §3.2r. Los dos cuellos reales:
+Inventario detallado en §3.2r.
+
+**Rutas que esta ronda cerró con medida** (no con suposición, porque un catálogo incompleto ya costó
+tres cifras): la **forma agrupada** del paper da exactamente las mismas cifras que la desarrollada
+—las subsumas ya recuperan `2a(n+1) = 2an + 2a`—; **subir el tope de subsumas** de 6 a 8 sumandos
+también, a 5× el tiempo; y **demostrar más no-negatividades no baja el aplanado** (sin el filtro sale
+el mismo número de nombres). Las tres estaban en la lista de «pendientes prometedores» y ya no lo
+están.
+
+Los dos cuellos reales que quedan:
 
 **El obstáculo matemático es uno solo, y bloquea tres eliminaciones.** Los dos **módulos de Davis**
 `2a(n+1)−(n+1)²−1` y `2a(p+1)−(p+1)²−1` de las ecuaciones (12) y (13). Son positivos en la
@@ -1163,29 +1173,31 @@ algo que decir. Pero hay **dos palancas continuas y opuestas**: aplanar a grado 
 un generador de grado `1+2d` y cuanto más alto `d`, menos nombres hacen falta; eliminar una incógnita
 lineal quita una variable y sube el grado. Barrerlas juntas da una **curva**:
 
-| variables | grado | receta |
-|---:|---:|---|
-| **33** | **5** | `a = A+2` + aplanado a 2 forzando definiciones + eliminar `e,q,y,z` |
-| **32** | **7** | aplanado a 3 + eliminar `e,q,y` |
-| **29** | **9** | aplanado a 4 + eliminar `q,y,z` |
-| **28** | **11** | aplanado a 5 + eliminar `q,y,z` |
-| **25** | **13** | aplanado a 6 + eliminar `q,y,z` |
-| **23** | **25** | sin aplanar + eliminar `q,y,z` |
-| 22 | 37 | sin aplanar + eliminar `e,q,y,z` |
+| variables | grado | receta | equivalencia |
+|---:|---:|---|---|
+| **33** | **5** | aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0/0 |
+| **30** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0/0 |
+| **27** | **9** | aplanar a 4 + eliminar `q,y,z` | ✅ 0/0 |
+| **26** | **11** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0/0 |
+| **25** | **13** | aplanar a 4 + eliminar `e,l,q,y,z` | ✅ 0/0 |
+| **24** | **15** | aplanar a 6 + eliminar `l,q,y,z` | ✅ 0/0 |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0/0 |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ 0/0 |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ 0/0 |
 
-Salvo el de grado 5, los puntos se midieron sobre el sistema **sin desplazar** y con `k_optimos=1`
-(sobre el sistema sin desplazar, el grado 5 sale en **(36, 5)**; la reparametrización de §3.2o lo
-lleva a 33). Los intermedios **no** se han vuelto a medir con las tres palancas: bajarían también,
-y por eso la frontera que se publica es una **cota superior**, nunca un mínimo.
+Todos sobre el sistema **desplazado** (`a = A+2`, §3.2o) y con `k_optimos=1`. Sobre el sistema sin
+desplazar el grado 5 sale en (36, 5) y los intermedios en (32,7), (28,9), (27,11), (25,13): la
+reparametrización paga en **toda** la curva, no solo en la esquina.
 
 Contra la literatura (`(10, >6000)`, `(12, 13697)`, `(19, 29)`, `(26, 25)`, `(42, 5)`):
 
 * **(33, 5)** — nueve por debajo del (42, 5) anunciado por JSWW y nunca escrito;
-* **(32, 7)**, **(29, 9)**, **(28, 11)**, **(25, 13)** — zona **literalmente vacía** en la literatura: entre el
-  grado 5 y el grado 25 no hay ningún par publicado;
-* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes;
-* **(23, 25)** — tres variables menos que el (26,25) publicado, al mismo grado;
-* `(22, 37)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso no se
+* **(30, 7)**, **(27, 9)**, **(26, 11)**, **(25, 13)**, **(24, 15)** — zona **literalmente vacía** en
+  la literatura: entre el grado 5 y el grado 25 no hay ningún par publicado;
+* **(25, 13)** y **(24, 15)** dominan al **(26, 25) publicado** en los **dos** ejes — una y dos
+  variables menos, y doce y diez grados menos;
+* **(23, 25)** — tres variables menos que el (26, 25), al mismo grado;
+* `(22, 29)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso no se
   presentan como récord. Se dejan en la tabla porque medirlos costó lo mismo y ocultarlos sería
   quedarse solo con lo que favorece.
 

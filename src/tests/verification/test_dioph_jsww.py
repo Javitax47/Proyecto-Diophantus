@@ -633,10 +633,19 @@ def test_frontera_de_pareto(stats):
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
     S = sistema(expandir=False)
+    # SOBRE EL SISTEMA SIN DESPLAZAR, y hay que decirlo porque la frontera que
+    # PUBLICA el informe es la del sistema desplazado y es mejor punto por punto
+    # --(30,7), (27,9), (26,11), (25,13), (24,15) frente a (32,7), (28,9), (27,11),
+    # (25,13)--. Aqui se mide la version rapida porque cada solve del sistema
+    # desplazado cuesta ~4 min y la suite no terminaria. Lo que este test protege
+    # es la MAQUINARIA: que cada punto publicado equivalga al original y que
+    # ninguno este dominado por la literatura. La cifra concreta de portada la
+    # miden [4] y [5], y esos si van sobre el sistema desplazado.
+    #
     # `k_optimos=1` mantiene la suite ejecutable: cada grado ya corre DOS tandas
-    # (libre y forzando definiciones) y cada solve cuesta ~30 s. Subirlo solo puede
-    # mejorar los puntos, nunca empeorarlos, asi que la frontera que sale es una
-    # cota superior -- que es justo lo que se afirma de ella.
+    # (libre y forzando definiciones). Subirlo solo puede mejorar los puntos, nunca
+    # empeorarlos, asi que la frontera que sale es una cota superior -- que es justo
+    # lo que se afirma de ella.
     frontera = barrido_pareto(S, grados=(2, 3, 4, 5, 6), k_optimos=1,
                               demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     #: pares PUBLICADOS o anunciados, para comprobar dominancia.

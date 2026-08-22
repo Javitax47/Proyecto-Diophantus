@@ -31,6 +31,16 @@ RESULTADOS MEDIDOS sobre el sistema de Jones-Sato-Wada-Wiens (1976):
 | con `a = A+2` y forzando definiciones |  16 |       |           |   16 |
 | ... y post-eliminando e, q, y, z |        |    32 | **(33,5)**|      |
 
+Y no es un punto suelto: `barrido_pareto` da la CURVA entera, cada punto con su
+veredicto de equivalencia (0 faltan / 0 sobran):
+
+    (33,5) (30,7) (27,9) (26,11) (25,13) (24,15) (23,25) [(22,29) (21,37)]
+
+Los dos ultimos van entre corchetes: el (19,29) que JSWW anuncian los domina en
+los dos ejes. Los cinco de en medio caen donde la literatura no tiene NADA --entre
+el grado 5 y el 25 no hay ningun par publicado--, y el (25,13) y el (24,15)
+dominan en LOS DOS EJES al (26,25) que JSWW si imprimieron.
+
 TRES VECES SE CREYO QUE ESTO ESTABA EN EL OPTIMO, Y LAS TRES ERA EL CATALOGO.
 Primero con monomios solos (46). Luego anadiendo los nodos del arbol (17). Y la
 tercera vez el aviso fue aritmetico y no habia forma de discutirlo: JSWW pasan de
