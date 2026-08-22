@@ -720,6 +720,50 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
+### 3.2k Reescritura COMPLETA: la cota baja de 20 a 16, y ahí se queda (por ahora)
+
+Se quitó el tope de intentos. Lo que impedía quitarlo eran tres problemas de coste, y el tercero
+resultó ser el dominante y no tener nada que ver con la reescritura:
+
+1. **Filtro exacto por monomio líder.** La regla `c → marca` dispara si y solo si algún monomio de
+   `e` es divisible por el líder de `c`. Comprobarlo cuesta comparar vectores de exponentes;
+   descubrirlo llamando a `sympy.reduced` costaba cuatro órdenes de magnitud más. Corta el 87 %
+   de las llamadas (728 → 91 pares sobre las ecuaciones de partida).
+2. **No reescribir lo ya reescrito.** `sympy.Poly(expr, *gens)` **no falla** cuando `expr` contiene
+   un símbolo ajeno: lo trata como **coeficiente**. Por eso la ruta se re-aplicaba a sus propios
+   resultados sin fondo —7.215 llamadas en 100 s sin terminar de construir— y además el test de
+   divisibilidad sobre esos monomios no significaba lo que parecía.
+3. **`grado` memoizado.** Este era el gordo, y no era de la reescritura: `grado` disparaba
+   **310.923 `expand` y 282.348 `Poly`**, el 39 % del tiempo. Memoizarla dejó las llamadas a `Poly`
+   en 27.690 y es lo que hizo viable todo lo demás. De paso, el pipeline publicado pasó de 18 s a 8 s.
+
+**Resultado, con la restricción de no-negatividad puesta (que es la que cuenta):**
+
+| | Nombres | Tiempo |
+|---|---|---|
+| Sin reescritura | 20 | 16 s |
+| Con tope de intentos | 20 | 16 s |
+| **Reescritura completa** | **16** | **24 s** |
+
+Sobre el sistema con `e` eliminada la cota baja de 21 a **15**. Y **16 nombres sobre 25 incógnitas
+darían (42, 5)**, que tras post-eliminar `q` e `y` sería **(40, 5)** — por debajo del 42 anunciado.
+
+#### Pero 16 es una COTA, no una cifra
+
+`materializar` **no consigue construir** ese conjunto de 16 en un tiempo utilizable: más de ocho
+minutos sin terminar, incluso tras trasladarle las tres optimizaciones. Y la regla de esta casa no
+cambia porque el número sea atractivo: **un conjunto que no se puede materializar no se puede
+verificar, y lo que no se verifica no entra en la cifra**. La publicada sigue siendo **(44, 5)**.
+
+Es exactamente la misma disciplina que retiró el (41,5) y el (40,5) en agosto, aplicada esta vez a
+un número que nos favorecía. La diferencia entre una cota y un resultado es precisamente que el
+segundo se puede exhibir.
+
+**Dónde está el bloqueo ahora**, ya acotado: no en el optimizador —que certifica 16 en 24 s— sino en
+`materializar`, cuya búsqueda con reescritura activa explora un árbol que no converge. Es el mismo
+tipo de problema que ya se resolvió en el optimizador con precomputos y filtros, así que la vía
+está abierta; simplemente no se ha completado.
+
 **Y la siguiente vía, ya sondeada y descartada tal cual.** Se probó sustituir en el ÁRBOL en vez de
 dividir, que era lo natural tras ver que `sympy.div` desarrolla. No funciona por sí sola:
 `E³.subs(E², s)` **no dispara** —sympy no sustituye potencias parciales— y `e.subs(E, s)` sí, pero

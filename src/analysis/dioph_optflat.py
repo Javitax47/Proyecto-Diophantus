@@ -188,6 +188,33 @@ def _monomio_expr(expo, gens):
     return m
 
 
+def _monomio_lider(c, gens):
+    """Monomio lider de `c` en grevlex, o None si no es polinomio en `gens`.
+
+    Sirve de FILTRO EXACTO: la reduccion por la regla `c -> marca` dispara si y
+    solo si algun monomio de `e` es divisible por este. Comprobarlo cuesta una
+    comparacion de vectores de exponentes; llamar a `sympy.reduced` para
+    descubrir que no dispara cuesta cuatro ordenes de magnitud mas. Con este
+    filtro se puede quitar el tope de intentos y hacer la ruta COMPLETA.
+    """
+    try:
+        poly = sympy.Poly(sympy.expand(c), *gens)
+    except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+        return None
+    monoms = poly.monoms(order='grevlex')
+    return monoms[0] if monoms else None
+
+
+def _puede_disparar(monoms_e, lm_c):
+    """Algun monomio de `e` es divisible por el lider de `c`?"""
+    if lm_c is None:
+        return False
+    for m in monoms_e:
+        if all(a >= b for a, b in zip(m, lm_c)):
+            return True
+    return False
+
+
 def _reescribir(e, c, gens, marca):
     """`e` reescrita como polinomio en `marca`, donde `marca` representa a `c`. O None.
 
@@ -335,7 +362,19 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
     # cuesta un nombre, y por eso entra en los generadores del calculo de grado.
     marca = {}
 
+    cache_grado = {}
+
     def grado(e):
+        # MEMOIZADO. Sin esto, `grado` disparaba 310.923 `expand` y 282.348 `Poly`
+        # --el 39% del tiempo, mas que la propia reescritura-- porque el encoding
+        # la llama por cada nodo, cada candidato y cada nivel de grado. Es la
+        # optimizacion que hace viable la ruta completa; el resto eran sintomas.
+        clave = sympy.srepr(e)
+        if clave not in cache_grado:
+            cache_grado[clave] = _grado_crudo(e)
+        return cache_grado[clave]
+
+    def _grado_crudo(e):
         e = sympy.expand(e)
         if getattr(e, "is_number", False):
             return 0
@@ -392,9 +431,29 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
     for i, c in enumerate(orden):
         marca[c] = sympy.Symbol("_m%d" % i)
     # Candidatos ordenados por grado DESCENDENTE: reescribir con el nombre mas
-    # grande que encaje es lo que mas baja el grado, y `_reescribir` es caro
-    # (reduccion polinomica), asi que se prueban pocos y los mejores primero.
+    # grande que encaje es lo que mas baja el grado.
     orden_reesc = sorted(orden, key=lambda c: -grado(c))
+    # PRECOMPUTOS que hacen viable la ruta COMPLETA (sin tope de intentos):
+    # el monomio lider de cada candidato --filtro exacto de si la regla dispara--
+    # y el grado, ambos calculados UNA vez en vez de por cada nodo.
+    # SOLO CANDIDATOS COMPUESTOS. Reescribir con un candidato que ya es un
+    # MONOMIO no aporta nada: partir el vector de exponentes sobre los
+    # generadores --la ruta monomial-- da exactamente las mismas reducciones. No
+    # es una restriccion, es quitar trabajo duplicado; y es lo que hace viable la
+    # version sin tope, porque los ~380 monomios candidatos eran casi toda la
+    # ramificacion. Lo que la reescritura aporta en exclusiva son los candidatos
+    # COMPUESTOS --los que contienen sumas--, que es justo donde el aplanado por
+    # particion de factores se queda corto.
+    orden_reesc = [c for c in orden_reesc if _como_monomio(c, gens) is None]
+    lider = {c: _monomio_lider(c, gens) for c in orden_reesc}
+    grado_c = {c: grado(c) for c in orden_reesc}
+    memo_reesc = {}
+
+    def reescribir_memo(e, c):
+        clave = (sympy.srepr(e), sympy.srepr(c))
+        if clave not in memo_reesc:
+            memo_reesc[clave] = _reescribir(e, c, gens, marca[c])
+        return memo_reesc[clave]
 
     opt = z3.Optimize()
     opt.set("timeout", timeout_s * 1000)
@@ -492,17 +551,35 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
             # verdad, a cambio de que la ruta sea INCOMPLETA -- y eso hay que
             # decirlo, porque significa que la cota resultante sigue siendo del
             # encoding y no del problema.
-            intentos = 0
+            # RUTA COMPLETA: se prueban TODOS los candidatos que pueden disparar.
+            # Antes habia un tope de intentos --y con el, la cota seguia siendo del
+            # encoding--. Se ha podido quitar porque el filtro por monomio lider es
+            # EXACTO: la regla `c -> marca` dispara si y solo si algun monomio de
+            # `e` es divisible por el lider de `c`. Comprobarlo cuesta comparar
+            # vectores de exponentes; descubrirlo llamando a `sympy.reduced` costaba
+            # cuatro ordenes de magnitud mas, y era lo que obligaba al tope.
+            # NO reescribir lo ya reescrito. `sympy.Poly(expr, *gens)` NO falla
+            # cuando `expr` contiene un marcador: lo trata como COEFICIENTE. Por
+            # eso la ruta se re-aplicaba a sus propios resultados sin fondo --7.215
+            # llamadas en 100 s sin terminar de construir el encoding-- y ademas el
+            # test de divisibilidad sobre esos monomios no significaba lo que
+            # parecia. Limitar a una reescritura por rama corta el arbol y deja la
+            # regla con la semantica que se penso.
+            if any(m in e.free_symbols for m in marca.values()):
+                monoms_e = []
+            else:
+                try:
+                    monoms_e = sympy.Poly(sympy.expand(e), *gens).monoms(order='grevlex')
+                except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+                    monoms_e = []
             for c in orden_reesc:
-                if intentos >= tope_reescritura:
-                    break
                 if c is e or not (c.free_symbols <= fs_e):
                     continue
-                gc = grado(c)
-                if gc < 2 or gc > gd:
+                if not (2 <= grado_c[c] <= gd):
                     continue
-                intentos += 1
-                r = _reescribir(e, c, gens, marca[c])
+                if not _puede_disparar(monoms_e, lider[c]):
+                    continue
+                r = reescribir_memo(e, c)
                 if r is None or grado(r) >= gd:
                     continue          # sin progreso: la recursion no terminaria
                 ops.append(z3.And(x[c], R(r, d)))
@@ -562,7 +639,20 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     """
     gens = list(system.params) + list(system.unknowns)
 
+    cache_grado = {}
+    marcadores = set()
+
     def grado(e):
+        # MEMOIZADO por el mismo motivo que en el optimizador: sin cache, la ruta
+        # de reescritura no llegaba a materializar el sistema completo. `grado` se
+        # llama por cada nodo y cada candidato, y cada llamada hacia `expand` +
+        # `Poly`.
+        clave = sympy.srepr(e)
+        if clave not in cache_grado:
+            cache_grado[clave] = _grado_crudo(e)
+        return cache_grado[clave]
+
+    def _grado_crudo(e):
         e = sympy.expand(e)
         if getattr(e, "is_number", False):
             return 0
@@ -591,8 +681,16 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
         if k not in nombres:
             w = sympy.Symbol("m%d" % (len(nombres) + 1), integer=True)
             nombres[k] = w
+            marcadores.add(w)
             defs.append((w, c))
         return nombres[k]
+
+    # PRECOMPUTOS de la ruta de reescritura: orden, grado y monomio lider de cada
+    # candidato, UNA vez. Recalcularlos por nodo construia un `Poly` por candidato
+    # y llamada, y era lo que impedia materializar el sistema completo.
+    reesc_orden = sorted(elegidos, key=lambda t: -grado(t))
+    reesc_grado = {c: grado(c) for c in reesc_orden}
+    reesc_lider = {c: _monomio_lider(c, gens) for c in reesc_orden}
 
     def intentar(e, d, permitir_nombre=True):
         """Reduce `e` a grado <= d, o devuelve None si no puede.
@@ -679,11 +777,26 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
             # `_reescribir`, que es caro. Sin esto, materializar el sistema de
             # JSWW no terminaba: se reducia con candidatos triviales primero y
             # se reintentaba el trabajo caro una y otra vez.
-            for c in sorted(elegidos_expr, key=lambda t: -grado(t)):
+            # MISMO FILTRO EXACTO que en el optimizador: la regla `c -> marca`
+            # dispara si y solo si algun monomio de `e` es divisible por el lider
+            # de `c`. Sin el, el materializador llamaba a `sympy.reduced` por cada
+            # par y no terminaba de construir el sistema completo.
+            if any(m in e.free_symbols for m in marcadores):
+                monoms_e = []
+            else:
+                try:
+                    monoms_e = sympy.Poly(sympy.expand(e), *gens).monoms(order='grevlex')
+                except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+                    monoms_e = []
+            if not monoms_e:
+                return None
+            for c in reesc_orden:
                 if c is e or not (c.free_symbols <= fs_e):
                     continue
-                gc = grado(c)
+                gc = reesc_grado[c]
                 if gc < 2 or gc > gd or sympy.expand(c - e) == 0:
+                    continue
+                if not _puede_disparar(monoms_e, reesc_lider[c]):
                     continue
                 nc = intentar(c, 1)
                 if nc is None:
