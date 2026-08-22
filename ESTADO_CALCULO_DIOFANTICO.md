@@ -1275,7 +1275,20 @@ Tres cosas que se midieron y que ya **no** hay que reintentar:
    búsqueda en vez de sortearla. La enumeración se conserva porque es lo que impide que la cifra
    dependa del modelo que devuelva Z3 ese día — que es como salieron (36,5) y (38,5) de dos tests
    con los mismos argumentos.
-3. **Pre-eliminar antes de aplanar es peor, siempre.** Medido de nuevo tras corregir el catálogo:
+3. **La forma AGRUPADA del paper no aporta nada.** JSWW escriben `b(2a(n+1) − (n+1)² − 1)` con
+   `(n+1)` agrupado; nosotros lo guardábamos desarrollado, y estaba anotado como sospechoso —la
+   forma agrupada expone `(n+1)` y `(n+1)²` como subexpresiones nombrables, y `(n+1)²` ya hace falta
+   en la ecuación (4)—. Medido con el catálogo actual: **exactamente las mismas cifras**, 15 nombres
+   → (38,5) libre y 16 → (36,5) forzando. La razón es que las **subsumas ya recuperan** lo que la
+   agrupación exponía: `2a(n+1) = 2an + 2a` es una subsuma del desarrollo. La sospecha era correcta
+   en 2025 y quedó obsoleta al arreglar el catálogo.
+4. **Subir el tope de las subsumas NO aporta.** `_nodos` corta en `Add` de 6 sumandos porque las
+   subsumas son `2ⁿ`. Como el catálogo incompleto ya costó tres cifras, había que medirlo y no
+   suponerlo: con tope 6 salen 16 nombres → **(36, 5)**; con tope 8, **exactamente lo mismo**, a
+   **5× el tiempo** (50 s → 257 s). Tope 10 no se ejecutó: con 8 ya costaba cinco veces más para
+   cero ganancia, y decirlo es más honesto que dejarlo corriendo una hora. Conclusión: el espacio de
+   subsumas está **saturado** en este sistema; si al catálogo aún le falta algo, no es por ahí.
+5. **Pre-eliminar antes de aplanar es peor, siempre.** Medido de nuevo tras corregir el catálogo:
    pre-eliminar `l` sobre el sistema desplazado sube a 21 nombres y el resultado final es peor. Lo
    que paga es eliminar **después**.
 

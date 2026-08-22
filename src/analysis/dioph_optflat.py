@@ -371,7 +371,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                               solo_no_negativos=False, demostrados=(),
                               reescritura=False, tope_reescritura=8,
                               excluir=(), sumas_parciales=True, semilla=None,
-                              forzar=()):
+                              forzar=(), tope_suma=6):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     AVISO DE COHERENCIA, aprendido a base de romperlo dos veces: `reescritura`
@@ -464,7 +464,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     cand = set()
     for e in system.eqs:
-        _nodos(e, cand, sumas_parciales=sumas_parciales)
+        _nodos(e, cand, sumas_parciales=sumas_parciales, tope_suma=tope_suma)
     # UNION DE LOS DOS ESPACIOS. Solo con nodos del arbol el optimo salia 51
     # variables, PEOR que la ruta arbol+monomios (47): faltaban monomios utiles
     # que no son nodos de ningun arbol (`a*n`, `k**2`, `l*p`...). Y solo con
