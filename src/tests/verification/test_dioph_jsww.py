@@ -408,7 +408,7 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.BOLD}({g_dem['variables']}, {g_dem['grado']}){Colors.ENDC} "
           f"estructura + la demostrada -- {Colors.OKGREEN}sale gratis{Colors.ENDC}")
     print(f"  {Colors.WARN}Estas tres van SIN reescritura, para ser homogeneas entre "
-          f"si. La cifra PUBLICADA la mide [4] y es (42, 5).{Colors.ENDC}")
+          f"si. La cifra PUBLICADA la mide [4] y es (41, 5).{Colors.ENDC}")
 
     problemas = []
     if fallos:

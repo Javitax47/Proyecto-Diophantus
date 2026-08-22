@@ -117,7 +117,24 @@ ECUACIONES_AGRUPADAS = [
 #: positiva en la solucion que construyen JSWW porque un modulo lo es, pero eso
 #: descansa en SU construccion y aqui no se demuestra. Dejarla fuera cuesta lo que
 #: cueste; resulta que no cuesta nada.
-NO_NEGATIVOS_DEMOSTRADOS = ("a + u**2*(-a + u**2)",)
+#: Expresiones que NO son >= 0 por estructura (tienen coeficientes negativos) pero
+#: SI lo son sobre las soluciones del sistema, con demostracion.
+#:
+#:  1. `a + u^2(u^2-a) >= 1`. De la ec. (7), `u^2 = 16 r^2 y^4 (a^2-1) + 1`:
+#:     * a = 0 -> u^2 = 1-16r^2y^4 >= 0 obliga a ry = 0, luego u = 1 y vale 1;
+#:     * a = 1 -> u^2 = 1, vale 1;
+#:     * a >= 2 y ry = 0 -> u = 1, vale a + (1-a) = 1;
+#:     * a >= 2 y ry >= 1 -> como a^2-1 >= a, sale u^2 >= 16a > a, luego
+#:       u^2 - a >= 1 y el total es >= a+1 > 0.
+#:     Comprobado ademas en 3.528 ternas (a,r,y) que satisfacen la ec. (7).
+#:
+#:  2. `(a + u^2(u^2-a))^2 - 1 >= 0`. Corolario inmediato de (1): si t >= 1
+#:     entonces t^2 - 1 >= 0. No cuesta demostracion nueva, solo darse cuenta --y
+#:     estaba en la lista de "exige demostracion" por no mirarlo.
+NO_NEGATIVOS_DEMOSTRADOS = (
+    "a + u**2*(-a + u**2)",
+    "(a + u**2*(-a + u**2))**2 - 1",
+)
 
 INCOGNITAS = [a, b, c, d, e, f, g, h, i, j, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z]
 PARAMETRO = k

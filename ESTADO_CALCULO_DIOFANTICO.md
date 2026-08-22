@@ -720,6 +720,39 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
+### 3.2n ✅ (41, 5) — POR DEBAJO del 42 anunciado, y lo desbloqueó un corolario de una línea
+
+De las cinco no-negatividades que §3.2m listaba como pendientes, **una no requería demostración
+nueva**: bastaba mirarla.
+
+```
+ya demostrado:  a + u²(u²−a) ≥ 1
+corolario:      (a + u²(u²−a))² − 1 ≥ 0        porque t ≥ 1 ⟹ t² − 1 ≥ 0
+```
+
+Estaba en la lista de «exige demostración» por no haberla mirado, no por ser difícil. Añadida al
+catálogo de no-negativos demostrados, el óptimo baja de 18 nombres a **17**:
+
+| Paso | Resultado |
+|---|---|
+| Sistema (1) publicado de JSWW | 25 incógnitas, grado 12 |
+| Aplanado con reescritura: **17 nombres** (cota inferior 17) | 42 incógnitas, grado 2 ⇒ **(43, 5)** |
+| Post-eliminar `q` e `y` | 40 incógnitas ⇒ **(41, 5)** |
+
+**Verificado igual que antes:** equivalencia simbólica con **0 faltan, 0 sobran** (17 ecuaciones se
+anulan al desnombrar, las 12 restantes recuperan las 12 originales vivas); grado 2 por ecuación;
+todos los nombres ≥ 0 sobre ℕ, con las dos excepciones estructurales demostradas.
+
+**Qué cambia el signo de la afirmación.** Hasta ahora lo mejor que se podía decir era «igualamos una
+cifra anunciada y nunca exhibida». Ahora es **una variable por debajo**: el (42,5) de JSWW era una
+frase sin construcción, y este (41,5) está construido y verificado. Sigue **sin ser un mínimo
+demostrado** —la cota es de la codificación— y sigue descansando en que el sistema (1) represente
+los primos.
+
+**Y la lección, que es la de siempre en este proyecto.** La ruta que dio el salto no fue el
+optimizador ni la reescritura ni el SMT: fue **leer la lista de pendientes y darse cuenta de que una
+ya estaba resuelta**. Cuatro de las cinco condiciones siguen abiertas, y §3.2m sigue siendo el mapa.
+
 ### 3.2m ¿Está agotada la esquina de grado 5? **No.** Rutas abiertas, con su estado medido
 
 Pregunta directa —«¿seguro que hemos acabado?»— y respuesta directa: **no**. Lo que sigue es el
@@ -728,7 +761,7 @@ varias están sin resolver por **coste de cómputo**, no por imposibilidad.
 
 | Ruta | Qué podría dar | Estado medido |
 |---|---|---|
-| **Demostrar las 5 no-negatividades restantes** | el óptimo *libre* es de **17 nombres** ⇒ (43,5) ⇒ **(41,5)** tras post-eliminar | Z3 **no concluye** sobre el sistema de grado 12 en 26 variables |
+| **Demostrar las no-negatividades restantes** | cada una puede quitar un nombre | **1 de 5 resuelta** (§3.2n, corolario) y dio (41,5). Quedan 4; Z3 **no concluye** sobre grado 12 en 26 variables |
 | **Eliminación completa** (no solo `q` e `y`) | cada incógnita extra eliminada = −1 variable | la búsqueda exhaustiva **no termina** (medido: >40 min sobre las 43 incógnitas) |
 | **Objetivo del optimizador = variables, no nombres** | podría preferir 19 nombres con 4 eliminaciones a 18 con 2 | **sin implementar** |
 | **Forma agrupada del paper** (`ECUACIONES_AGRUPADAS`) | expone `(n+1)` y `(n+1)²` como nombrables | **sin medir** con reescritura |
