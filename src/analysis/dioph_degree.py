@@ -591,6 +591,74 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     return out
 
 
+def definiciones_lineales(system, grado_minimo=2):
+    """Miembros derechos de las ecuaciones que DEFINEN una incognita sobre N.
+
+    Devuelve la lista de expresiones `R` tales que alguna ecuacion es `u - R` (o
+    `R - u`) con `u` de grado 1, coeficiente +-1, `u` ausente de `R`, y `R` con
+    TODOS los coeficientes >= 0 -- es decir, exactamente las que `eliminar_lineales`
+    sabe usar.
+
+    PARA QUE SIRVE, que no es evidente. Estas expresiones son las que conviene
+    pasar como `forzar` al optimizador de aplanado, y la razon es una regla
+    general y no un truco:
+
+        si `u = R` y se NOMBRA `R` como `m`, la ecuacion pasa a ser `m - u = 0`,
+        y entonces eliminar `u` la sustituye por UN SIMBOLO -- coste de grado cero.
+
+    Sin ese nombre, sustituir `u` mete la expresion `R` entera donde `u` aparecia
+    y el grado se dispara: medido sobre el sistema de JSWW, eliminar `z` sin
+    nombrar su definicion sube las ecuaciones de grado 2 a grado 4, y la
+    eliminacion se descarta. Con el nombre, sale gratis.
+
+    El balance nunca es malo: nombrar cuesta a lo sumo una incognita y eliminar
+    quita una. Y suele ser bueno, porque muchas de estas expresiones el
+    optimizador iba a nombrarlas de todos modos.
+
+    `grado_minimo` descarta las definiciones que ya son de grado 1 (`e = 2n+p+q+z`):
+    esas se eliminan solas, nombrarlas seria gastar una incognita a cambio de nada.
+    """
+    fuera = []
+    gens = system.params + system.unknowns
+    for cruda in system.eqs:
+        e = sympy.expand(cruda)
+        for u in system.unknowns:
+            coef = e.coeff(u, 1)
+            if coef not in (1, -1) or e.coeff(u, 2) != 0:
+                continue
+            resto = sympy.expand(e - coef * u)
+            if u in resto.free_symbols:
+                continue
+            valor = sympy.expand(-resto / coef)
+            if not _coeficientes_no_negativos_expr(valor):
+                continue
+            try:
+                g = sympy.Poly(valor, *gens).total_degree()
+            except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+                continue
+            if g < grado_minimo:
+                continue
+            # SE DEVUELVEN LAS DOS FORMAS, y no es por comodidad. El optimizador
+            # reconoce un candidato por su `str()`, y su catalogo se construye
+            # sobre la forma FACTORIZADA que recibe el sistema. Devolver solo la
+            # desarrollada --que es la que hace falta para DETECTAR la definicion--
+            # produce cadenas como `g*h*k + 2*g*h + ...` que no casan con ningun
+            # candidato: forzar no forzaba nada, en silencio, y la medida salia
+            # identica a no forzar.
+            formas = [valor]
+            if cruda.is_Add:
+                # La forma TAL CUAL la escribe el sistema: se quita el termino
+                # `coef*u` del Add sin expandir nada mas.
+                resto_crudo = sympy.Add(*[t for t in cruda.args if t != coef * u])
+                tal_cual = resto_crudo if coef == -1 else -resto_crudo
+                if sympy.expand(tal_cual - valor) == 0:
+                    formas.append(tal_cual)
+            for forma in formas:
+                if forma not in fuera:
+                    fuera.append(forma)
+    return fuera
+
+
 def eliminar_maximo(system, tope=2, solo=None, name=None):
     """Post-eliminacion que explora TODOS LOS ORDENES y devuelve el mejor sistema.
 

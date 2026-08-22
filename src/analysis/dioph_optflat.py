@@ -27,7 +27,9 @@ RESULTADOS MEDIDOS sobre el sistema de Jones-Sato-Wada-Wiens (1976):
 | tras `flatten_tree(S, 8)`       |      16 |    46 | (47, 5)   |   16 |
 | JSWW 1976, a mano               |      16 |    41 | (42, 5)   |    - |
 | forma factorizada, catalogo actual |   15 |    40 | (41, 5)   |   15 |
-| ... y post-eliminando e, q, y   |         |    37 | **(38,5)**|      |
+| ... y post-eliminando e, q, y   |         |    37 | (38, 5)   |      |
+| con `a = A+2` y forzando definiciones |  16 |       |           |   16 |
+| ... y post-eliminando e, q, y, z |        |    32 | **(33,5)**|      |
 
 TRES VECES SE CREYO QUE ESTO ESTABA EN EL OPTIMO, Y LAS TRES ERA EL CATALOGO.
 Primero con monomios solos (46). Luego anadiendo los nodos del arbol (17). Y la
@@ -368,7 +370,8 @@ def no_negativo_sobre_N(e):
 def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                               solo_no_negativos=False, demostrados=(),
                               reescritura=False, tope_reescritura=8,
-                              excluir=(), sumas_parciales=True, semilla=None):
+                              excluir=(), sumas_parciales=True, semilla=None,
+                              forzar=()):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     AVISO DE COHERENCIA, aprendido a base de romperlo dos veces: `reescritura`
@@ -685,13 +688,34 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
         opt.add(v == opciones_de(e, d, pn))
     for r in raiz:
         opt.add(r)
-    # CLAUSULAS DE BLOQUEO: prohiben una asignacion COMPLETA ya vista, no un
-    # subconjunto. Bloquear "que no aparezca este candidato" descartaria optimos
-    # legitimos que lo usan junto a otros distintos.
+    # CLAUSULAS DE BLOQUEO. Empezaron prohibiendo la asignacion COMPLETA ya vista
+    # --lo conservador: no descartar ningun optimo legitimo-- y no servian para
+    # nada: Z3 respondia con otra asignacion casi identica y diez iteraciones
+    # seguidas daban el MISMO resultado final. Cambiar la semilla tampoco movio
+    # nada.
+    #
+    # Aqui se exige algo mas fuerte: que el conjunto nuevo **omita al menos uno**
+    # de los candidatos de cada conjunto ya visto. Eso SI puede saltarse optimos
+    # (un conjunto que use todos los de uno anterior mas otros distintos queda
+    # excluido), y por eso hay que decirlo: la enumeracion es una FUENTE DE
+    # DIVERSIDAD, no un recorrido exhaustivo. La cifra que sale sigue siendo una
+    # cota superior --construida y verificada-- y nunca se presenta como minimo.
     for prohibido in excluir:
         prohibido = set(prohibido)
-        opt.add(z3.Not(z3.And(*[x[c] if str(c) in prohibido else z3.Not(x[c])
-                                for c in orden])))
+        usados = [c for c in orden if str(c) in prohibido]
+        if usados:
+            opt.add(z3.Or(*[z3.Not(x[c]) for c in usados]))
+
+    # `forzar`: candidatos que DEBEN nombrarse. No es para ayudar al optimizador
+    # --el objetivo ya sabe minimizar-- sino para alcanzar aplanados que valen mas
+    # de lo que el objetivo puede medir. Caso concreto y reproducible: si se nombra
+    # `(g*k+2*g+k+1)*(h+j)+h`, la ecuacion (2) queda `m - z = 0` y entonces `z` se
+    # post-elimina sustituyendola por UN SIMBOLO, sin subir el grado. Sin ese
+    # nombre, sustituir `z` mete una expresion de grado 3 y la eliminacion se cae.
+    # El objetivo no ve nada de esto: cuenta nombres con las originales congeladas.
+    for c in orden:
+        if str(c) in set(forzar):
+            opt.add(x[c])
 
     objetivo_min = opt.minimize(z3.Sum([z3.If(x[c], 1, 0) for c in orden]))
 
@@ -993,7 +1017,8 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
 
 def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
                            timeout_s=900, solo_no_negativos=True, demostrados=(),
-                           reescritura=True, sumas_parciales=True, verbose=False):
+                           reescritura=True, sumas_parciales=True,
+                           forzar_definiciones=True, verbose=False):
     """Aplana y post-elimina, quedandose con el MEJOR de varios optimos distintos.
 
     POR QUE NO BASTA LLAMAR AL OPTIMIZADOR UNA VEZ. El optimo en numero de
@@ -1020,34 +1045,52 @@ def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
 
     if solo_eliminar is None:
         solo_eliminar = list(system.unknowns)
-    vistos, mejor = [], None
-    for i in range(max(1, k_optimos)):
-        r = aplanado_minimo_compuesto(system, target, timeout_s=timeout_s,
-                                      solo_no_negativos=solo_no_negativos,
-                                      demostrados=demostrados,
-                                      reescritura=reescritura,
-                                      sumas_parciales=sumas_parciales,
-                                      excluir=vistos, semilla=i)
-        if r["estado"] != "optimo_del_encoding":
-            break                      # se agotaron los optimos de ese tamano
-        vistos.append(r["elegidos"])
-        M = materializar(system, r["elegidos"], target, reescritura=reescritura)
-        if max_equation_degree(M) > target:
-            continue                   # el materializado no alcanza lo certificado
-        E = eliminar_maximo(M, target, solo=solo_eliminar)
-        gen = 1 + 2 * max_equation_degree(E)
-        v = len(E.unknowns) + 1
-        if verbose:
-            print(f"    optimo #{len(vistos)}: {r['nombres']} nombres, "
-                  f"post-elim {sorted(str(t) for t, _ in E.eliminadas)} -> ({v}, {gen})",
-                  flush=True)
-        if mejor is None or (v, gen) < (mejor["variables"], mejor["grado"]):
-            mejor = {"sistema": E, "variables": v, "grado": gen,
-                     "nombres": r["nombres"], "cota": r["cota"],
-                     "eliminadas": list(E.eliminadas), "elegidos": r["elegidos"],
-                     "materializado": M}
+    # DOS TANDAS, y la segunda es la que gana. `forzar_definiciones` obliga a
+    # nombrar el miembro derecho de cada ecuacion que DEFINE una incognita: eso
+    # convierte la ecuacion en `m - u = 0` y entonces eliminar `u` la sustituye por
+    # UN SIMBOLO, sin subir el grado. Cuesta a lo sumo un nombre y quita una
+    # incognita, asi que el balance nunca es malo -- medido sobre JSWW: 15 nombres
+    # y 3 eliminaciones (38,5) frente a 16 nombres y 4 eliminaciones (36,5).
+    #
+    # Se corren LAS DOS y se toma la mejor porque el forzado no domina siempre: si
+    # la definicion iba a nombrarse igualmente, forzarla no cuesta nada; si no,
+    # cuesta uno y puede no recuperarlo.
+    from src.analysis.dioph_degree import definiciones_lineales
+    tandas = [()]
+    if forzar_definiciones:
+        tandas.append(tuple(str(d) for d in definiciones_lineales(system)))
+
+    mejor, total_vistos = None, 0
+    for forzar in tandas:
+        vistos = []
+        for i in range(max(1, k_optimos)):
+            r = aplanado_minimo_compuesto(system, target, timeout_s=timeout_s,
+                                          solo_no_negativos=solo_no_negativos,
+                                          demostrados=demostrados,
+                                          reescritura=reescritura,
+                                          sumas_parciales=sumas_parciales,
+                                          excluir=vistos, semilla=i, forzar=forzar)
+            if r["estado"] != "optimo_del_encoding":
+                break                  # se agotaron los optimos de ese tamano
+            vistos.append(r["elegidos"])
+            total_vistos += 1
+            M = materializar(system, r["elegidos"], target, reescritura=reescritura)
+            if max_equation_degree(M) > target:
+                continue               # el materializado no alcanza lo certificado
+            E = eliminar_maximo(M, target, solo=solo_eliminar)
+            gen = 1 + 2 * max_equation_degree(E)
+            v = len(E.unknowns) + 1
+            if verbose:
+                print(f"    [{'forzado' if forzar else 'libre  '}] optimo #{len(vistos)}: "
+                      f"{r['nombres']} nombres, post-elim "
+                      f"{sorted(str(t) for t, _ in E.eliminadas)} -> ({v}, {gen})", flush=True)
+            if mejor is None or (v, gen) < (mejor["variables"], mejor["grado"]):
+                mejor = {"sistema": E, "variables": v, "grado": gen,
+                         "nombres": r["nombres"], "cota": r["cota"],
+                         "eliminadas": list(E.eliminadas), "elegidos": r["elegidos"],
+                         "materializado": M, "forzado": bool(forzar)}
     if mejor is not None:
-        mejor["optimos_vistos"] = len(vistos)
+        mejor["optimos_vistos"] = total_vistos
     return mejor
 
 

@@ -38,7 +38,7 @@ from src.analysis.dioph_degree import (
 )
 from src.analysis.dioph_optflat import (
     Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar, no_negativo_sobre_N,
-    barrido_pareto,
+    barrido_pareto, aplanado_y_eliminacion,
 )
 
 
@@ -53,6 +53,30 @@ class Stats:
     def fail(self, msg):
         self.failed += 1
         print(f"  {Colors.FAIL}FALLO: {msg}{Colors.ENDC}")
+
+
+#: EL PIPELINE PUBLICADO, calculado UNA vez. Lo usan [4] (la cifra) y [5] (la
+#: equivalencia), y tienen que ver EXACTAMENTE el mismo sistema: cuando cada test
+#: lo recalculaba por su cuenta, el optimo --que no es unico-- salia distinto en
+#: cada uno y los dos publicaban cifras que no casaban, (36,5) y (38,5). Ademas
+#: sobre el sistema desplazado cada solve cuesta minutos.
+_PIPELINE = None
+
+
+def pipeline_publicado():
+    """Sistema desplazado (`a = A+2`, cota demostrada) aplanado y post-eliminado.
+
+    `k_optimos=1` basta porque `aplanado_y_eliminacion` corre DOS tandas --libre y
+    forzando las definiciones lineales-- y la que gana es la forzada. Subirlo solo
+    puede mejorar la cifra; se deja en 1 para que la suite termine.
+    """
+    global _PIPELINE
+    if _PIPELINE is None:
+        S = sistema_desplazado(COTA_A)
+        _PIPELINE = (S, aplanado_y_eliminacion(
+            S, 2, k_optimos=1, solo_eliminar=list(S.unknowns),
+            demostrados=no_negativos_desplazados(COTA_A)))
+    return _PIPELINE
 
 
 def test_transcripcion(stats):
@@ -159,70 +183,50 @@ def test_aplanado_optimo(stats):
     print(f"\n{Colors.HEADER}[4] Aplanado optimo sobre el sistema de JSWW{Colors.ENDC}")
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
-    S = sistema(expandir=False)
-    r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
-                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS,
-                                  reescritura=True)
-    print(f"  optimizador: {r['estado']}, {r['nombres']} nombres (cota inferior {r['cota']})")
-    if r["estado"] != "optimo_del_encoding":
-        stats.fail(f"no se alcanzo la cota: {r['estado']}")
+    S, best = pipeline_publicado()
+    if best is None:
+        stats.fail("el optimizador no alcanzo su cota en ninguna tanda")
         return
-    M = materializar(S, r["elegidos"], 2, reescritura=True)
-    grado = max_equation_degree(M)
-    _, g_plano = to_generator(M, FACTOR)
-    usadas = sum(1 for u in INCOGNITAS if u in M.unknowns)
+    dem = no_negativos_desplazados(COTA_A)
+    loc = {str(x): x for x in S.params + S.unknowns}
+    M, E = best["materializado"], best["sistema"]
+    usadas = sum(1 for u in S.unknowns if u in M.unknowns)
+    print(f"  partida: sistema (1) con a = A+{COTA_A} (cota demostrada, ver [8])")
+    print(f"  optimizador: {best['nombres']} nombres (cota inferior {best['cota']}), "
+          f"forzando definiciones: {best['forzado']}")
     print(f"  materializado: {M.cost()} incognitas ({usadas} originales + "
-          f"{M.cost()-usadas} nombres), grado maximo {grado}")
-    print(f"  tras aplanar: ({g_plano['variables']} variables, grado {g_plano['grado']})")
+          f"{M.cost()-usadas} nombres), grado maximo {max_equation_degree(M)}")
+    quitadas = sorted(str(u) for u, _ in best["eliminadas"])
+    print(f"  + post-eliminacion de {quitadas}: {E.cost()} incognitas, "
+          f"grado {max_equation_degree(E)}")
+    print(f"  {Colors.BOLD}GENERADOR: ({best['variables']} variables, grado "
+          f"{best['grado']}){Colors.ENDC}     JSWW 1976: (42, 5)")
 
-    # POST-ELIMINACION, y es la jugada que el optimizador NO PUEDE VER. Su
-    # objetivo minimiza NOMBRES con las incognitas originales congeladas: no hay
-    # ningun termino que premie borrar una. Pero `q = h + j + w*z` (ec. alpha_0) e
-    # `y = l + n + v` (ec. alpha_8) son definiciones lineales cuyos miembros
-    # derechos tienen TODOS los coeficientes positivos, luego son >= 0 sobre N
-    # automaticamente y la equisatisfacibilidad vale en las dos direcciones sin
-    # ninguna suposicion. Y el grado no sube: en el sistema YA aplanado, q e y
-    # solo multiplican cosas de grado 1.
-    #
-    # Lo encontro una revision adversarial, y lo incomodo es que el mecanismo ya
-    # estaba implementado en el repo (`eliminar_lineales`, usado en
-    # `L_prime_shared`): simplemente nunca se habia conectado a esta cadena, que
-    # es donde esta la cifra de portada. Eliminar ANTES de aplanar es peor
-    # (medido); lo que paga es eliminar DESPUES.
-    # TODOS LOS ORDENES, no el primero que salga. Quitar `e` antes que `q` deja a
-    # `q` inutilizable y viceversa: un recorrido voraz deja la cifra final al azar
-    # del orden de iteracion. `eliminar_maximo` explora las ramas y exige que el
-    # grado siga en 2.
-    E = eliminar_maximo(M, 2, solo=INCOGNITAS)
-    grado = max_equation_degree(E)
-    _, g = to_generator(E, FACTOR)
-    quitadas = [str(a) for a, _ in getattr(E, "eliminadas", [])]
-    print(f"  + post-eliminacion de {quitadas}: {E.cost()} incognitas, grado {grado}")
-    print(f"  {Colors.BOLD}GENERADOR: ({g['variables']} variables, grado "
-          f"{g['grado']}){Colors.ENDC}     JSWW 1976: (42, 5)")
-    M = E
-    sin_probar = [c for c in r["elegidos"]
-                  if not no_negativo_sobre_N(sympy.sympify(
-                      c, locals={str(x): x for x in S.params + S.unknowns}))
-                  and c not in NO_NEGATIVOS_DEMOSTRADOS]
-    if grado > 2:
-        stats.fail(f"el sistema materializado tiene grado {grado}, no 2")
+    sin_probar = [c for c in best["elegidos"]
+                  if not no_negativo_sobre_N(sympy.sympify(c, locals=loc))
+                  and c not in dem]
+    negativas = [str(u) for u, v in best["eliminadas"]
+                 if not no_negativo_sobre_N(sympy.expand(v))]
+    if max_equation_degree(M) > 2:
+        stats.fail(f"el sistema materializado tiene grado {max_equation_degree(M)}, no 2")
     elif sin_probar:
         stats.fail(f"se nombro sin demostrar que sea >= 0 sobre N: {sin_probar}")
-    elif g["grado"] != 5:
-        stats.fail(f"generador de grado {g['grado']}, se esperaba 5")
+    elif negativas:
+        stats.fail(f"se elimino una incognita cuya definicion puede ser negativa: {negativas}")
+    elif best["grado"] != 5:
+        stats.fail(f"generador de grado {best['grado']}, se esperaba 5")
+    elif best["variables"] > 42:
+        stats.fail(f"({best['variables']}, 5) esta POR ENCIMA del (42,5) anunciado")
     else:
-        distancia = g["variables"] - 42
-        if distancia > 0:
-            stats.fail(f"({g['variables']}, 5) esta POR ENCIMA del (42,5) anunciado")
-            return
-        print(f"  {Colors.WARN}Distancia al (42,5) anunciado: {distancia:+d} variables.")
-        print(f"  Y NO esta demostrado que no se pueda mejorar. La cota que devuelve")
-        print(f"  el optimizador es de su CODIFICACION, no del problema: hay")
-        print(f"  contraejemplo --sobre el sistema con `e` eliminada dice 21 y existe")
-        print(f"  un aplanado de 20--. Ademas su objetivo minimiza NOMBRES con las")
-        print(f"  incognitas originales congeladas, asi que no ve la eliminacion que")
-        print(f"  acaba de quitar dos. Esta cifra es la mejor CONSTRUIDA, no un minimo.{Colors.ENDC}")
+        print(f"  {Colors.WARN}Distancia al (42,5) anunciado: "
+              f"{best['variables'] - 42:+d} variables.")
+        print(f"  Y NO esta demostrado que no se pueda mejorar. La cota del")
+        print(f"  optimizador es de su CODIFICACION, no del problema, y este mismo")
+        print(f"  apartado es la prueba: la codificacion anterior certificaba 17")
+        print(f"  nombres como cota inferior y existia un aplanado de 15. Ademas su")
+        print(f"  objetivo minimiza NOMBRES con las incognitas originales congeladas,")
+        print(f"  asi que no ve ninguna de las eliminaciones que acaba de hacer.")
+        print(f"  Esta cifra es la mejor CONSTRUIDA, no un minimo.{Colors.ENDC}")
         stats.ok()
 
 
@@ -245,42 +249,39 @@ def test_equivalencia_por_sustitucion(stats):
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
     import sympy
-    S = sistema(expandir=False)
-    # MISMAS OPCIONES QUE [4], y esto no es un detalle: sin ellas este test
-    # verificaba un sistema DISTINTO del que publica [4]. El optimo no es unico,
-    # asi que "el aplanado equivale al original" quedaba comprobado sobre un
-    # aplanado que no era el de la cifra. Lo detecto una revision adversarial.
-    r = aplanado_minimo_compuesto(S, 2, timeout_s=300, solo_no_negativos=True,
-                                  demostrados=NO_NEGATIVOS_DEMOSTRADOS,
-                                  reescritura=True)
-    if r["estado"] != "optimo_del_encoding":
-        stats.fail(f"el optimizador no alcanzo la cota: {r['estado']}")
+    # EL MISMO OBJETO QUE PUBLICA [4], no una reconstruccion. Cuando cada test
+    # llamaba al optimizador por su cuenta, el optimo --que no es unico-- salia
+    # distinto en cada uno: [4] publicaba una cifra y [5] verificaba OTRO sistema.
+    S, best = pipeline_publicado()
+    if best is None:
+        stats.fail("el optimizador no alcanzo su cota en ninguna tanda")
         return
-    M0 = materializar(S, r["elegidos"], 2, reescritura=True)
-    M = M0
-    # EL SISTEMA QUE SE PUBLICA, no una etapa intermedia. Antes este test corria
-    # el optimizador con otras opciones y sin la post-eliminacion, o sea verificaba
-    # la equivalencia de un sistema DISTINTO del de la cifra -- y como el optimo no
-    # es unico, ni siquiera del mismo aplanado. Lo detecto una revision adversarial.
-    M = eliminar_maximo(M, 2, solo=INCOGNITAS)
+    M0, M = best["materializado"], best["sistema"]
+
+    # El sistema desplazado tiene que SER el (1) de JSWW con a = A+COTA_A. Si no,
+    # todo lo demas verifica un objeto que no es el de la literatura.
+    A = sympy.Symbol('A', integer=True)
+    a = INCOGNITAS[0]
+    if any(sympy.expand(sd - so.subs(a, A + COTA_A)) != 0
+           for sd, so in zip(S.eqs, ECUACIONES)):
+        stats.fail("sistema_desplazado no coincide con ECUACIONES sustituyendo a")
+        return
+    print(f"  el sistema de partida ES el (1) de JSWW con a = A+{COTA_A} "
+          f"(y a >= {COTA_A} esta demostrado, ver [8])")
+
     # HASTA PUNTO FIJO: una definicion puede mencionar una incognita eliminada
     # DESPUES (`e = 2n+p+q+z` con `q` eliminada luego), y una sola pasada de
     # `subs` dejaria `q` viva en el sistema recuperado.
-    quitadas = {a: b for a, b in getattr(M, "eliminadas", [])}
+    quitadas = {u: v for u, v in best["eliminadas"]}
     for _ in range(len(quitadas)):
-        quitadas = {a: sympy.expand(b.subs(quitadas)) for a, b in quitadas.items()}
+        quitadas = {u: sympy.expand(v.subs(quitadas)) for u, v in quitadas.items()}
 
-    # LAS DEFINICIONES SE PIDEN, NO SE ADIVINAN. Antes se re-derivaban leyendo las
-    # ecuaciones --buscar una incognita nueva con coeficiente 1 que no aparezca en
-    # el resto--, y eso funciona mientras cada definitoria mencione un solo nombre.
-    # Con la reescritura activa una definicion puede expresarse en terminos de
-    # OTROS nombres (`m5 = m4^2 + 2*e*m4`), el detector encontraba 15 de 18 y el
-    # test fallaba por su propia heuristica, no por el sistema.
-    # Con la MISMA sustitucion aplicada. `eliminar_lineales` sustituye `q` e `y`
-    # en TODAS las ecuaciones, tambien en las definitorias, asi que una definicion
-    # guardada antes de eliminar esta obsoleta: al desnombrar reintroducia `q` e
-    # `y` y el sistema recuperado no casaba. No era un fallo del sistema sino de
-    # comparar dos fotos tomadas en momentos distintos.
+    # LAS DEFINICIONES SE PIDEN, NO SE ADIVINAN. Re-derivarlas leyendo las
+    # ecuaciones funciona solo mientras cada definitoria mencione un unico nombre,
+    # y deja de funcionar con la reescritura activa (`m5 = m4^2 + 2*e*m4`).
+    # Y con la MISMA sustitucion aplicada: una definicion guardada ANTES de
+    # eliminar esta obsoleta, y comparar dos fotos tomadas en momentos distintos
+    # ya dio un fallo falso.
     defs = {w: sympy.expand(c.subs(quitadas)) for w, c in M0.definiciones}
 
     def desnombrar(e):
@@ -290,30 +291,44 @@ def test_equivalencia_por_sustitucion(stats):
             e = sympy.expand(e.subs(defs))
         return e
 
-    # Sustituir cada nombre por lo que representa debe dejar: las definitorias en
-    # 0 = 0 (no dicen nada por si mismas) y el resto en las ecuaciones originales.
     desnombradas = [desnombrar(e) for e in M.eqs]
     definitorias = [x for x in desnombradas if x == 0]
     vivas = [x for x in desnombradas if x != 0]
-    originales = [sympy.expand(x.subs(quitadas)) for x in S.eqs]
+    # LAS ORIGINALES TAMBIEN SE DESNOMBRAN. `quitadas` puede mapear una incognita
+    # a un NOMBRE --`z -> m1` cuando se ha forzado nombrar la definicion de `z`--,
+    # y entonces el lado "original" lleva un nombre que el lado recuperado ya no
+    # tiene: la comparacion se hace entre dos representaciones distintas y falla
+    # sin que el sistema tenga nada malo. Es la TERCERA vez que un comprobador de
+    # este proyecto da un fallo falso por comparar dos fotos tomadas en momentos
+    # distintos; conviene que quede escrito.
+    originales = [desnombrar(sympy.expand(x.subs(quitadas))) for x in S.eqs]
     consumidas = [i for i, o in enumerate(originales) if o == 0]
     originales = [o for o in originales if o != 0]
 
     def casa(u, v):
         return sympy.expand(u - v) == 0 or sympy.expand(u + v) == 0
 
-    faltan = [o for o in originales if not any(casa(o, x) for x in vivas)]
-    sobran = [x for x in vivas if not any(casa(o, x) for o in originales)]
+    # EMPAREJAMIENTO 1 A 1, no "existe alguna que case": dos ecuaciones vivas
+    # iguales taparian que falta una original distinta.
+    pendientes, faltan = list(vivas), []
+    for o in originales:
+        for i, vv in enumerate(pendientes):
+            if casa(o, vv):
+                pendientes.pop(i); break
+        else:
+            faltan.append(o)
     print(f"  {len(defs)} nombres, {len(definitorias)} ecuaciones se anulan al "
           f"desnombrar, {len(vivas)} quedan vivas (originales: {len(originales)})")
     print(f"  eliminadas por sustitucion: {sorted(str(k) for k in quitadas)} "
           f"-> consumen las originales {consumidas} (se vuelven 0 == 0)")
-    print(f"  originales no recuperadas: {len(faltan)}   recuperadas que no son originales: {len(sobran)}")
-    if faltan or sobran:
+    print(f"  originales no recuperadas: {len(faltan)}   "
+          f"recuperadas que no son originales: {len(pendientes)}")
+    if faltan or pendientes:
         stats.fail(f"la sustitucion hacia atras no devuelve el sistema original "
-                   f"({len(faltan)} faltan, {len(sobran)} sobran)")
+                   f"({len(faltan)} faltan, {len(pendientes)} sobran)")
     else:
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} el sistema aplanado es el de JSWW escrito de otra forma")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} el sistema aplanado es el de JSWW "
+              f"escrito de otra forma")
         stats.ok()
 
 
@@ -422,7 +437,7 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.BOLD}({g_dem['variables']}, {g_dem['grado']}){Colors.ENDC} "
           f"estructura + la demostrada -- {Colors.OKGREEN}sale gratis{Colors.ENDC}")
     print(f"  {Colors.WARN}Estas tres van SIN reescritura, para ser homogeneas entre "
-          f"si. La cifra PUBLICADA la mide [4] y es (41, 5).{Colors.ENDC}")
+          f"si. La cifra PUBLICADA la mide [4].{Colors.ENDC}")
 
     problemas = []
     if fallos:
@@ -618,7 +633,11 @@ def test_frontera_de_pareto(stats):
     if not Z3_DISPONIBLE:
         print("  (z3 no disponible: omitido)"); return
     S = sistema(expandir=False)
-    frontera = barrido_pareto(S, grados=(2, 3, 4, 5, 6),
+    # `k_optimos=1` mantiene la suite ejecutable: cada grado ya corre DOS tandas
+    # (libre y forzando definiciones) y cada solve cuesta ~30 s. Subirlo solo puede
+    # mejorar los puntos, nunca empeorarlos, asi que la frontera que sale es una
+    # cota superior -- que es justo lo que se afirma de ella.
+    frontera = barrido_pareto(S, grados=(2, 3, 4, 5, 6), k_optimos=1,
                               demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     #: pares PUBLICADOS o anunciados, para comprobar dominancia.
     literatura = [(26, 25), (42, 5), (19, 29), (12, 13697), (10, 6001)]
