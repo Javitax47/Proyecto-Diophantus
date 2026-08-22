@@ -720,6 +720,164 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
+### 3.2p ✅ (38, 5) — CUATRO por debajo del 42 anunciado, y la FRONTERA COMPLETA
+
+Este apartado sustituye al 3.2n como cifra de portada. El (41, 5) sigue siendo correcto; lo que
+cambia es que ya no es lo mejor construido.
+
+#### Lo que desbloqueó el salto: un resultado IMPOSIBLE, otra vez
+
+El optimizador certificaba **17 nombres como cota inferior**. JSWW pasan de 26 a 42 variables con la
+sustitución de Skolem, o sea **16 nombres**, y su método es mecánico.
+
+> Una cota inferior por encima de una construcción publicada no puede ser cierta.
+
+Es el mismo patrón que descubrió los seis defectos anteriores: el imposible es del instrumento, no
+del problema. Y el instrumento fallaba en el **catálogo de candidatos**. Tenía dos espacios —nodos
+del árbol y monomios del desarrollo— y le faltaba un tercero: las **subsumas**.
+
+```
+ec.(2):  (g·k + 2g + k + 1)·(h+j) + h − z
+         `g·k + k + 1` es una SUBSUMA: ni es nodo del árbol (el nodo es la suma entera)
+         ni es monomio de ningún desarrollo. No estaba en ninguno de los dos espacios.
+```
+
+Añadidas las subsumas al catálogo **y la regla espejo en las dos direcciones** (`R[e][d] ← x_c ∧
+R[resto][d]` en el optimizador, y su gemela en el materializador —la pareja desalineada ya rompió la
+cadena dos veces—), el óptimo cae de **17 a 15 nombres**.
+
+Y con 15 nombres la post-eliminación admite **tres** incógnitas en vez de dos:
+
+| Paso | Resultado |
+|---|---|
+| Sistema (1) publicado de JSWW | 25 incógnitas, grado 12 |
+| Aplanado con subsumas: **15 nombres** (cota inferior 15) | 40 incógnitas, grado 2 ⇒ (41, 5) |
+| Post-eliminar `e`, `q`, `y` | 37 incógnitas ⇒ **(38, 5)** |
+
+**Verificado con las cuatro comprobaciones de siempre**, ninguna relajada:
+
+1. grado ≤ 2 por ecuación en el sistema materializado;
+2. los 15 nombres son ≥ 0 sobre ℕ (14 por estructura + 1 de la lista demostrada);
+3. equivalencia simbólica: al deshacer los nombres en cascada, **las 15 definitorias se anulan y las
+   11 vivas recuperan las 11 originales vivas — 0 faltan, 0 sobran**;
+4. las tres definiciones eliminadas (`q = h+j+wz`, `e = h+j+2n+p+wz+z`, `y = l+n+v`) tienen todos los
+   coeficientes positivos, luego la equisatisfacibilidad vale en las dos direcciones sin suponer nada.
+
+Además el **orden de la post-eliminación importa** y antes se perdía: quitar `e` primero deja `q`
+inutilizable (subiría el grado a 4) y quitar `q` primero deja fuera a `e`. Un recorrido voraz se
+queda con lo primero que encuentra y la cifra dependía del orden de iteración. `eliminar_maximo`
+explora **todas** las ramas.
+
+#### La frontera de Pareto, que es el resultado que estaba sin publicar
+
+Se venían midiendo dos esquinas —grado 5 y grado 25— como si fueran los dos únicos sitios donde hay
+algo que decir. Pero hay **dos palancas continuas y opuestas**: aplanar a grado `d` por ecuación da
+un generador de grado `1+2d` y cuanto más alto `d`, menos nombres hacen falta; eliminar una incógnita
+lineal quita una variable y sube el grado. Barrerlas juntas da una **curva**:
+
+| variables | grado | receta |
+|---:|---:|---|
+| **38** | **5** | aplanado a 2 + eliminar `e,q,y` |
+| **32** | **7** | aplanado a 3 + eliminar `e,q,y` |
+| **28** | **9** | aplanado a 4 + eliminar `e,q,y,z` |
+| **25** | **13** | aplanado a 6 + eliminar `q,y,z` |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` |
+| 22 | 37 | sin aplanar + eliminar `e,q,y,z` |
+
+Contra la literatura (`(10, >6000)`, `(12, 13697)`, `(19, 29)`, `(26, 25)`, `(42, 5)`):
+
+* **(38, 5)** — cuatro por debajo del (42, 5) anunciado por JSWW y nunca escrito;
+* **(32, 7)**, **(28, 9)**, **(25, 13)** — zona **literalmente vacía** en la literatura: entre el
+  grado 5 y el grado 25 no hay ningún par publicado;
+* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes;
+* **(23, 25)** — tres variables menos que el (26,25) publicado, al mismo grado;
+* `(22, 37)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso no se
+  presentan como récord. Se dejan en la tabla porque medirlos costó lo mismo y ocultarlos sería
+  quedarse solo con lo que favorece.
+
+Los puntos intermedios son **mecánicos**: nadie los reclamó porque nadie los escribió. Exhibirlos
+cuesta lo mismo que exhibir uno solo, y sin ellos se estaba publicando menos de lo que se tenía.
+
+#### Lo que NO cambia
+
+* **No es un mínimo demostrado.** La cota que devuelve el optimizador sigue siendo de su codificación
+  —y este apartado es la prueba: la codificación anterior certificaba 17 y existía un 15—. La
+  siguiente laguna del catálogo, si la hay, se detectará igual: por un resultado imposible.
+* Sigue descansando en que el sistema (1) de JSWW represente los primos. Eso se cita, no se demuestra
+  aquí.
+* `deg < 5` sigue abierto según los propios autores.
+
+### 3.2o ✅ COTA DEMOSTRADA: el sistema de JSWW implica `n ≥ 2` y `a ≥ 2`
+
+La ecuación (11) define `l = k + 1 + i·(a − 1)`. Tiene un `−i`, y por eso `eliminar_lineales` la
+rechazaba: sobre ℕ hay que poder **reconstruir** un valor no negativo, y sin saber `a ≥ 1` no se
+puede. Era una de las cuatro condiciones que §3.2m listaba como frontera abierta.
+
+**Se demuestra, y es elemental.** Tres pasos, los tres verificados en `test_dioph_jsww [8]`:
+
+**Paso 1 — `n ≥ 2`.** La ecuación (4) dice `f² = 16K³(K+1)N² + 1` con `K = k+1 ≥ 1`, `N = n+1`.
+
+```
+N = 1:   (4K² + 2K − 1)²  =  f² − 4K(K+1)     <  f²  <  f² + (2K−1)(2K+1)  =  (4K² + 2K)²
+N = 2:   (8K² + 4K − 1)²  =  f² − 8K          <  f²  <  f² + (4K−1)(4K+1)  =  (8K² + 4K)²
+```
+
+`f` quedaría **estrictamente entre dos enteros consecutivos**: imposible. Que las cuatro diferencias
+sean `> 0` para todo `K ≥ 1` se certifica sustituyendo `K = KK+1` y comprobando que el polinomio
+resultante tiene todos los coeficientes `≥ 0` y no es idénticamente nulo. Es una demostración
+completa, no una comprobación en un rango.
+
+**Paso 2 — `a ≠ 0`.** Con `a = 0` la ecuación (6) queda `x² + y² = 1`, luego `y ≤ 1`; y la ecuación
+(9) es `n + l + v = y`, luego `n ≤ 1`. Contradice el paso 1.
+
+**Paso 3 — `a ≠ 1`.** Con `a = 1` la ecuación (5) queda `o² = 4e⁴ + 8e³ + 1`, y para `e ≥ 1` hay otro
+encaje estricto: `(2e²+2e−1)² = o² − 4e < o² < o² + (4e²−1) = (2e²+2e)²`. Luego `e = 0`. Pero la
+ecuación (3) es `2n + p + q + z = e`, así que `e = 0` fuerza `n = 0`. Contradice el paso 1. ∎
+
+#### Cómo se usa una cota sin relajar el criterio
+
+La forma limpia **no** es aflojar `_coeficientes_no_negativos_expr` —que es lo único que impide
+aceptar sistemas falsos— sino **reparametrizar**: con `a ≥ 2` demostrado, `a = A + 2` con `A ∈ ℕ` es
+un cambio de variable biyectivo, y entonces `l = k + 1 + i·(A + 1)` tiene todos los coeficientes
+positivos y pasa el criterio **sin tocarlo**. Eso es `sistema_desplazado()`, que además **rechaza**
+cualquier desplazamiento mayor que la cota demostrada.
+
+**Qué desbloquea, medido:** exactamente una eliminación más, `l`, y solo fuera de la esquina de
+grado 5. La frontera con `a = A+2`: `(23, 25)` igual, `(22, 29)` y `(21, 37)` —ambos **dominados por
+el (19, 29)** de JSWW—. En la esquina de grado 5 el desplazamiento **no cambia nada**: sigue saliendo
+la misma cifra.
+
+> Un detalle que casi cuesta la medida: tras el cambio de variable, las cadenas de
+> `NO_NEGATIVOS_DEMOSTRADOS` ya no coinciden con las del sistema desplazado, y el optimizador las
+> reconoce **por texto**. Las dos demostraciones se perdían en silencio y el aplanado subía de 15 a
+> 20 nombres. Habría parecido que el desplazamiento empeora la cifra cuando era un fallo de
+> emparejado de cadenas. Por eso existe `no_negativos_desplazados()`.
+
+**Lo que esto NO da, y es la frontera que sigue abierta.** Las otras tres eliminaciones (`m`, `p`,
+`x`, de las ecuaciones 12–14) necesitan `a ≥ n+1`, `a ≥ p+1` y `a ≥ p`: relaciones **entre
+incógnitas**, que un desplazamiento constante no arregla. Siguen sin demostración.
+
+### 3.2q Rutas CERRADAS en esta ronda (para no volver a intentarlas)
+
+Tres cosas que se midieron y que ya **no** hay que reintentar:
+
+1. **El filtro de no-negatividad no cuesta nada.** Con `solo_no_negativos=False` el óptimo sigue
+   siendo el mismo número de nombres; lo único que cambia es que Z3 elige el módulo de Davis
+   `2ap+2a−p²−2p−2` y `y²(a²−1)`, que no están demostrados. Conclusión: **demostrar más
+   no-negatividades no baja el aplanado**. La brecha estaba en el catálogo, no en el filtro.
+2. **El óptimo no es único, pero da igual.** Se enumeraron **12 óptimos distintos** de 17 nombres con
+   cláusulas de bloqueo (`excluir=`) y se post-eliminó exhaustivamente sobre cada uno: los 12 dan
+   exactamente `(41, 5)`. La cifra no dependía de qué modelo devolviera Z3 ese día.
+3. **Pre-eliminar antes de aplanar es peor, siempre.** Medido de nuevo tras corregir el catálogo:
+   pre-eliminar `l` sobre el sistema desplazado sube a 21 nombres y el resultado final es peor. Lo
+   que paga es eliminar **después**.
+
+Y una que sigue **bloqueada por acceso, no por matemáticas**: el texto de la demostración de JSWW
+resolvería si `a > n` y `a > p` se **derivan** de las ecuaciones o son solo condiciones de su
+construcción. Hay un PDF del paper en `www.math.umd.edu` y otro con una solución explícita en
+`www.ericzheng.org`; **los dos están bloqueados por la política de red de este entorno**. No se ha
+intentado rodear el bloqueo.
+
 ### 3.2n ✅ (41, 5) — POR DEBAJO del 42 anunciado, y lo desbloqueó un corolario de una línea
 
 De las cinco no-negatividades que §3.2m listaba como pendientes, **una no requería demostración

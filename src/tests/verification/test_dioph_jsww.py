@@ -29,14 +29,16 @@ import sympy
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
 from src.analysis.dioph_jsww import (
-    sistema, FACTOR, PUBLICADO, INCOGNITAS, NO_NEGATIVOS_DEMOSTRADOS,
+    sistema, sistema_desplazado, no_negativos_desplazados, FACTOR, PUBLICADO,
+    INCOGNITAS, NO_NEGATIVOS_DEMOSTRADOS, COTA_A, COTA_N, ECUACIONES,
 )
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
-    eliminar_lineales,
+    eliminar_lineales, eliminar_maximo,
 )
 from src.analysis.dioph_optflat import (
     Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar, no_negativo_sobre_N,
+    barrido_pareto,
 )
 
 
@@ -187,7 +189,11 @@ def test_aplanado_optimo(stats):
     # `L_prime_shared`): simplemente nunca se habia conectado a esta cadena, que
     # es donde esta la cifra de portada. Eliminar ANTES de aplanar es peor
     # (medido); lo que paga es eliminar DESPUES.
-    E = eliminar_lineales(M, 2, solo=['q', 'y'])
+    # TODOS LOS ORDENES, no el primero que salga. Quitar `e` antes que `q` deja a
+    # `q` inutilizable y viceversa: un recorrido voraz deja la cifra final al azar
+    # del orden de iteracion. `eliminar_maximo` explora las ramas y exige que el
+    # grado siga en 2.
+    E = eliminar_maximo(M, 2, solo=INCOGNITAS)
     grado = max_equation_degree(E)
     _, g = to_generator(E, FACTOR)
     quitadas = [str(a) for a, _ in getattr(E, "eliminadas", [])]
@@ -207,6 +213,9 @@ def test_aplanado_optimo(stats):
         stats.fail(f"generador de grado {g['grado']}, se esperaba 5")
     else:
         distancia = g["variables"] - 42
+        if distancia > 0:
+            stats.fail(f"({g['variables']}, 5) esta POR ENCIMA del (42,5) anunciado")
+            return
         print(f"  {Colors.WARN}Distancia al (42,5) anunciado: {distancia:+d} variables.")
         print(f"  Y NO esta demostrado que no se pueda mejorar. La cota que devuelve")
         print(f"  el optimizador es de su CODIFICACION, no del problema: hay")
@@ -253,8 +262,13 @@ def test_equivalencia_por_sustitucion(stats):
     # el optimizador con otras opciones y sin la post-eliminacion, o sea verificaba
     # la equivalencia de un sistema DISTINTO del de la cifra -- y como el optimo no
     # es unico, ni siquiera del mismo aplanado. Lo detecto una revision adversarial.
-    M = eliminar_lineales(M, 2, solo=['q', 'y'])
+    M = eliminar_maximo(M, 2, solo=INCOGNITAS)
+    # HASTA PUNTO FIJO: una definicion puede mencionar una incognita eliminada
+    # DESPUES (`e = 2n+p+q+z` con `q` eliminada luego), y una sola pasada de
+    # `subs` dejaria `q` viva en el sistema recuperado.
     quitadas = {a: b for a, b in getattr(M, "eliminadas", [])}
+    for _ in range(len(quitadas)):
+        quitadas = {a: sympy.expand(b.subs(quitadas)) for a, b in quitadas.items()}
 
     # LAS DEFINICIONES SE PIDEN, NO SE ADIVINAN. Antes se re-derivaban leyendo las
     # ecuaciones --buscar una incognita nueva con coeficiente 1 que no aparezca en
@@ -495,6 +509,143 @@ def test_esquina_de_variables(stats):
         stats.ok()
 
 
+def test_cota_a_mayor_igual_2(stats):
+    """[8] DEMOSTRACION, no muestreo: el sistema de JSWW implica n >= 2 y a >= 2.
+
+    POR QUE HACE FALTA. `eliminar_lineales` solo quita una incognita si el miembro
+    derecho tiene todos los coeficientes >= 0, porque sobre N hay que poder
+    reconstruir un valor no negativo. La ecuacion (11) define `l = k+1+i(a-1)`,
+    con un `-i`, y por eso quedaba bloqueada. La forma limpia de usar una cota NO
+    es relajar el criterio --que es lo unico que impide aceptar sistemas falsos--
+    sino REPARAMETRIZAR: con `a >= 2` demostrado, `a = A+2` es un cambio de
+    variable biyectivo y `l = k+1+i(A+1)` pasa el criterio sin tocarlo.
+
+    LO QUE SE COMPRUEBA AQUI son los CERTIFICADOS de la demostracion, no casos
+    sueltos. Cada paso es un encaje estricto entre dos cuadrados consecutivos, y
+    que la diferencia sea > 0 para todo K >= 1 se certifica sustituyendo K = KK+1
+    y viendo que el polinomio resultante tiene todos los coeficientes >= 0 y no es
+    identicamente nulo. Eso es una demostracion completa, no una comprobacion en
+    un rango.
+    """
+    print(f"\n{Colors.HEADER}[8] Cota demostrada: n >= 2 y a >= 2{Colors.ENDC}")
+    K = sympy.Symbol('K', positive=True, integer=True)
+    KK = sympy.Symbol('KK', nonnegative=True, integer=True)
+    fallos = []
+
+    def positivo_para_K_ge_1(expr, var, sustituto):
+        """Certifica expr > 0 para var >= 1 via coeficientes no negativos."""
+        pol = sympy.Poly(sympy.expand(expr.subs(var, sustituto + 1)), sustituto)
+        cs = pol.all_coeffs()
+        return all(c >= 0 for c in cs) and any(c > 0 for c in cs)
+
+    # Paso 1: la ec.(4) no tiene solucion con n = 0 ni con n = 1.
+    for N, lo, hi in [(1, 4*K**2 + 2*K - 1, 4*K**2 + 2*K),
+                      (2, 8*K**2 + 4*K - 1, 8*K**2 + 4*K)]:
+        F2 = sympy.expand(16 * K**3 * (K + 1) * N**2 + 1)
+        ok_lo = positivo_para_K_ge_1(F2 - lo**2, K, KK)
+        ok_hi = positivo_para_K_ge_1(hi**2 - F2, K, KK)
+        print(f"  n = {N-1}: ({lo})^2 < f^2 < ({hi})^2 para todo K>=1 -> "
+              f"{ok_lo and ok_hi}")
+        if not (ok_lo and ok_hi):
+            fallos.append(f"el encaje de la ec.(4) falla para n={N-1}")
+    print(f"  => n = 0 y n = 1 imposibles, luego {Colors.BOLD}n >= {COTA_N}{Colors.ENDC}")
+
+    # Paso 2: a = 0 da x^2 + y^2 = 1, luego y <= 1, y la ec.(9) fuerza n <= 1.
+    e6 = sympy.expand(ECUACIONES[5].subs(INCOGNITAS[0], 0))   # ec.(6) con a=0
+    if sympy.expand(e6 + sympy.Symbol('x', integer=True)**2
+                    + sympy.Symbol('y', integer=True)**2 - 1) != 0:
+        fallos.append("la ec.(6) con a=0 no es x^2+y^2=1")
+    print(f"  a = 0: ec.(6) queda {e6} = 0  =>  y <= 1, y la ec.(9) da n <= 1: "
+          f"contradice n >= {COTA_N}")
+
+    # Paso 3: a = 1 obliga a e = 0 (otro encaje), y la ec.(3) da n = 0.
+    ee = sympy.Symbol('ee', positive=True, integer=True)
+    EE = sympy.Symbol('EE', nonnegative=True, integer=True)
+    O2 = sympy.expand(4 * ee**4 + 8 * ee**3 + 1)
+    ok = (positivo_para_K_ge_1(O2 - (2*ee**2 + 2*ee - 1)**2, ee, EE) and
+          positivo_para_K_ge_1((2*ee**2 + 2*ee)**2 - O2, ee, EE))
+    print(f"  a = 1: ec.(5) queda o^2 = 4e^4+8e^3+1, sin cuadrado para e>=1 -> {ok}")
+    if not ok:
+        fallos.append("el encaje de la ec.(5) con a=1 falla")
+    print(f"  => e = 0, y la ec.(3) (2n+p+q+z = e) da n = 0: contradice n >= {COTA_N}")
+    print(f"  {Colors.BOLD}CONCLUSION: a >= {COTA_A} en toda solucion sobre N{Colors.ENDC}")
+
+    # La reparametrizacion desbloquea exactamente UNA eliminacion mas: `l`.
+    base = sorted(str(t) for t, _ in
+                  getattr(eliminar_lineales(sistema(expandir=False), 99), "eliminadas", []))
+    desp = sorted(str(t) for t, _ in
+                  getattr(eliminar_lineales(sistema_desplazado(COTA_A), 99), "eliminadas", []))
+    print(f"  eliminables sin desplazar: {base}")
+    print(f"  eliminables con a = A+{COTA_A}: {desp}")
+    if set(desp) - set(base) != {'l'}:
+        fallos.append(f"se esperaba desbloquear solo 'l', se desbloqueo {set(desp)-set(base)}")
+
+    # Y la guarda: no se puede pedir un desplazamiento sin demostracion.
+    try:
+        sistema_desplazado(COTA_A + 1)
+        fallos.append("sistema_desplazado acepto un desplazamiento no demostrado")
+    except ValueError:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} `sistema_desplazado({COTA_A+1})` "
+              f"se rechaza: no hay demostracion de a >= {COTA_A+1}")
+
+    print(f"  {Colors.WARN}LO QUE ESTO NO DA: las otras tres eliminaciones (l, m, p, x")
+    print(f"  en las ec. 12-14) necesitan a >= n+1, a >= p+1 y a >= p, que son")
+    print(f"  relaciones ENTRE incognitas y no se arreglan desplazando. Siguen")
+    print(f"  abiertas.{Colors.ENDC}")
+    if fallos:
+        stats.fail(fallos[0])
+    else:
+        stats.ok()
+
+
+def test_frontera_de_pareto(stats):
+    """[9] La FRONTERA COMPLETA (variables, grado), no dos esquinas sueltas.
+
+    Hay dos palancas y son opuestas: aplanar a grado `d` da un generador de grado
+    `1+2d` y cuanto mas alto `d` menos nombres hacen falta; eliminar una incognita
+    lineal quita una variable y sube el grado. Juntas barren una CURVA.
+
+    Y la zona intermedia de esa curva esta VACIA en la literatura: entre el (42,5)
+    de JSWW y su (26,25) no hay ningun par publicado. Los puntos de en medio son
+    mecanicos --nadie los reclamo porque nadie los escribio-- pero exhibirlos
+    cuesta lo mismo que exhibir uno solo, y sin ellos se estaba publicando menos
+    de lo que se tiene.
+
+    Se exige: la frontera esta ordenada (grado creciente, variables decrecientes)
+    y ningun punto es dominado por una cifra de la literatura.
+    """
+    print(f"\n{Colors.HEADER}[9] Frontera de Pareto (variables, grado){Colors.ENDC}")
+    if not Z3_DISPONIBLE:
+        print("  (z3 no disponible: omitido)"); return
+    S = sistema(expandir=False)
+    frontera = barrido_pareto(S, grados=(2, 3, 4, 5, 6),
+                              demostrados=NO_NEGATIVOS_DEMOSTRADOS)
+    #: pares PUBLICADOS o anunciados, para comprobar dominancia.
+    literatura = [(26, 25), (42, 5), (19, 29), (12, 13697), (10, 6001)]
+    fallos = []
+    prev_v, prev_g = None, None
+    for v, g, receta in frontera:
+        dominado = [(lv, lg) for lv, lg in literatura if lv <= v and lg <= g
+                    and (lv, lg) != (v, g)]
+        marca = (Colors.FAIL + f"dominado por {dominado}" + Colors.ENDC if dominado
+                 else Colors.OKGREEN + "no dominado" + Colors.ENDC)
+        print(f"  ({v:3d} variables, grado {g:3d})  {marca:<40s} {receta}")
+        if prev_v is not None and not (v < prev_v and g > prev_g):
+            fallos.append(f"la frontera no esta ordenada en ({v},{g})")
+        prev_v, prev_g = v, g
+    # El punto de grado 5 es la cifra de portada y no puede empeorar.
+    g5 = [v for v, g, _ in frontera if g == 5]
+    if not g5 or g5[0] > 42:
+        fallos.append(f"el punto de grado 5 salio {g5}, se esperaba <= 42")
+    else:
+        print(f"  {Colors.BOLD}grado 5: {g5[0]} variables{Colors.ENDC}   "
+              f"JSWW 1976 anuncio 42")
+    if fallos:
+        stats.fail(fallos[0])
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -505,6 +656,8 @@ def main():
     test_equivalencia_por_sustitucion(stats)
     test_no_negatividad_de_los_nombres(stats)
     test_esquina_de_variables(stats)
+    test_cota_a_mayor_igual_2(stats)
+    test_frontera_de_pareto(stats)
 
     total = stats.passed + stats.failed
     print()

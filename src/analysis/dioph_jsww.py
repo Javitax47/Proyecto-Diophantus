@@ -157,6 +157,93 @@ PUBLICADO = {
     "referencia": "Jones-Sato-Wada-Wiens, Amer. Math. Monthly 83:6 (1976) 449-464",
 }
 
+# ---------------------------------------------------------------------------
+#   COTA DEMOSTRADA:  toda solucion sobre N del sistema (1) cumple  a >= 2
+# ---------------------------------------------------------------------------
+#
+# POR QUE IMPORTA. `eliminar_lineales` solo puede quitar una incognita cuando el
+# miembro derecho tiene todos los coeficientes >= 0, porque sobre N hay que poder
+# RECONSTRUIR un valor no negativo. La ecuacion (11) define
+#
+#       l = k + 1 + i*(a - 1)
+#
+# que tiene un `-i` y por eso quedaba bloqueada: sin saber `a >= 1` el valor
+# reconstruido podria ser negativo y se perderia la completitud. La forma limpia
+# de usar una cota de este tipo NO es relajar el criterio (que es lo unico que
+# separa este codigo de aceptar sistemas falsos) sino REPARAMETRIZAR: si `a >= 2`
+# esta demostrado, escribir `a = A + 2` con `A in N` es un cambio de variable
+# biyectivo, y entonces `l = k + 1 + i*(A + 1)` tiene todos los coeficientes
+# positivos y el criterio pasa SIN tocarlo.
+#
+# DEMOSTRACION (elemental, tres pasos; verificada en test_dioph_jsww [8]).
+#
+# Paso 1: n >= 2.
+#   La ecuacion (4) dice  f^2 = 16*K^3*(K+1)*N^2 + 1  con K = k+1 >= 1, N = n+1.
+#   * N = 1:  f^2 = 16K^4 + 16K^3 + 1  y
+#         (4K^2+2K-1)^2 = f^2 - 4K(K+1)  <  f^2  <  f^2 + (2K-1)(2K+1) = (4K^2+2K)^2.
+#   * N = 2:  f^2 = 64K^4 + 64K^3 + 1  y
+#         (8K^2+4K-1)^2 = f^2 - 8K       <  f^2  <  f^2 + (4K-1)(4K+1) = (8K^2+4K)^2.
+#   En ambos casos f quedaria ESTRICTAMENTE entre dos enteros consecutivos (las
+#   cuatro diferencias son > 0 para todo K >= 1: se comprueba sustituyendo
+#   K = KK+1 y viendo que todos los coeficientes en KK son >= 0 y no todos nulos).
+#   Luego n = 0 y n = 1 son imposibles.
+#
+# Paso 2: a != 0.
+#   Con a = 0 la ecuacion (6) queda  x^2 + y^2 = 1, luego y <= 1. La ecuacion (9)
+#   es  n + l + v = y, luego n <= 1, que contradice el paso 1.
+#
+# Paso 3: a != 1.
+#   Con a = 1 la ecuacion (5) queda  o^2 = 4e^4 + 8e^3 + 1. Para e >= 1,
+#         (2e^2+2e-1)^2 = o^2 - 4e  <  o^2  <  o^2 + (4e^2-1) = (2e^2+2e)^2,
+#   otra vez un encaje estricto: imposible. Luego e = 0. Pero la ecuacion (3) es
+#   2n + p + q + z = e, asi que e = 0 fuerza n = 0, que contradice el paso 1.
+#
+# Por tanto a >= 2.  (De paso queda demostrado n >= 2, que se usa en los pasos 2 y 3
+# y que tambien vale por si mismo.)
+#
+# LO QUE ESTO **NO** DA, y conviene tenerlo escrito porque es la frontera abierta:
+# las otras tres eliminaciones necesitan `a >= n+1`, `a >= p+1` y `a >= p`, que son
+# relaciones ENTRE incognitas y no se arreglan con un desplazamiento constante.
+# Siguen sin demostracion (ver ESTADO_CALCULO_DIOFANTICO 3.2m).
+COTA_A = 2
+COTA_N = 2
+
+
+def sistema_desplazado(desplazamiento=COTA_A, expandir=False, agrupado=False):
+    """El sistema (1) reparametrizado con `a = A + desplazamiento`.
+
+    Cambio de variable biyectivo N -> {desplazamiento, desplazamiento+1, ...}, y
+    por tanto equisatisfacible con `sistema()` SIEMPRE QUE `a >= desplazamiento`
+    este demostrado. Para 2 lo esta (ver arriba); no se debe llamar con un valor
+    mayor sin una demostracion nueva.
+    """
+    if desplazamiento > COTA_A:
+        raise ValueError(
+            f"a >= {desplazamiento} no esta demostrado; la cota probada es {COTA_A}")
+    fuente = ECUACIONES_AGRUPADAS if agrupado else ECUACIONES
+    A = sympy.Symbol('A', integer=True)
+    eqs = [x_.subs(a, A + desplazamiento) for x_ in fuente]
+    if expandir:
+        eqs = [sympy.expand(x_) for x_ in eqs]
+    inc = [A if s is a else s for s in INCOGNITAS]
+    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+                 name=f"JSWW 1976 con a = A+{desplazamiento}")
+
+
+def no_negativos_desplazados(desplazamiento=COTA_A):
+    """`NO_NEGATIVOS_DEMOSTRADOS` reescrito para `sistema_desplazado`.
+
+    NO es cosmetico. El optimizador reconoce una expresion demostrada comparando
+    su `str()` contra esta tupla; tras el cambio de variable las cadenas ya no
+    coinciden y las dos demostraciones se pierden EN SILENCIO. Medido: eso solo
+    subia el aplanado de 17 a 20 nombres, y la cifra habria parecido un empeora-
+    miento del desplazamiento cuando era un fallo de emparejado de cadenas.
+    """
+    A = sympy.Symbol('A', integer=True)
+    loc = {str(s): s for s in _SIMBOLOS}
+    return tuple(str(sympy.sympify(s, locals=loc).subs(a, A + desplazamiento))
+                 for s in NO_NEGATIVOS_DEMOSTRADOS)
+
 
 def sistema(expandir=True, agrupado=False):
     """El sistema (1) de JSWW como `Dioph`.

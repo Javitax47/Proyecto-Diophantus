@@ -25,18 +25,22 @@ RESULTADOS MEDIDOS sobre el sistema de Jones-Sato-Wada-Wiens (1976):
 |---------------------------------|---------|-------|-----------|------|
 | original expandido              |      25 |    50 | (51, 5)   |   25 |
 | tras `flatten_tree(S, 8)`       |      16 |    46 | (47, 5)   |   16 |
-| JSWW 1976, a mano               |       - |    41 | (42, 5)   |    - |
+| JSWW 1976, a mano               |      16 |    41 | (42, 5)   |    - |
+| forma factorizada, catalogo actual |   15 |    40 | (41, 5)   |   15 |
+| ... y post-eliminando e, q, y   |         |    37 | **(38,5)**|      |
 
-LA CONCLUSION, que es la parte util: **nuestra busqueda ya estaba en el optimo**.
-Los ~2.000 reinicios aleatorios habian encontrado 46, y Z3 demuestra que 46 es el
-minimo para esa base. Luego el problema NO es la busqueda: es la FORMULACION.
+TRES VECES SE CREYO QUE ESTO ESTABA EN EL OPTIMO, Y LAS TRES ERA EL CATALOGO.
+Primero con monomios solos (46). Luego anadiendo los nodos del arbol (17). Y la
+tercera vez el aviso fue aritmetico y no habia forma de discutirlo: JSWW pasan de
+26 a 42 variables, o sea 16 nombres, y esta codificacion certificaba **17 como
+COTA INFERIOR**. Una cota inferior por encima de una construccion publicada es
+imposible; el imposible era del instrumento. Faltaban las SUBSUMAS --`g*k + k + 1`
+dentro de `g*k + 2*g + k + 1`--, que no son nodos del arbol ni monomios de ningun
+desarrollo y por tanto no estaban en ninguno de los dos espacios. Con ellas: 15.
 
-POR QUE JSWW llega a 41 y nosotros no. Ellos no nombran solo monomios: nombran
-SUBEXPRESIONES COMPUESTAS -- `(a + u^2(u^2-a))^2`, `(n+4dy)^2`-- que no son
-monomios de ningun desarrollo. Optimizar sobre ese espacio es el problema del
-CIRCUITO ARITMETICO MINIMO con puertas de grado 2 (un straight-line program
-minimo), y es un espacio muchisimo mas grande que el de los monomios. Ahi esta
-la brecha de 5 variables, y ahi hay que atacar si se quiere bajar de 47.
+LA LECCION, que vale mas que la cifra: la palabra `optimo_del_encoding` no es
+pedanteria. Cada vez que el catalogo crece, el "optimo" baja. La unica cota que
+significa algo aqui es la que un resultado imposible todavia no ha refutado.
 """
 
 import itertools
@@ -113,6 +117,15 @@ def aplanado_minimo(system, target=2, timeout_s=300):
 
     opt = z3.Optimize()
     opt.set("timeout", timeout_s * 1000)
+    if semilla is not None:
+        # DIVERSIFICAR ENTRE OPTIMOS, que no es lo mismo que bloquearlos. Las
+        # clausulas de `excluir` prohiben una asignacion exacta, y Z3 responde con
+        # otra casi identica: seis iteraciones seguidas devolvian el MISMO conjunto
+        # de post-eliminaciones. Con semillas distintas explora regiones distintas
+        # del espacio de optimos, que es lo que hace falta cuando lo que se compara
+        # no es el numero de nombres --todos empatan-- sino cuantas incognitas
+        # ORIGINALES deja eliminar despues, que el objetivo no puede ver.
+        opt.set("random_seed", int(semilla))
     for m in objetivo:
         opt.add(partir(m))
     for t in candidatos:
@@ -140,18 +153,37 @@ def aplanado_minimo(system, target=2, timeout_s=300):
 #   APLANADO MINIMO SOBRE SUBEXPRESIONES COMPUESTAS (no solo monomios)
 # ---------------------------------------------------------------------------
 
-def _nodos(e, acc):
+def _nodos(e, acc, sumas_parciales=False, tope_suma=6):
     """Todos los nodos del arbol de `e`, y los productos parciales de cada Mul.
 
     Los productos parciales hacen falta porque partir `f1*f2*f3` en dos grupos
     crea subexpresiones (`f1*f2`) que no son nodos del arbol original pero si
     candidatas a recibir nombre.
+
+    `sumas_parciales` anade tambien las SUMAS parciales de cada Add (y de su
+    forma desarrollada). Existe porque el catalogo se quedaba corto de forma
+    demostrable: JSWW obtienen 42 variables a partir de 26, o sea 16 nombres, y
+    esta codificacion certificaba 17 como COTA INFERIOR. Una cota inferior por
+    encima de una construccion publicada solo puede significar que al catalogo le
+    faltan candidatos. Los que faltaban son subsumas como `2*a*(n+1)` dentro de
+    `2*a*n + 2*a - n**2 - 2*n - 2`, que no son nodos del arbol ni monomios de
+    ningun desarrollo, y por tanto no estaban en ninguno de los dos espacios.
     """
     e = sympy.sympify(e)
     acc.add(e)
     if e.is_Add or e.is_Mul:
         for a in e.args:
-            _nodos(a, acc)
+            _nodos(a, acc, sumas_parciales, tope_suma)
+    if sumas_parciales and e.is_Add:
+        for forma in {e, sympy.expand(e)}:
+            if not forma.is_Add:
+                continue
+            args = list(forma.args)
+            if len(args) > tope_suma:
+                continue
+            for r in range(2, len(args)):
+                for comb in itertools.combinations(range(len(args)), r):
+                    acc.add(sympy.Add(*[args[i] for i in comb]))
     if e.is_Mul:
         coef, resto = e.as_coeff_Mul()
         fs = list(resto.args) if resto.is_Mul else [resto]
@@ -335,7 +367,8 @@ def no_negativo_sobre_N(e):
 
 def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                               solo_no_negativos=False, demostrados=(),
-                              reescritura=False, tope_reescritura=8):
+                              reescritura=False, tope_reescritura=8,
+                              excluir=(), sumas_parciales=True, semilla=None):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     AVISO DE COHERENCIA, aprendido a base de romperlo dos veces: `reescritura`
@@ -369,6 +402,22 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     Objetivo: minimizar el numero de nombres. Devuelve el mismo dict que
     `aplanado_minimo`, con `estado` = 'optimo' solo si se alcanza la cota.
+
+    `sumas_parciales` (por defecto SI): incluye en el catalogo las subsumas de
+    cada Add. Medido sobre el sistema de JSWW: 17 nombres sin ellas, 15 con
+    ellas, +7 s de tiempo. No es un ajuste fino sino la correccion de una laguna
+    DEMOSTRABLE del catalogo: JSWW pasan de 26 a 42 variables, o sea 16 nombres,
+    y esta codificacion certificaba 17 como COTA INFERIOR. Una cota inferior por
+    encima de una construccion publicada es un resultado imposible, y como
+    siempre en este modulo el imposible era del instrumento.
+
+    `excluir`: conjuntos de nombres (listas de cadenas) ya obtenidos, que se
+    PROHIBEN con una clausula de bloqueo para poder enumerar OTROS optimos del
+    mismo tamano. Existe porque el optimo NO ES UNICO y el numero de nombres no
+    es la cifra final: despues viene la post-eliminacion de incognitas
+    originales, que el objetivo no puede ver. Dos aplanados de 17 nombres pueden
+    admitir distinto numero de post-eliminaciones, asi que quedarse con el primer
+    modelo que devuelva Z3 es dejar la cifra final al azar del solucionador.
     """
     if not Z3_DISPONIBLE:
         return {"estado": "sin_z3"}
@@ -412,7 +461,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     cand = set()
     for e in system.eqs:
-        _nodos(e, cand)
+        _nodos(e, cand, sumas_parciales=sumas_parciales)
     # UNION DE LOS DOS ESPACIOS. Solo con nodos del arbol el optimo salia 51
     # variables, PEOR que la ruta arbol+monomios (47): faltaban monomios utiles
     # que no son nodos de ningun arbol (`a*n`, `k**2`, `l*p`...). Y solo con
@@ -463,6 +512,8 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
     # COMPUESTOS --los que contienen sumas--, que es justo donde el aplanado por
     # particion de factores se queda corto.
     orden_reesc = [c for c in orden_reesc if _como_monomio(c, gens) is None]
+    # Candidatos que son SUMAS: los unicos que pueden encajar como subsuma.
+    add_cand = [c for c in orden if c.is_Add]
     lider = {c: _monomio_lider(c, gens) for c in orden_reesc}
     grado_c = {c: grado(c) for c in orden_reesc}
     memo_reesc = {}
@@ -517,6 +568,29 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
         ex = sympy.expand(e)
         if ex != e and ex.is_Add and len(ex.args) <= 60:
             ops.append(z3.And(*[R(a, d) for a in ex.args]))
+        # RUTA DE SUBSUMA. Si un candidato `c` es una suma cuyos sumandos son un
+        # SUBCONJUNTO de los de `e`, nombrarlo deja `e = m_c + resto`, y basta
+        # reducir el resto. Sin esta regla los candidatos de `sumas_parciales` se
+        # anadian al catalogo pero eran INUTILIZABLES, y el optimo no se movia --
+        # que es exactamente el sintoma que tendria un catalogo enriquecido de
+        # verdad pero inutil. Es la regla espejo de la de `_intentar_crudo`.
+        # GUARDA `d >= 1`, la misma que ya fallo una vez (defecto 5): un nombre es
+        # una incognita de GRADO 1, asi que esta ruta no puede usarse cuando se
+        # pide grado 0. Y NO se condiciona a `permitir_nombre`: ese flag prohibe
+        # nombrar `e` a si mismo, no usar OTRO nombre; exigirlo aqui haria al
+        # optimizador mas estricto que al materializador -- o al reves-- y esa
+        # pareja desalineada ya ha roto la cadena dos veces.
+        if d >= 1:
+            for forma in ([e] if e.is_Add else []) + ([ex] if ex.is_Add and ex is not e else []):
+                args_e = set(forma.args)
+                if len(args_e) > 60:
+                    continue
+                for c in add_cand:
+                    args_c = set(c.args)
+                    if c is e or not (args_c < args_e):
+                        continue
+                    resto = sympy.Add(*(args_e - args_c))
+                    ops.append(z3.And(x[c], R(resto, d)))
         # RUTA MONOMIAL: si el nodo desarrollado es UN monomio, hay que partir su
         # VECTOR DE EXPONENTES, no sus factores sintacticos. Sin esto, `a**2*y**2`
         # solo se partia como (a^2)*(y^2) --dos nombres-- y no como (a*y)*(a*y),
@@ -611,6 +685,14 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
         opt.add(v == opciones_de(e, d, pn))
     for r in raiz:
         opt.add(r)
+    # CLAUSULAS DE BLOQUEO: prohiben una asignacion COMPLETA ya vista, no un
+    # subconjunto. Bloquear "que no aparezca este candidato" descartaria optimos
+    # legitimos que lo usan junto a otros distintos.
+    for prohibido in excluir:
+        prohibido = set(prohibido)
+        opt.add(z3.Not(z3.And(*[x[c] if str(c) in prohibido else z3.Not(x[c])
+                                for c in orden])))
+
     objetivo_min = opt.minimize(z3.Sum([z3.If(x[c], 1, 0) for c in orden]))
 
     res = opt.check()
@@ -709,6 +791,8 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     reesc_orden = sorted(elegidos, key=lambda t: -grado(t))
     reesc_grado = {c: grado(c) for c in reesc_orden}
     reesc_lider = {c: _monomio_lider(c, gens) for c in reesc_orden}
+    elegidos_add = sorted([c for c in elegidos if c.is_Add],
+                          key=lambda t: (-grado(t), -len(t.args)))
 
     cache_intentar = {}
 
@@ -753,6 +837,21 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
             partes = [intentar(a, d) for a in ex.args]
             if all(p is not None for p in partes):
                 return sympy.Add(*partes)
+        # REGLA ESPEJO de la ruta de subsuma del optimizador. Tiene que estar en
+        # los dos sitios y con el mismo criterio: un certificado solo vale para el
+        # juego de reglas con el que se emitio, y esta pareja ya se rompio dos
+        # veces en las dos direcciones (ver el aviso de coherencia de
+        # `aplanado_minimo_compuesto`).
+        if d >= 1:
+            for forma in ([e] if e.is_Add else []) + ([ex] if ex.is_Add and ex is not e else []):
+                args_e = set(forma.args)
+                for c in elegidos_add:
+                    args_c = set(c.args)
+                    if not (args_c < args_e):
+                        continue
+                    r = intentar(sympy.Add(*(args_e - args_c)), d)
+                    if r is not None:
+                        return simbolo(c) + r
         expo = _como_monomio(ex, gens)
         if expo is not None and d >= 2:
             for d1 in itertools.product(*[range(a + 1) for a in expo]):
@@ -890,6 +989,151 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     # nombres. Quien las conoce sin ambiguedad es quien las creo.
     salida.definiciones = [(w, sympy.sympify(k)) for k, w in nombres.items()]
     return salida
+
+
+def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
+                           timeout_s=900, solo_no_negativos=True, demostrados=(),
+                           reescritura=True, sumas_parciales=True, verbose=False):
+    """Aplana y post-elimina, quedandose con el MEJOR de varios optimos distintos.
+
+    POR QUE NO BASTA LLAMAR AL OPTIMIZADOR UNA VEZ. El optimo en numero de
+    nombres **no es unico**, y el numero de nombres **no es la cifra final**:
+    despues viene la post-eliminacion de incognitas originales, que el objetivo
+    no puede ver --minimiza nombres con las originales congeladas--. Dos aplanados
+    de 15 nombres pueden admitir distinto numero de post-eliminaciones.
+
+    Y no es teorico: dos tests que llamaban al optimizador con los MISMOS
+    argumentos obtuvieron modelos distintos y publicaron (36,5) y (38,5). Una
+    cifra que depende de que modelo devuelva Z3 esa vez no es un resultado.
+
+    Aqui se enumeran hasta `k_optimos` conjuntos DISTINTOS del mismo tamano con
+    clausulas de bloqueo, se materializa cada uno y se post-elimina explorando
+    todos los ordenes, y se devuelve el mejor. La cifra pasa a depender solo de
+    `k_optimos`, que es un parametro declarado -- y sigue siendo una COTA
+    SUPERIOR: subir `k_optimos` solo puede mejorarla.
+
+    Devuelve un dict con `sistema` (el `Dioph` final), `variables`, `grado`
+    (el del GENERADOR), `nombres`, `cota`, `eliminadas`, `elegidos` y
+    `optimos_vistos`.
+    """
+    from src.analysis.dioph_degree import eliminar_maximo, max_equation_degree
+
+    if solo_eliminar is None:
+        solo_eliminar = list(system.unknowns)
+    vistos, mejor = [], None
+    for i in range(max(1, k_optimos)):
+        r = aplanado_minimo_compuesto(system, target, timeout_s=timeout_s,
+                                      solo_no_negativos=solo_no_negativos,
+                                      demostrados=demostrados,
+                                      reescritura=reescritura,
+                                      sumas_parciales=sumas_parciales,
+                                      excluir=vistos, semilla=i)
+        if r["estado"] != "optimo_del_encoding":
+            break                      # se agotaron los optimos de ese tamano
+        vistos.append(r["elegidos"])
+        M = materializar(system, r["elegidos"], target, reescritura=reescritura)
+        if max_equation_degree(M) > target:
+            continue                   # el materializado no alcanza lo certificado
+        E = eliminar_maximo(M, target, solo=solo_eliminar)
+        gen = 1 + 2 * max_equation_degree(E)
+        v = len(E.unknowns) + 1
+        if verbose:
+            print(f"    optimo #{len(vistos)}: {r['nombres']} nombres, "
+                  f"post-elim {sorted(str(t) for t, _ in E.eliminadas)} -> ({v}, {gen})",
+                  flush=True)
+        if mejor is None or (v, gen) < (mejor["variables"], mejor["grado"]):
+            mejor = {"sistema": E, "variables": v, "grado": gen,
+                     "nombres": r["nombres"], "cota": r["cota"],
+                     "eliminadas": list(E.eliminadas), "elegidos": r["elegidos"],
+                     "materializado": M}
+    if mejor is not None:
+        mejor["optimos_vistos"] = len(vistos)
+    return mejor
+
+
+def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
+                   timeout_s=900, solo_no_negativos=True, demostrados=(),
+                   reescritura=True, sumas_parciales=True, k_optimos=4,
+                   verbose=False):
+    """FRONTERA DE PARETO (variables, grado), no un punto suelto.
+
+    POR QUE EXISTE. Se venian midiendo dos esquinas --grado 5 y grado 25-- como
+    si fueran los dos unicos sitios donde hay algo que decir. Pero hay dos
+    palancas continuas y opuestas:
+
+      * aplanar a grado por ecuacion `d` da un generador de grado `1 + 2d`, y
+        cuanto mas alto `d`, menos nombres hacen falta;
+      * eliminar una incognita lineal quita una variable y SUBE el grado.
+
+    Barrerlas juntas da una CURVA. Publicar un punto de ella es publicar menos de
+    lo que se tiene, y --peor-- deja sin medir la zona intermedia, que en la
+    literatura esta literalmente vacia: entre el (42,5) de JSWW y su (26,25) no
+    hay ningun par publicado.
+
+    Devuelve la lista de puntos NO DOMINADOS como (variables, grado, receta),
+    ordenada por grado creciente. Cada punto viene de un sistema realmente
+    MATERIALIZADO y con el grado medido sobre el, no de una formula.
+
+    Las eliminaciones se prueban en TODOS LOS ORDENES posibles porque el orden
+    importa: quitar `e` primero deja `q` inutilizable y viceversa, y un voraz se
+    queda con lo primero que encuentra.
+    """
+    from src.analysis.dioph_degree import eliminar_lineales, max_equation_degree
+
+    originales = [str(u) for u in system.unknowns]
+    if eliminables is None:
+        eliminables = originales
+    eliminables = set(eliminables)
+    puntos = {}
+
+    def registrar(v, g, receta):
+        if g not in puntos or v < puntos[g][0]:
+            puntos[g] = (v, receta)
+            if verbose:
+                print(f"    ({v:3d} variables, grado {g:3d})  {receta}", flush=True)
+
+    def explorar(M, receta, tope):
+        vistos, pila = set(), [(M, ())]
+        while pila:
+            cur, hechas = pila.pop()
+            if frozenset(hechas) in vistos:
+                continue
+            vistos.add(frozenset(hechas))
+            registrar(len(cur.unknowns) + 1, 1 + 2 * max_equation_degree(cur),
+                      f"{receta} + eliminar {sorted(hechas)}")
+            for c in [str(u) for u in cur.unknowns if str(u) in eliminables]:
+                E = eliminar_lineales(cur, tope, solo=[c])
+                nuevas = tuple(str(t) for t, _ in getattr(E, "eliminadas", []))
+                if nuevas:
+                    pila.append((E, hechas + nuevas))
+
+    explorar(system, "sin aplanar", 99)
+    for d in grados:
+        # POR K OPTIMOS, no por el primero: el optimo no es unico y la cifra final
+        # dependia de que modelo devolviera Z3. Cada punto de la frontera se toma
+        # del mejor de `k_optimos` aplanados distintos del mismo tamano.
+        best = aplanado_y_eliminacion(system, d, k_optimos=k_optimos,
+                                      solo_eliminar=list(system.unknowns),
+                                      timeout_s=timeout_s,
+                                      solo_no_negativos=solo_no_negativos,
+                                      demostrados=demostrados, reescritura=reescritura,
+                                      sumas_parciales=sumas_parciales)
+        if best is None:
+            if verbose:
+                print(f"  [grado {d}] el optimizador no alcanzo su cota", flush=True)
+            continue
+        if verbose:
+            print(f"  [aplanado a {d}] {best['nombres']} nombres, mejor de "
+                  f"{best['optimos_vistos']} optimos", flush=True)
+        explorar(best["materializado"], f"aplanado a {d}", d)
+
+    frontera, mejor = [], None
+    for g in sorted(puntos):
+        v, receta = puntos[g]
+        if mejor is None or v < mejor:
+            frontera.append((v, g, receta))
+            mejor = v
+    return frontera
 
 
 from src.analysis.dioph_calculus import Dioph          # noqa: E402  (al final: evita ciclo)

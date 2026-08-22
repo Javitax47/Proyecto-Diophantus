@@ -591,6 +591,54 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     return out
 
 
+def eliminar_maximo(system, tope=2, solo=None, name=None):
+    """Post-eliminacion que explora TODOS LOS ORDENES y devuelve el mejor sistema.
+
+    POR QUE NO BASTA `eliminar_lineales` A SECAS. Dos motivos, los dos medidos:
+
+     1. EL ORDEN IMPORTA. Sobre el aplanado a grado 2 del sistema de JSWW, quitar
+        `e` primero deja `q` inutilizable --sustituirla subiria el grado a 4-- y
+        quitar `q` primero deja fuera a `e`. Cualquier recorrido voraz se queda
+        con lo primero que encuentra y la cifra depende del orden de iteracion.
+     2. HAY QUE VIGILAR EL GRADO. `eliminar_lineales` acepta `tope` pero no lo
+        usa: sin restringir `solo` tambien deshace los NOMBRES --toda definicion
+        `w = d` es lineal en `w`-- y el aplanado se pierde entero. Medido: sobre
+        el sistema de 42 incognitas y grado 2, la eliminacion libre devuelve 24
+        variables y grado 37.
+
+    Aqui se prueba incognita a incognita, se descarta la que suba el grado por
+    encima de `tope`, y se exploran todas las ramas. `solo` restringe el conjunto
+    de candidatas (lo normal: las incognitas ORIGINALES, nunca los nombres).
+    """
+    candidatas = None if solo is None else {str(s) for s in solo}
+    vistos = set()
+    mejor, mejor_defs = system, []
+    pila = [(system, frozenset(), [])]
+    while pila:
+        cur, hechas, defs = pila.pop()
+        if hechas in vistos:
+            continue
+        vistos.add(hechas)
+        if cur.cost() < mejor.cost():
+            mejor, mejor_defs = cur, defs
+        for c in [str(u) for u in cur.unknowns
+                  if candidatas is None or str(u) in candidatas]:
+            E = eliminar_lineales(cur, tope, solo=[c])
+            hechas_E = list(getattr(E, "eliminadas", []))
+            if not hechas_E or max_equation_degree(E) > tope:
+                continue
+            pila.append((E, hechas | {str(t) for t, _ in hechas_E}, defs + hechas_E))
+    # `eliminadas` ACUMULADA a lo largo del camino ganador. Es lo que necesita la
+    # verificacion por sustitucion hacia atras, y ojo: un valor puede mencionar
+    # una incognita eliminada DESPUES, asi que hay que sustituir hasta punto fijo,
+    # no una sola vez. Comparar definiciones tomadas antes de eliminar con
+    # ecuaciones tomadas despues ya dio un fallo falso una vez.
+    mejor.eliminadas = mejor_defs
+    if name:
+        mejor.name = name
+    return mejor
+
+
 def _coeficientes_no_negativos_expr(e):
     """True si todo monomio de `e` tiene coeficiente >= 0 (constante incluida)."""
     e = sympy.expand(e)
