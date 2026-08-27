@@ -1036,6 +1036,7 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
         return r
 
     eqs = [sympy.expand(reducir(e, target)) for e in system.eqs]
+    definitorias = []
     i = 0
     while i < len(defs):
         w, c = defs[i]
@@ -1072,6 +1073,12 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                 f"redujo a si mismo ({w} = {cuerpo}). El nombre quedaria libre y el "
                 f"sistema seria mas debil que el original. Definicion: {c}")
         eqs.append(ecuacion)
+        # SE GUARDA EL CUERPO REDUCIDO, no solo la expresion original que el nombre
+        # representa. Son cosas distintas: la ecuacion que va al sistema es
+        # `w - reducir(c)`, y `reducir` sustituye subexpresiones por OTROS nombres.
+        # La comprobacion estructural --¿existe en el sistema la ecuacion que ata
+        # `w`?-- tiene que mirar lo que se emitio, no lo que se pretendia.
+        definitorias.append((w, cuerpo))
         i += 1
 
     # Y la comprobacion estructural, que no depende de como se hayan expresado las
@@ -1118,6 +1125,7 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     # reescritura hace que una definicion se exprese en terminos de OTROS
     # nombres. Quien las conoce sin ambiguedad es quien las creo.
     salida.definiciones = [(w, sympy.sympify(k)) for k, w in nombres.items()]
+    salida.definitorias = definitorias
     return salida
 
 
@@ -1132,34 +1140,52 @@ def verificar_estructura(materializado):
     identidad sigue cuadrando y el sistema publicado es ESTRICTAMENTE MAS DEBIL
     que el original: `w` queda libre.
 
-    Lo que hace falta es una comprobacion ESTRUCTURAL, y son tres condiciones.
-    Juntas dan una biyeccion entre conjuntos de soluciones; ninguna sobra:
+    DOS LISTAS, Y NO SON LA MISMA. `definiciones` dice que EXPRESION ORIGINAL
+    representa cada nombre; `definitorias` dice que CUERPO REDUCIDO se emitio
+    realmente en la ecuacion, y ese cuerpo puede mencionar otros nombres. Mirar la
+    primera donde habia que mirar la segunda hace que la comprobacion rechace
+    sistemas correctos: fue el primer resultado de esta funcion y era suyo el
+    error, no del sistema.
 
-      1. Cada nombre `w` con definicion `w = cuerpo` tiene EN EL SISTEMA una
-         ecuacion igual a `+-(w - cuerpo)`, y se empareja 1 A 1 (dos nombres no
-         pueden reclamar la misma ecuacion).
-      2. `w` no aparece en su propio cuerpo. Sin esto `w - cuerpo` puede expandir
-         a 0 -- que es exactamente como se colo el noveno defecto.
+    CUATRO CONDICIONES. Juntas dan una biyeccion entre conjuntos de soluciones;
+    ninguna sobra:
+
+      1. Cada nombre `w` con cuerpo emitido `r` tiene EN EL SISTEMA una ecuacion
+         igual a `+-(w - r)`, y se empareja 1 A 1 (dos nombres no pueden reclamar
+         la misma ecuacion).
+      2. `w` no aparece en `r`. Sin esto `w - r` puede expandir a 0 -- que es
+         exactamente como se colo el noveno defecto.
       3. El grafo de dependencias entre nombres es ACICLICO. Con un ciclo
          `w1 = f(w2)`, `w2 = g(w1)` las dos ecuaciones existen y ninguna es
-         autorreferente, pero el par puede admitir soluciones espurias: la
-         sustitucion hacia atras no termina y no hay valor determinado.
+         autorreferente, pero el par no determina nada: la sustitucion hacia atras
+         no termina.
+      4. Desplegando `r` hasta punto fijo se recupera la expresion original que el
+         nombre dice representar. Esto ata las dos listas: sin ello, `w` estaria
+         bien determinado pero por OTRA cosa, y la identidad polinomica de abajo
+         --que usa `definiciones`-- estaria hablando de un sistema distinto.
 
-    Con las tres, cada nombre queda determinado por las originales en orden
-    topologico, y anadirlos no cambia la satisfacibilidad. Sin la 1 o la 2, el
-    sistema tiene soluciones que el original no tiene.
+    Con las cuatro, cada nombre queda determinado por las originales en orden
+    topologico, y anadirlos no cambia la satisfacibilidad.
     """
-    defs = list(getattr(materializado, "definiciones", []))
+    declaradas = {w: sympy.expand(c)
+                  for w, c in getattr(materializado, "definiciones", [])}
+    # `definitorias` es lo que se emitio; si no esta (sistemas antiguos), lo unico
+    # que hay es la definicion declarada, y entonces 1 y 4 coinciden.
+    emitidas = list(getattr(materializado, "definitorias", None)
+                    or list(declaradas.items()))
     ecs = [sympy.expand(e) for e in materializado.eqs]
-    nombres = {w for w, _ in defs}
+    nombres = set(declaradas) | {w for w, _ in emitidas}
 
     autorreferentes, sin_ecuacion = [], []
     libres = list(range(len(ecs)))
-    for w, cuerpo in defs:
-        if w in sympy.expand(cuerpo).free_symbols:
+    cuerpos = {}
+    for w, r in emitidas:
+        r = sympy.expand(r)
+        cuerpos[w] = r
+        if w in r.free_symbols:
             autorreferentes.append(str(w))
             continue
-        objetivo = sympy.expand(w - cuerpo)
+        objetivo = sympy.expand(w - r)
         for i in list(libres):
             if ecs[i] - objetivo == 0 or ecs[i] + objetivo == 0:
                 libres.remove(i)
@@ -1169,8 +1195,7 @@ def verificar_estructura(materializado):
 
     # ACICLICIDAD por eliminacion repetida de fuentes (Kahn). Lo que sobra al
     # final es exactamente el conjunto de nombres metidos en algun ciclo.
-    dep = {w: (sympy.expand(c).free_symbols & nombres) - {w} for w, c in defs}
-    pendientes = dict(dep)
+    pendientes = {w: (r.free_symbols & nombres) - {w} for w, r in cuerpos.items()}
     while True:
         listos = [w for w, d in pendientes.items() if not (d & set(pendientes))]
         if not listos:
@@ -1179,12 +1204,29 @@ def verificar_estructura(materializado):
             pendientes.pop(w)
     ciclos = sorted(str(w) for w in pendientes)
 
+    # 4: desplegar hasta punto fijo y comparar con lo declarado. Solo tiene
+    # sentido si no hay ciclos -- con un ciclo el despliegue no termina.
+    discrepantes = []
+    if not ciclos and not autorreferentes:
+        for w, r in cuerpos.items():
+            if w not in declaradas:
+                continue
+            prev, e = None, r
+            for _ in range(len(cuerpos) + 1):
+                if prev == e:
+                    break
+                prev, e = e, sympy.expand(e.subs(cuerpos))
+            if sympy.expand(e - declaradas[w]) != 0:
+                discrepantes.append(str(w))
+
     return {
-        "ok": not autorreferentes and not sin_ecuacion and not ciclos,
-        "definiciones": len(defs),
+        "ok": not autorreferentes and not sin_ecuacion and not ciclos
+              and not discrepantes,
+        "definiciones": len(emitidas),
         "autorreferentes": sorted(autorreferentes),
         "sin_ecuacion": sorted(sin_ecuacion),
         "ciclos": ciclos,
+        "discrepantes": sorted(discrepantes),
     }
 
 

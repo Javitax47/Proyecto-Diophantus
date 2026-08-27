@@ -189,9 +189,13 @@ def test_estructura_ata_los_nombres(stats):
     print(f"\n{Colors.HEADER}[6] La verificacion estructural ata cada nombre a su definicion{Colors.ENDC}")
     x, y, m1, m2 = sympy.symbols('x y m1 m2', integer=True)
 
-    def sistema(eqs, defs, unknowns=(x, y, m1)):
+    def sistema(eqs, defs, unknowns=(x, y, m1), emitidas=None):
         d = Dioph([], list(unknowns), list(eqs))
         d.definiciones = list(defs)
+        # `definitorias` = lo que se emitio de verdad. Cuando no se pasa, coincide
+        # con lo declarado, que es el caso de los sistemas antiguos.
+        if emitidas is not None:
+            d.definitorias = list(emitidas)
         return d
 
     casos = [
@@ -214,6 +218,22 @@ def test_estructura_ata_los_nombres(stats):
          sistema([m1 - x - m2, m2 - y - m1, m1 - 5],
                  [(m1, x + m2), (m2, y + m1)], unknowns=(x, y, m1, m2)),
          False, "ciclos"),
+        # `m1` esta perfectamente atado --por una ecuacion, sin ciclo y sin
+        # autorreferencia-- pero a OTRA cosa que la que dice representar. La
+        # identidad polinomica de `verificar_equivalencia` usa `definiciones`, o
+        # sea que estaria hablando de un sistema distinto del que se publica.
+        ("atado a otra cosa",
+         sistema([m1 - x - y, m1 - 5], [(m1, x * y)], emitidas=[(m1, x + y)]),
+         False, "discrepantes"),
+        # El caso normal con reescritura: el cuerpo emitido menciona OTRO nombre y
+        # al desplegarlo reaparece la definicion declarada. Esto TIENE que pasar --
+        # rechazarlo fue el primer resultado de esta funcion, y el error era suyo.
+        ("cuerpo emitido en terminos de otro nombre",
+         sistema([m2 - x - y, m1 - m2 - 1, m1 - 5],
+                 [(m2, x + y), (m1, x + y + 1)],
+                 unknowns=(x, y, m1, m2),
+                 emitidas=[(m2, x + y), (m1, m2 + 1)]),
+         True, None),
     ]
 
     for etiqueta, S, esperado, clave in casos:
