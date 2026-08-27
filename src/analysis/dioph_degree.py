@@ -591,6 +591,85 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     return out
 
 
+def techo_combinacion_relaciones(system):
+    """Cuanto podria ahorrar el TEOREMA DE COMBINACION DE RELACIONES en `system`.
+
+    QUE ES. El teorema de Matiyasevich-Robinson colapsa `q` condiciones del tipo
+    "A es un cuadrado" y "S divide a T" en UNA sola ecuacion al coste de UNA
+    incognita. Esta declarado en este proyecto como "la unica pieza que reduce el
+    conteo" en la esquina de pocas variables, y esta SIN IMPLEMENTAR.
+
+    PARA QUE SIRVE ESTA FUNCION. Para decidir si merece la pena implementarlo
+    ANTES de implementarlo. El ahorro no es `q - 1`: es
+    `(numero de INCOGNITAS dedicadas a esas condiciones) - 1`, que es menor porque
+    una misma incognita puede servir a varias condiciones. Confundir las dos cosas
+    infla el techo y hace parecer viable lo que no lo es.
+
+    LO QUE MIDIO SOBRE ESTE PROYECTO, y es la razon de que exista:
+
+        cadena propia (49 incognitas)  ->  techo (35, ?)
+        sistema (1) de JSWW            ->  techo (17, ?)
+
+    La primera linea **descarta** aplicar el teorema a la cadena propia: su techo
+    TEORICO (35 variables) es peor que el (23, 25) que ya esta construido y
+    verificado. La segunda parece prometedora --17 batiria al (19, 29) anunciado--
+    pero el techo es en VARIABLES y no dice nada del GRADO, y ahi esta la trampa:
+    el punto (17, D) solo sirve si `D < 13.697`, porque si no lo domina el
+    (12, 13.697) de la literatura. Los grados que produce este teorema son
+    astronomicos por construccion, asi que el punto resultante seria con casi total
+    seguridad DOMINADO -- es decir, trabajo perdido.
+
+    NOTA SOBRE LA FUENTE. El enunciado exacto de `M_q` no esta accesible desde este
+    entorno (arxiv.org y en.wikipedia.org los rechaza la politica de egress), y
+    escribirlo de memoria seria exactamente el error que este proyecto ha pagado
+    ocho veces. Por eso se mide el TECHO en vez de implementar a ciegas.
+
+    Devuelve un dict con `incognitas`, `colapsables`, `ahorro`, `techo_variables`
+    y el desglose por clase de ecuacion.
+    """
+    inc = set(system.unknowns)
+    gens = system.params + system.unknowns
+    colapsables, clases = set(), {}
+
+    def cuenta(k):
+        clases[k] = clases.get(k, 0) + 1
+
+    for e in system.eqs:
+        ex = sympy.expand(e)
+        libres = ex.free_symbols & inc
+        marcada = None
+        for v in libres:                      # "algo = cuadrado": P - v**2
+            if ex.coeff(v, 2) in (1, -1) and ex.coeff(v, 1) == 0:
+                if v not in sympy.expand(ex - ex.coeff(v, 2) * v ** 2).free_symbols:
+                    marcada, tipo = v, "cuadrado"
+                    break
+        if marcada is None:
+            for v in libres:                  # "S | T": T - S*v con S no constante
+                c1 = ex.coeff(v, 1)
+                if ex.coeff(v, 2) == 0 and c1 != 0 and not c1.is_number:
+                    if v not in sympy.expand(ex - c1 * v).free_symbols:
+                        marcada, tipo = v, "divisibilidad"
+                        break
+        if marcada is not None:
+            colapsables.add(marcada)
+            cuenta(tipo)
+        else:
+            try:
+                g = sympy.Poly(ex, *gens).total_degree()
+            except (sympy.PolynomialError, sympy.GeneratorsNeeded):
+                g = 99
+            cuenta("lineal" if g <= 1 else "otra")
+
+    ahorro = max(0, len(colapsables) - 1)
+    return {
+        "incognitas": len(system.unknowns),
+        "colapsables": sorted(str(v) for v in colapsables),
+        "ahorro": ahorro,
+        "techo_variables": len(system.unknowns) - ahorro + 1,
+        "clases": clases,
+    }
+
+
 def definiciones_lineales(system, grado_minimo=2):
     """Miembros derechos de las ecuaciones que DEFINEN una incognita sobre N.
 

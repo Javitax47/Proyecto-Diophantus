@@ -355,6 +355,50 @@ que es la que sale con signo bueno. Lo mismo pasa con `h`/`j` en la (1), y con `
 Así que el inventario real es: **dos** eliminaciones bloqueadas por matemática (`m` y `x`, ambas por
 Davis), no tres, y la ganancia máxima por esa vía es de **2 variables**, no de 3.
 
+### El Teorema de Combinación de Relaciones: medido el techo ANTES de implementarlo, y no sale
+
+Estaba declarado como **«la única pieza que reduce el conteo»** en la esquina de pocas variables, y
+era la recomendación para seguir. Antes de gastar una sesión implementándolo se midió **cuánto podría
+comprar como máximo**. No sale, y conviene que quede escrito por qué.
+
+**Qué hace el teorema (Matiyasevich–Robinson):** colapsa `q` condiciones del tipo «A es un cuadrado»
+y «S divide a T» en **una sola ecuación al coste de una incógnita**.
+
+**El ahorro NO es `q − 1`.** Es `(incógnitas dedicadas a esas condiciones) − 1`, que es bastante
+menor porque una misma incógnita sirve a varias condiciones. Confundir las dos cosas infla el techo
+y hace parecer viable lo que no lo es. Medido con `techo_combinacion_relaciones`:
+
+| sistema | incógnitas | colapsables | ahorro máx. | **techo** |
+|---|---:|---:|---:|---|
+| cadena propia (`L_prime_shared`) | 49 | 15 | 14 | **(36, ?)** |
+| sistema (1) de JSWW | 25 | 10 | 9 | **(17, ?)** |
+
+**La primera fila descarta la cadena propia.** Su techo *teórico* —36 variables— es **peor que el
+(23, 25) que ya está construido y verificado**. Implementar el teorema ahí sería trabajo garantizado
+en pérdida. Esto invalida la recomendación que se había dado, y es exactamente el motivo de medir
+antes de construir.
+
+**La segunda fila parece prometedora y es una trampa.** 17 variables batiría al (19, 29) que JSWW
+anuncian. Pero el techo es en **variables** y no dice nada del **grado**, y ahí está el problema:
+
+> el punto (17, D) solo vale algo si **D < 13.697**; si no, lo domina el (12, 13.697) de la
+> literatura — y también lo dominaría el (10, >6.000).
+
+Los grados que produce este teorema son **astronómicos por construcción** (el propio documento
+anotaba ~10⁴⁵ para la aplicación que da el par universal de Jones). Así que el punto resultante sería
+con casi total seguridad **dominado**: 17 variables no sirven de nada a grado 10⁴⁵.
+
+**Y no se puede afinar más, por una razón concreta.** El enunciado exacto de `M_q` —y por tanto su
+grado— **no es accesible desde este entorno**: la política de egress rechaza `arxiv.org` y
+`en.wikipedia.org`, además de los `math.umd.edu` y `ericzheng.org` ya anotados. Escribir `M_q` de
+memoria sería exactamente el error que este proyecto ha pagado ocho veces: un polinomio mal recordado
+produce un sistema **insound**, y esta vez ni siquiera habría un resultado imposible que lo delatara,
+porque no hay testigo con el que evaluarlo.
+
+**Conclusión operativa:** no implementar el teorema. Queda la función `techo_combinacion_relaciones`
+para que, el día que el enunciado esté disponible, la decisión se tome con el número delante y no con
+una intuición.
+
 ### Qué queda abierto
 
 Ninguna ruta está **refutada**; todas están bloqueadas por matemática que falta o por herramienta.
