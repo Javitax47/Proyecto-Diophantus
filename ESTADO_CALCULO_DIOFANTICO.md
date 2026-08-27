@@ -122,6 +122,59 @@ Es el noveno defecto y el primero que delata una **herramienta distinta**. Los o
 cazó el propio instrumento dando un número que no podía ser cierto; este lo cazó cambiar de
 formalismo, que es exactamente el argumento por el que se formaliza.
 
+### La reparación, y lo que apareció debajo
+
+El arreglo obvio —«que las rutas de reescritura y de subsuma consulten el flag»— **no era el
+arreglo**. `permitir_nombre` era un **booleano que solo protegía la llamada de primer nivel**: en
+cuanto la reducción recurría —sobre los sumandos, sobre los factores, sobre el resto de una
+reescritura— el flag se perdía y la rama directa volvía a poder nombrar la propia expresión que se
+estaba definiendo. Se sustituyó por una **clave prohibida** (`srepr` de la expresión que se define)
+que **viaja por toda la recursión**.
+
+Y entonces apareció lo importante, que es peor que el defecto:
+
+> Sin la autorreferencia, esos cuerpos **no tienen ninguna reducción a grado 2** y la búsqueda no
+> termina. La autorreferencia era lo que hacía **terminar** la recursión.
+
+Es decir: **los certificados de 15 y 17 nombres de la ruta de reescritura no son materializables**.
+El optimizador prometía conjuntos de nombres que no se pueden construir. Las cifras no vuelven al
+arreglar el defecto — no estaban ahí.
+
+Se añadió un **tope de profundidad** para que la reducción falle *limpio* (devuelve `None`) en vez de
+agotar la pila, y el pipeline **se repliega solo** a `reescritura=False`:
+
+```
+[libre  /reesc]     descartado: no se pudo reducir a grado 2: 16*(k+1)^3*(k+2)*(n+1)^2 + 1
+[forzado/reesc]     descartado: no se pudo reducir a grado 2: h + (h+j)*(g*k+2*g+k+1)
+[libre  /sin-reesc] 20 nombres, post-elim ['q','y'] -> (44, 5)   ok=True, 0 faltan / 0 sobran
+```
+
+Más nombres, pero **construible**, que es la única clase de cifra que este proyecto publica.
+
+### La comprobación que faltaba: `verificar_estructura`
+
+El límite de `verificar_equivalencia` está ahora **escrito en el código y cubierto por un test**, no
+solo en este registro. La identidad polinómica sigue haciendo falta, pero no basta: hace la
+sustitución **ella**, con el diccionario de definiciones, y por eso es ciega a que el sistema no la
+imponga. La comprobación que sí lo ve es **estructural**, y son tres condiciones independientes:
+
+| condición | qué rotura caza |
+|---|---|
+| cada nombre `w` tiene **en el sistema** una ecuación igual a `±(w − cuerpo)`, emparejada **1 a 1** | la definitoria perdida o colapsada |
+| `w` **no aparece** en su propio cuerpo | el noveno defecto exacto: `w − w` expande a 0 |
+| el grafo de dependencias entre nombres es **acíclico** | `w₁ = f(w₂)`, `w₂ = g(w₁)`: las dos ecuaciones existen, ninguna es autorreferente, y aun así no determinan nada |
+
+Las tres juntas dan una **biyección** entre conjuntos de soluciones: cada nombre queda determinado
+por las originales en orden topológico. Ninguna sobra — la tercera no la habría cazado ninguna de las
+otras dos. `verificar_equivalencia` ya no puede dar `ok` sin ella, y el test `[6]` de
+`test_dioph_optflat` construye las **tres** roturas por separado y exige que se señale la causa
+correcta.
+
+> La lección, dicha sin adornos: **las cifras que cayeron son exactamente las que usaban más
+> maquinaria; la que sobrevive —(23, 25)— se podría haber hecho a mano en una tarde.** Cada capa
+> añadió una manera nueva de estar equivocado, y la verificación que se presentaba como fuerte era
+> ciega a esa clase de error.
+
 ### Qué sobrevive
 
 | resultado | estado |

@@ -1121,6 +1121,73 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     return salida
 
 
+def verificar_estructura(materializado):
+    """¿Cada nombre nuevo esta REALMENTE ATADO a su definicion por una ecuacion?
+
+    ESTA ES LA COMPROBACION QUE FALTABA Y QUE COSTO CUATRO CIFRAS. La de abajo
+    (`verificar_equivalencia`) es una IDENTIDAD POLINOMICA: sustituye cada nombre
+    por su definicion y mira si reaparecen las originales. Esa sustitucion la hace
+    ELLA, con el diccionario de definiciones -- no comprueba que el SISTEMA la
+    imponga. Si la ecuacion definitoria de `w` se perdio (o colapso a `0 = 0`), la
+    identidad sigue cuadrando y el sistema publicado es ESTRICTAMENTE MAS DEBIL
+    que el original: `w` queda libre.
+
+    Lo que hace falta es una comprobacion ESTRUCTURAL, y son tres condiciones.
+    Juntas dan una biyeccion entre conjuntos de soluciones; ninguna sobra:
+
+      1. Cada nombre `w` con definicion `w = cuerpo` tiene EN EL SISTEMA una
+         ecuacion igual a `+-(w - cuerpo)`, y se empareja 1 A 1 (dos nombres no
+         pueden reclamar la misma ecuacion).
+      2. `w` no aparece en su propio cuerpo. Sin esto `w - cuerpo` puede expandir
+         a 0 -- que es exactamente como se colo el noveno defecto.
+      3. El grafo de dependencias entre nombres es ACICLICO. Con un ciclo
+         `w1 = f(w2)`, `w2 = g(w1)` las dos ecuaciones existen y ninguna es
+         autorreferente, pero el par puede admitir soluciones espurias: la
+         sustitucion hacia atras no termina y no hay valor determinado.
+
+    Con las tres, cada nombre queda determinado por las originales en orden
+    topologico, y anadirlos no cambia la satisfacibilidad. Sin la 1 o la 2, el
+    sistema tiene soluciones que el original no tiene.
+    """
+    defs = list(getattr(materializado, "definiciones", []))
+    ecs = [sympy.expand(e) for e in materializado.eqs]
+    nombres = {w for w, _ in defs}
+
+    autorreferentes, sin_ecuacion = [], []
+    libres = list(range(len(ecs)))
+    for w, cuerpo in defs:
+        if w in sympy.expand(cuerpo).free_symbols:
+            autorreferentes.append(str(w))
+            continue
+        objetivo = sympy.expand(w - cuerpo)
+        for i in list(libres):
+            if ecs[i] - objetivo == 0 or ecs[i] + objetivo == 0:
+                libres.remove(i)
+                break
+        else:
+            sin_ecuacion.append(str(w))
+
+    # ACICLICIDAD por eliminacion repetida de fuentes (Kahn). Lo que sobra al
+    # final es exactamente el conjunto de nombres metidos en algun ciclo.
+    dep = {w: (sympy.expand(c).free_symbols & nombres) - {w} for w, c in defs}
+    pendientes = dict(dep)
+    while True:
+        listos = [w for w, d in pendientes.items() if not (d & set(pendientes))]
+        if not listos:
+            break
+        for w in listos:
+            pendientes.pop(w)
+    ciclos = sorted(str(w) for w in pendientes)
+
+    return {
+        "ok": not autorreferentes and not sin_ecuacion and not ciclos,
+        "definiciones": len(defs),
+        "autorreferentes": sorted(autorreferentes),
+        "sin_ecuacion": sorted(sin_ecuacion),
+        "ciclos": ciclos,
+    }
+
+
 def verificar_equivalencia(system, materializado, final, verbose=False):
     """¿Es `final` el mismo objeto matematico que `system`, escrito de otra forma?
 
@@ -1203,8 +1270,11 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
         else:
             faltan.append(o)
 
+    est = verificar_estructura(materializado)
+
     veredicto = {
-        "ok": not faltan and not pendientes and not perdidas,
+        "ok": not faltan and not pendientes and not perdidas and est["ok"],
+        "estructura": est,
         "perdidas": sorted(str(u) for u in perdidas),
         "definitorias": len(definitorias), "vivas": len(vivas),
         "originales": len(originales),
@@ -1215,7 +1285,8 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
         print(f"    equivalencia: {veredicto['definitorias']} definitorias se anulan, "
               f"{veredicto['vivas']} vivas vs {veredicto['originales']} originales "
               f"-> faltan {veredicto['faltan']}, sobran {veredicto['sobran']}"
-              + (f", INCOGNITAS PERDIDAS {veredicto['perdidas']}" if perdidas else ""),
+              + (f", INCOGNITAS PERDIDAS {veredicto['perdidas']}" if perdidas else "")
+              + ("" if est["ok"] else f", ESTRUCTURA ROTA {est}"),
               flush=True)
     return veredicto
 

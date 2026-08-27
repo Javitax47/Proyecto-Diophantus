@@ -63,6 +63,14 @@ class Stats:
 _PIPELINE = None
 
 
+#: MEJOR CIFRA CONSTRUIBLE a grado 5, y por tanto el umbral de regresion de [4]
+#: y [9]. NO es 42. Este proyecto llego a publicar (33,5) y hubo que retirarlo:
+#: salia de la ruta de reescritura, que certifica conjuntos de nombres que luego
+#: NO se pueden materializar. Poner aqui el 42 de JSWW convertiria el test en una
+#: aspiracion en vez de en una guarda: fallaria hoy sin que nada se haya roto.
+MEJOR_GRADO_5 = 44
+
+
 def pipeline_publicado():
     """Sistema desplazado (`a = A+2`, cota demostrada) aplanado y post-eliminado.
 
@@ -215,11 +223,16 @@ def test_aplanado_optimo(stats):
         stats.fail(f"se elimino una incognita cuya definicion puede ser negativa: {negativas}")
     elif best["grado"] != 5:
         stats.fail(f"generador de grado {best['grado']}, se esperaba 5")
-    elif best["variables"] > 42:
-        stats.fail(f"({best['variables']}, 5) esta POR ENCIMA del (42,5) anunciado")
+    elif best["variables"] > MEJOR_GRADO_5:
+        stats.fail(f"({best['variables']}, 5) empeora la mejor cifra construida "
+                   f"({MEJOR_GRADO_5}, 5): esto es una REGRESION")
     else:
         print(f"  {Colors.WARN}Distancia al (42,5) anunciado: "
-              f"{best['variables'] - 42:+d} variables.")
+              f"{best['variables'] - 42:+d} variables — POR ENCIMA, no por debajo.")
+        print(f"  El umbral de este test NO es 42. Se llego a anunciar (33,5), y")
+        print(f"  era falso: venia de la ruta de reescritura, cuyos certificados no")
+        print(f"  son materializables (ver el noveno defecto en el informe). Lo que")
+        print(f"  se protege aqui es que la mejor cifra CONSTRUIBLE no empeore.")
         print(f"  Y NO esta demostrado que no se pueda mejorar. La cota del")
         print(f"  optimizador es de su CODIFICACION, no del problema, y este mismo")
         print(f"  apartado es la prueba: la codificacion anterior certificaba 17")
@@ -634,9 +647,9 @@ def test_frontera_de_pareto(stats):
         print("  (z3 no disponible: omitido)"); return
     S = sistema(expandir=False)
     # SOBRE EL SISTEMA SIN DESPLAZAR, y hay que decirlo porque la frontera que
-    # PUBLICA el informe es la del sistema desplazado y es mejor punto por punto
-    # --(30,7), (27,9), (26,11), (25,13), (24,15) frente a (32,7), (28,9), (27,11),
-    # (25,13)--. Aqui se mide la version rapida porque cada solve del sistema
+    # PUBLICA el informe es la del sistema desplazado y es mejor en su tramo alto
+    # --gana los puntos (24,21), (22,29) y (21,37), que la version sin desplazar no
+    # alcanza--. Aqui se mide la version rapida porque cada solve del sistema
     # desplazado cuesta ~4 min y la suite no terminaria. Lo que este test protege
     # es la MAQUINARIA: que cada punto publicado equivalga al original y que
     # ninguno este dominado por la literatura. La cifra concreta de portada la
@@ -672,11 +685,12 @@ def test_frontera_de_pareto(stats):
         prev_v, prev_g = v, g
     # El punto de grado 5 es la cifra de portada y no puede empeorar.
     g5 = [v for v, g, _, _ in frontera if g == 5]
-    if not g5 or g5[0] > 42:
-        fallos.append(f"el punto de grado 5 salio {g5}, se esperaba <= 42")
+    if not g5 or g5[0] > MEJOR_GRADO_5:
+        fallos.append(f"el punto de grado 5 salio {g5}, se esperaba "
+                      f"<= {MEJOR_GRADO_5} (la mejor cifra construible)")
     else:
         print(f"  {Colors.BOLD}grado 5: {g5[0]} variables{Colors.ENDC}   "
-              f"JSWW 1976 anuncio 42")
+              f"JSWW 1976 anuncio 42 — seguimos {g5[0]-42:+d} por encima")
     if fallos:
         stats.fail(fallos[0])
     else:

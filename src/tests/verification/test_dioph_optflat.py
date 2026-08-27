@@ -28,7 +28,10 @@ from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, flatten_best, flatten_search,
     flatten_greedy_semilla, eliminar_lineales, max_equation_degree,
 )
-from src.analysis.dioph_optflat import Z3_DISPONIBLE, aplanado_minimo
+from src.analysis.dioph_optflat import (Z3_DISPONIBLE, aplanado_minimo,
+                                        verificar_estructura)
+from src.analysis.dioph_calculus import Dioph
+import sympy
 
 
 class Colors:
@@ -169,6 +172,63 @@ def test_optimo_de_davis(stats):
         stats.ok()
 
 
+def test_estructura_ata_los_nombres(stats):
+    """[6] `verificar_estructura` caza las tres formas de nombre NO atado.
+
+    ESTE TEST EXISTE POR UN FALLO REAL, no por cobertura. La verificacion que
+    habia --sustituir cada nombre por su definicion y comprobar que reaparecen las
+    ecuaciones originales-- es una IDENTIDAD POLINOMICA: la sustitucion la hace el
+    verificador, no el sistema. Cuando la ecuacion definitoria de un nombre se
+    perdio, la identidad seguia cuadrando (0 faltan, 0 sobran) sobre un sistema
+    ESTRICTAMENTE MAS DEBIL que el original. Cuatro cifras publicadas se apoyaban
+    en eso.
+
+    Se comprueban las tres roturas por separado, porque son independientes y una
+    comprobacion que solo pillara la primera dejaria pasar las otras dos.
+    """
+    print(f"\n{Colors.HEADER}[6] La verificacion estructural ata cada nombre a su definicion{Colors.ENDC}")
+    x, y, m1, m2 = sympy.symbols('x y m1 m2', integer=True)
+
+    def sistema(eqs, defs, unknowns=(x, y, m1)):
+        d = Dioph([], list(unknowns), list(eqs))
+        d.definiciones = list(defs)
+        return d
+
+    casos = [
+        ("bien formado",
+         sistema([m1 - x * y, m1 - 5], [(m1, x * y)]),
+         True, None),
+        # El noveno defecto EXACTO: el cuerpo menciona el propio nombre, luego
+        # `m1 - cuerpo` expande a 0 y no queda ninguna ecuacion que ate `m1`.
+        ("nombre autorreferente",
+         sistema([sympy.expand(m1 - m1), m1 - 5], [(m1, m1)]),
+         False, "autorreferentes"),
+        # La misma consecuencia por otra via: la definicion existe en el
+        # diccionario pero el sistema no la impone.
+        ("definicion sin ecuacion",
+         sistema([m1 - 5], [(m1, x * y)]),
+         False, "sin_ecuacion"),
+        # Las dos ecuaciones existen y ninguna es autorreferente, pero el par no
+        # determina nada: la sustitucion hacia atras no termina.
+        ("ciclo entre dos nombres",
+         sistema([m1 - x - m2, m2 - y - m1, m1 - 5],
+                 [(m1, x + m2), (m2, y + m1)], unknowns=(x, y, m1, m2)),
+         False, "ciclos"),
+    ]
+
+    for etiqueta, S, esperado, clave in casos:
+        v = verificar_estructura(S)
+        if v["ok"] != esperado:
+            stats.fail(f"{etiqueta}: se esperaba ok={esperado} y salio {v}")
+            continue
+        if clave is not None and not v[clave]:
+            stats.fail(f"{etiqueta}: no se senala la causa `{clave}` -> {v}")
+            continue
+        stats.ok()
+        print(f"  {Colors.OKGREEN}OK{Colors.ENDC} {etiqueta}: ok={v['ok']}"
+              + (f" ({clave}={v[clave]})" if clave else ""))
+
+
 def main():
     print(f"{Colors.BOLD}=== OPTIMIZACION DEL APLANADO: HEURISTICAS Y OPTIMO EXACTO ==={Colors.ENDC}")
     stats = Stats()
@@ -177,6 +237,7 @@ def main():
     test_mejor_no_empeora(stats)
     test_eliminacion_solo_si_es_sound(stats)
     test_optimo_de_davis(stats)
+    test_estructura_ata_los_nombres(stats)
 
     total = stats.passed + stats.failed
     print()
