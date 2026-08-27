@@ -1298,9 +1298,14 @@ Tres cosas que se midieron y que ya **no** hay que reintentar:
    desbloquear **eliminaciones**, que es otra cosa y es donde queda trabajo.)
 2. **El óptimo no es único, y la enumeración a ciegas no sirve para diversificar.** Se enumeraron
    12 óptimos distintos con cláusulas de bloqueo (`excluir=`) y se post-eliminó exhaustivamente
-   sobre cada uno: los 12 dan la misma cifra. Cambiar la semilla de Z3 tampoco mueve nada. Lo que
-   sí funciona es **forzar** el candidato que hace falta (§ la tercera palanca), que es dirigir la
-   búsqueda en vez de sortearla. La enumeración se conserva porque es lo que impide que la cifra
+   sobre cada uno: los 12 dan la misma cifra. Y **cambiar la semilla de Z3 tampoco** — pero esta
+   segunda mitad hubo que **medirla dos veces**, porque la primera no medía nada: el
+   `opt.set("random_seed", …)` había aterrizado en `aplanado_minimo` en vez de en
+   `aplanado_minimo_compuesto` (un `replace(..., 1)` que pegó en la primera de las dos
+   coincidencias del fichero), así que las ocho «ejecuciones con semillas distintas» eran ocho
+   ejecuciones idénticas. Rehecha con la semilla puesta de verdad: las ocho dan **(36, 5)**.
+   Lo que sí funciona es **forzar** el candidato que hace falta (§ la tercera palanca), que es
+   dirigir la búsqueda en vez de sortearla. La enumeración se conserva porque es lo que impide que la cifra
    dependa del modelo que devuelva Z3 ese día — que es como salieron (36,5) y (38,5) de dos tests
    con los mismos argumentos.
 3. **La forma AGRUPADA del paper no aporta nada.** JSWW escriben `b(2a(n+1) − (n+1)² − 1)` con
