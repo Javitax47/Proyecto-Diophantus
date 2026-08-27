@@ -53,12 +53,16 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 
 ---
 
-## 2.bis ⛔ RETRACTACIÓN: el (33, 5) y el (36, 5) NO son válidos — noveno defecto
+## 2.bis ⛔ RETRACTACIÓN: se retiran TODAS las cifras de grado 5 desde el (41, 5) — noveno defecto
 
-**Se retiran las cifras (33, 5) y (36, 5), y con ellas los puntos intermedios de la frontera
-obtenidos forzando definiciones.** Lo que sigue explica qué falló, qué sobrevive y cómo se detectó.
-El resto del documento está corregido, pero esta sección va delante porque una cifra retirada tiene
-que verse antes que la cifra.
+**Se retiran (33, 5), (36, 5), (38, 5) y (41, 5).** La última cifra válida de la esquina de grado 5
+es **(44, 5)**, que está *por encima* del (42, 5) que JSWW anunciaron: **ya no lo batimos**.
+
+> Esta sección se escribió primero diciendo que el defecto era de la palanca de «forzar
+> definiciones» y que el (38, 5) sobrevivía. **Era falso, y en la misma sesión.** Al medir el alcance
+> —en vez de suponerlo— resultó que el culpable es la **ruta de reescritura**, que es anterior y
+> mucho más profunda. Queda escrito así, con la corrección visible, porque una retractación mal
+> acotada es otra afirmación sin verificar.
 
 ### Qué falló
 
@@ -67,7 +71,7 @@ producía sistemas **estrictamente más débiles que el original**.
 
 El mecanismo, exacto: `materializar` emite la ecuación definitoria de cada nombre `w` como
 `w − reducir(cuerpo, permitir_nombre=False)`. Ese flag existe justamente para que la definitoria de
-`w` no se exprese usando `w`. **Las rutas de subsuma y de reescritura no consultaban ese flag** —se
+`w` no se exprese usando `w`. **Las rutas de reescritura y de subsuma no consultaban ese flag** —se
 añadieron después—, así que `reducir` podía devolver el propio `w`, y la ecuación emitida era
 `w − w`, que expande a **cero**.
 
@@ -75,13 +79,18 @@ añadieron después—, así que `reducir` podía devolver el propio `w`, y la e
 la ecuacion definitoria de m1 colapsa a 0 = 0: su cuerpo se redujo a si mismo (m1 = m1)
 ```
 
-Con `forzar` activo se perdían **cinco** definitorias de quince. Los nombres quedaban libres, y con
-ellos desaparecían del sistema las incógnitas originales que solo vivían ahí:
+**El alcance, medido en vez de supuesto:**
 
-| cifra | incógnitas perdidas | ecuaciones destruidas |
+| configuración | cifra | veredicto |
 |---|---|---|
-| (36, 5) | `g` | (2) |
-| (33, 5) | `g`, `r` | (2) y (7) |
+| reescritura + subsumas + forzar | (33, 5), (36, 5) | ⛔ definitorias colapsadas; desaparecen `g` y `r` |
+| reescritura + subsumas | (38, 5) | ⛔ `m2 = m2` |
+| reescritura sin subsumas | (41, 5) | ⛔ `m2 = m2` |
+| **sin reescritura** | **(44, 5)** | ✅ **válida** |
+
+O sea: **el culpable es la reescritura**, y arruina todas las cifras de grado 5 desde que se
+introdujo. Con `forzar` además desaparecían incógnitas originales, que es cómo se detectó, pero el
+daño ya estaba antes.
 
 Un sistema al que le falta la ecuación (2) tiene soluciones que el (1) de JSWW no tiene. Como
 generador, **emitiría números que no son primos**. Es un fallo de *soundness*, el peor de los dos
@@ -112,14 +121,17 @@ formalismo, que es exactamente el argumento por el que se formaliza.
 
 | resultado | estado |
 |---|---|
-| **(38, 5)** — aplanado sin forzar | ✅ **válido**: ninguna incógnita desaparece |
-| (23, 25) y los puntos sin aplanar | ✅ válidos: no hay aplanado, no hay nombres |
+| **(23, 25)** — solo eliminaciones, sin aplanar | ✅ **válido**, y es lo que queda en pie: tres variables menos que el (26, 25) **publicado**, al mismo grado |
+| (22, 37) y demás puntos sin aplanar | ✅ válidos (dominados por el (19, 29) anunciado) |
 | `a ≥ 2` formalizado en Lean | ✅ intacto: habla del sistema (1), no del aplanado |
-| **(33, 5)**, **(36, 5)** | ⛔ **retirados** |
-| puntos intermedios con `forzar` | ⛔ retirados; se remiden sin él |
+| **(44, 5)** — aplanado sin reescritura | ✅ válido, pero **peor** que el (42, 5) anunciado |
+| (41, 5), (38, 5), (36, 5), (33, 5) | ⛔ **retirados** |
+| los puntos intermedios de la frontera | ⛔ retirados; se remiden sin reescritura |
 
-La mejor cifra construida y verificada en la esquina de grado 5 vuelve a ser **(38, 5)**, cuatro por
-debajo del (42, 5) que JSWW anunciaron.
+**Consecuencia que hay que decir sin rodeos: en la esquina de grado 5 ya no batimos a JSWW.** La
+mejor cifra válida es (44, 5) y ellos anunciaron (42, 5). Lo que sí sigue en pie es el **(23, 25)**,
+que no usa aplanado en absoluto —solo eliminaciones lineales— y mejora en tres variables el (26, 25)
+que JSWW sí imprimieron.
 
 ### La guarda, para que no se repita
 
