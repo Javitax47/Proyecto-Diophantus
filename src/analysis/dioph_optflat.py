@@ -129,15 +129,6 @@ def aplanado_minimo(system, target=2, timeout_s=300):
 
     opt = z3.Optimize()
     opt.set("timeout", timeout_s * 1000)
-    if semilla is not None:
-        # DIVERSIFICAR ENTRE OPTIMOS, que no es lo mismo que bloquearlos. Las
-        # clausulas de `excluir` prohiben una asignacion exacta, y Z3 responde con
-        # otra casi identica: seis iteraciones seguidas devolvian el MISMO conjunto
-        # de post-eliminaciones. Con semillas distintas explora regiones distintas
-        # del espacio de optimos, que es lo que hace falta cuando lo que se compara
-        # no es el numero de nombres --todos empatan-- sino cuantas incognitas
-        # ORIGINALES deja eliminar despues, que el objetivo no puede ver.
-        opt.set("random_seed", int(semilla))
     for m in objetivo:
         opt.add(partir(m))
     for t in candidatos:
@@ -539,6 +530,21 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     opt = z3.Optimize()
     opt.set("timeout", timeout_s * 1000)
+    if semilla is not None:
+        # DIVERSIFICAR ENTRE OPTIMOS, que no es lo mismo que bloquearlos: las
+        # clausulas de `excluir` prohiben asignaciones concretas, la semilla mueve
+        # la exploracion. Hace falta porque lo que se compara entre optimos NO es el
+        # numero de nombres --todos empatan-- sino cuantas incognitas ORIGINALES
+        # dejan eliminar despues, que el objetivo no puede ver.
+        #
+        # OJO: este bloque estuvo diez commits en `aplanado_minimo` por un
+        # `replace(..., 1)` que pego en la primera coincidencia del fichero. Dos
+        # consecuencias: `aplanado_minimo` reventaba con NameError (no tiene el
+        # parametro), y aqui la semilla NUNCA se aplicaba -- asi que la medida
+        # "cambiar la semilla no mueve nada" no medía nada. Octavo defecto de este
+        # modulo, y el primero de esta clase: no un encoding mal pensado sino una
+        # edicion que aterrizo en la funcion equivocada.
+        opt.set("random_seed", int(semilla))
 
     # CODIFICACION TIPO TSEITIN. Una version anterior INLINEABA la formula
     # recursivamente y memoizaba la expresion z3; al entrar de nuevo en un nodo
