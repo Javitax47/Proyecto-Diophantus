@@ -156,7 +156,7 @@ def aplanado_minimo(system, target=2, timeout_s=300):
 #   APLANADO MINIMO SOBRE SUBEXPRESIONES COMPUESTAS (no solo monomios)
 # ---------------------------------------------------------------------------
 
-def _nodos(e, acc, sumas_parciales=False, tope_suma=6):
+def _nodos(e, acc, sumas_parciales=False, tope_suma=6, productos_subsuma=False):
     """Todos los nodos del arbol de `e`, y los productos parciales de cada Mul.
 
     Los productos parciales hacen falta porque partir `f1*f2*f3` en dos grupos
@@ -187,6 +187,25 @@ def _nodos(e, acc, sumas_parciales=False, tope_suma=6):
             for r in range(2, len(args)):
                 for comb in itertools.combinations(range(len(args)), r):
                     acc.add(sympy.Add(*[args[i] for i in comb]))
+    if productos_subsuma and e.is_Mul:
+        # TERCER HUECO DEL CATALOGO, detectado por censo y no por intuicion: un
+        # producto en el que UN FACTOR se sustituye por una de SUS subsumas. Ni es
+        # nodo del arbol, ni monomio del desarrollo, ni subsuma de ningun Add del
+        # sistema -- `(h+j)*(g*k+k+1)` dentro de `(g*k+2*g+k+1)*(h+j)` no estaba en
+        # ninguno de los tres espacios anteriores. Medido: 111 expresiones asi
+        # faltaban, 35 de ellas nombrables sin demostracion.
+        coef, resto = e.as_coeff_Mul()
+        fs = list(resto.args) if resto.is_Mul else [resto]
+        if len(fs) <= 4:
+            for idx, f in enumerate(fs):
+                if not f.is_Add or len(f.args) > tope_suma:
+                    continue
+                args = list(f.args)
+                for r in range(1, len(args)):
+                    for comb in itertools.combinations(range(len(args)), r):
+                        sub = sympy.Add(*[args[i] for i in comb])
+                        acc.add(coef * sympy.Mul(
+                            *[sub if i == idx else fs[i] for i in range(len(fs))]))
     if e.is_Mul:
         coef, resto = e.as_coeff_Mul()
         fs = list(resto.args) if resto.is_Mul else [resto]
@@ -372,7 +391,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
                               solo_no_negativos=False, demostrados=(),
                               reescritura=False, tope_reescritura=8,
                               excluir=(), sumas_parciales=True, semilla=None,
-                              forzar=(), tope_suma=6):
+                              forzar=(), tope_suma=6, productos_subsuma=False):
     """Minimo numero de SUBEXPRESIONES a nombrar, no solo monomios.
 
     AVISO DE COHERENCIA, aprendido a base de romperlo dos veces: `reescritura`
@@ -465,7 +484,8 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
 
     cand = set()
     for e in system.eqs:
-        _nodos(e, cand, sumas_parciales=sumas_parciales, tope_suma=tope_suma)
+        _nodos(e, cand, sumas_parciales=sumas_parciales, tope_suma=tope_suma,
+               productos_subsuma=productos_subsuma)
     # UNION DE LOS DOS ESPACIOS. Solo con nodos del arbol el optimo salia 51
     # variables, PEOR que la ruta arbol+monomios (47): faltaban monomios utiles
     # que no son nodos de ningun arbol (`a*n`, `k**2`, `l*p`...). Y solo con

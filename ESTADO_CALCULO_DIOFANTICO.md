@@ -328,6 +328,33 @@ reducción, no en el polinomio. Era una barrera **tipográfica**, no matemática
 Lo que sí es nuevo hoy: que la equivalencia esté **verificada a máquina** y que exista un marco de
 optimización con cotas. Eso no se podía hacer a mano.
 
+### El frente lineal está agotado, y ahora por CENSO en vez de por impresión
+
+Se venía diciendo «no quedan más eliminaciones gratis» sin haberlo comprobado incógnita a incógnita.
+Hecho el censo de las 25 sobre los dos sistemas —dónde aparece cada una, con qué grado, y si alguna
+ecuación la despeja linealmente— el resultado es limpio:
+
+| grupo | cuántas | cuáles | por qué |
+|---|---:|---|---|
+| **eliminables** (RHS con todos los coeficientes ≥ 0) | **5** | `e, q, y, z` + `l` con `a = A+2` | ya se eliminan las cinco |
+| despejables pero con signos mezclados | 8 | `h, j, m, n, p, v, x` | ver abajo |
+| **ninguna ecuación las despeja linealmente** | 12 | `a, b, c, d, f, g, i, o, r, s, t, u, w` | fuera de alcance por estructura |
+
+**La lectura, que es más fuerte que «no encontramos más».** El sistema tiene exactamente **cinco
+ecuaciones lineales** —(1), (2), (3), (9) y (11)— y cada una aporta **exactamente una** incógnita
+despejable con todo positivo: `q`, `z`, `e`, `y`, `l`. Las cinco están explotadas. No es que no
+hayamos mirado: es que **no hay más ecuaciones lineales de las que sacar nada**.
+
+**Y una corrección.** Se venía diciendo que las tres eliminaciones restantes —`m`, `p`, `x`— estaban
+bloqueadas por los módulos de Davis. Es cierto para `m` y `x` (ecuaciones 12 y 13), **pero no para
+`p`**: `p` se despeja de la ecuación (3), `p = e − 2n − q − z`, y lo que la bloquea es
+`−2n − q − z`, que no tiene nada que ver con Davis. Es el fenómeno trivial de que de una ecuación
+`A = B + C + D` solo se puede eliminar la de la izquierda: o `e` o `p`, no las dos. Se elimina `e`,
+que es la que sale con signo bueno. Lo mismo pasa con `h`/`j` en la (1), y con `n`/`v` en la (9).
+
+Así que el inventario real es: **dos** eliminaciones bloqueadas por matemática (`m` y `x`, ambas por
+Davis), no tres, y la ganancia máxima por esa vía es de **2 variables**, no de 3.
+
 ### Qué queda abierto
 
 Ninguna ruta está **refutada**; todas están bloqueadas por matemática que falta o por herramienta.
@@ -342,7 +369,9 @@ están.
 
 Los dos cuellos reales que quedan:
 
-**El obstáculo matemático es uno solo, y bloquea tres eliminaciones.** Los dos **módulos de Davis**
+**El obstáculo matemático es uno solo, y bloquea dos eliminaciones** (tres decía antes; el censo de
+arriba lo corrige: `p` no está bloqueada por Davis sino por haber eliminado ya `e` de la misma
+ecuación). Los dos **módulos de Davis**
 `2a(n+1)−(n+1)²−1` y `2a(p+1)−(p+1)²−1` de las ecuaciones (12) y (13). Son positivos en la
 construcción de JSWW porque un módulo lo es, pero eso descansa en *su* construcción. Demostrarlos
 desde las ecuaciones exige `a > n` y `a > p`: relaciones **entre incógnitas**, que ningún cambio de
