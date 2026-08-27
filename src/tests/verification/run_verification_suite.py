@@ -67,6 +67,7 @@ TESTS = [
     ("test_dioph_soundness.py",       "Calculo diofantico: soundness por SMT (la direccion inversa)"),
     ("test_dioph_jsww.py",            "Calculo diofantico: patron de medida externo (JSWW 1976) y aplanado optimo"),
     ("test_dioph_optflat.py",         "Calculo diofantico: aplanado optimo y heuristicas de reduccion de grado"),
+    ("test_lean_cota_a.py",           "Calculo diofantico: la formalizacion en Lean dice lo que creemos que dice"),
     ("test_discovery_campaign.py",    "Campaña de descubrimiento: barrido de familias paramétricas (certificado)"),
     ("test_product.py",               "Producto monetizable: verifier + recheck independiente + metering + atlas"),
     ("test_qubo.py",                  "Exportador a QUBO (sistema diofántico -> optimización binaria / annealing)"),
