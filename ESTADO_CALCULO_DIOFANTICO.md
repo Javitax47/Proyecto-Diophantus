@@ -231,8 +231,8 @@ primos. Es resultado de 1976, con cincuenta años de citas y linaje de formaliza
 ### El método que produjo todo esto: el resultado imposible como informe de error
 
 Es la parte transferible, y la única lección que sobreviviría aunque las cifras se retirasen.
-**Ninguno de los siete defectos se encontró leyendo el código.** Los siete los delató un resultado
-que no podía ser cierto:
+**Ninguno de los ocho defectos se encontró leyendo el código.** A los siete primeros los delató
+un resultado que no podía ser cierto; al octavo, un test al ejecutarse:
 
 | # | Defecto | El imposible que lo delató |
 |---|---|---|
@@ -243,10 +243,27 @@ que no podía ser cierto:
 | 5 | nombrar en grado 0 | una ruta nueva «mejoraba» de 20 a 17 nombres; la mejora entera era el bug |
 | 6 | `sympy.Poly` lee los marcadores como coeficientes | el optimizador certificaba 16 donde el materializador construía 18 |
 | 7 | al catálogo le faltaban las subsumas | **cota inferior 17 > construcción publicada 16**. Una resta |
+| 8 | la semilla de Z3 aterrizó en la función equivocada | un `NameError` al ejecutar la suite |
 
-**Tres de los siete comparten causa raíz**, y no está en el código propio: `sympy.Poly(e, *gens)` no
-falla cuando `e` contiene símbolos ajenos a `gens` — los trata como **coeficientes**, en silencio y
-con resultado plausible.
+**Tres de los siete primeros comparten causa raíz**, y no está en el código propio:
+`sympy.Poly(e, *gens)` no falla cuando `e` contiene símbolos ajenos a `gens` — los trata como
+**coeficientes**, en silencio y con resultado plausible.
+
+**El octavo es de otra clase, y por eso vale la pena separarlo.** Los siete primeros eran *encodings
+mal pensados* que un resultado imposible delató. El octavo fue una **edición que aterrizó en el sitio
+equivocado**: un `replace(..., 1)` pegó `opt.set("random_seed", …)` en la primera de las dos
+coincidencias de `opt = z3.Optimize()` del fichero, o sea en `aplanado_minimo` en vez de en
+`aplanado_minimo_compuesto`. Dos efectos, y el segundo es el interesante:
+
+* `aplanado_minimo` reventaba con `NameError` —no tiene ese parámetro— y la suite lo cazó;
+* en `aplanado_minimo_compuesto` la semilla **nunca se aplicaba**, así que la medida anotada
+  —«cambiar la semilla no mueve nada»— comparaba **ocho ejecuciones idénticas**.
+
+La conclusión resultó ser correcta (rehecha con la semilla puesta: las ocho dan (36,5)), pero *eso da
+igual*: **una conclusión correcta obtenida de una medida vacía sigue siendo una medida vacía**, y si
+la cifra hubiera dependido de ella habría sido otro (40,5) retirado. La lección tampoco es la misma
+que la de los siete: aquí no falló el razonamiento, falló **no ejecutar la suite después de tocar el
+fichero**.
 
 **Y dos de los imposibles apuntaban a cifras MEJORES que la publicada.** El defecto 6 daba 16 nombres
 y habría dado (40, 5); no se sostuvo y hubo que retirarlo. La misma disciplina que retiró el (41,5)
