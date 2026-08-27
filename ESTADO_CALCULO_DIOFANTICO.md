@@ -432,6 +432,11 @@ lo estaba. El «óptimo» del optimizador ha caído tres veces —46 → 17 → 
 **ampliar el catálogo**, nunca por buscar mejor. La frase honesta no es «no queda nada», sino **«no
 queda nada que sepamos formular hoy»**.
 
+**Con un matiz nuevo, y es la primera vez que se puede decir algo así.** Se buscó un *cuarto* espacio
+de candidatos, se encontró (111 productos-con-subsuma ausentes), se añadió… y la cifra **no se
+movió**. Es el primer hueco del catálogo que no paga. Sigue sin demostrar nada —el quinto espacio,
+si existe, tampoco lo veríamos— pero rompe la racha que hacía sospechar que siempre quedaba uno más.
+
 ### Cómo se reproduce, en cuatro líneas
 
 Todo el pipeline está en dos funciones. No hay pasos manuales ni números escritos a mano:
@@ -1411,7 +1416,23 @@ Tres cosas que se midieron y que ya **no** hay que reintentar:
    **5× el tiempo** (50 s → 257 s). Tope 10 no se ejecutó: con 8 ya costaba cinco veces más para
    cero ganancia, y decirlo es más honesto que dejarlo corriendo una hora. Conclusión: el espacio de
    subsumas está **saturado** en este sistema; si al catálogo aún le falta algo, no es por ahí.
-5. **Pre-eliminar antes de aplanar es peor, siempre.** Medido de nuevo tras corregir el catálogo:
+5. **El TERCER hueco del catálogo existe y no aporta nada — y esto es lo importante.** El censo
+   encontró que faltaban **111 productos-con-un-factor-subsuma** (`(h+j)·(gk+k+1)` dentro de
+   `(gk+2g+k+1)·(h+j)`), 35 de ellos nombrables sin demostración: no son nodo del árbol, ni monomio
+   del desarrollo, ni subsuma de ningún `Add`. Un cuarto espacio de candidatos, real y ausente.
+   Añadidos (`productos_subsuma=True`) y medido en los dos sistemas:
+
+   | sistema | sin el hueco | con el hueco |
+   |---|---|---|
+   | sin desplazar | 16 nombres → **(36, 5)** en 62 s | 16 nombres → **(36, 5)** en 60 s |
+   | `a = A+2` | 16 nombres → **(33, 5)** en 314 s | 16 nombres → **(33, 5)** en 313 s |
+
+   **Idéntico.** Y ese empate es la primera evidencia real de saturación que tiene este proyecto:
+   las tres ampliaciones anteriores del catálogo bajaron la cifra cada vez —46 → 17 → 15 nombres—,
+   y esta no la mueve ni un nombre ni un segundo. No demuestra que el catálogo esté completo (nada
+   lo demuestra), pero es lo más parecido a una señal de fondo que se ha conseguido: hasta ahora,
+   *cada* hueco encontrado pagaba.
+6. **Pre-eliminar antes de aplanar es peor, siempre.** Medido de nuevo tras corregir el catálogo:
    pre-eliminar `l` sobre el sistema desplazado sube a 21 nombres y el resultado final es peor. Lo
    que paga es eliminar **después**.
 
