@@ -5,15 +5,20 @@
 > y cuál es el siguiente paso.
 > Última actualización: agosto 2026.
 
-> **Marcador actual, en dos líneas.** Una **frontera de nueve pares**, todos construidos desde el
-> sistema (1) publicado de Jones–Sato–Wada–Wiens y **todos verificados simbólicamente** (0 faltan /
-> 0 sobran):
+> **⛔ AVISO: gran parte de las cifras de este documento fueron RETIRADAS.** Ver **§2.bis**. El
+> noveno defecto —la ruta de reescritura producía sistemas más débiles que el original— invalidó
+> `(41,5)`, `(38,5)`, `(36,5)` y `(33,5)` y los puntos intermedios de la frontera.
 >
-> `(33,5) (30,7) (27,9) (26,11) (25,13) (24,15) (23,25)` — y `(22,29) (21,37)`, dominados.
+> **Marcador actual, tras la retractación:**
 >
-> El **(33, 5)** está **nueve por debajo** del (42, 5) que JSWW anunciaron en una frase y nunca
-> escribieron. El **(25, 13)** y el **(24, 15)** dominan en **los dos ejes** al (26, 25) que sí
-> imprimieron. Ninguno es un mínimo, y por qué no lo es está escrito en el informe (**§3**).
+> * esquina de grado 5: **(44, 5)**, construida y verificada — **por encima** del (42, 5) que JSWW
+>   anunciaron, o sea que **ahí ya no los batimos**;
+> * **(23, 25)**: tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
+>   No usa aplanado —solo eliminaciones lineales— y es **lo que queda en pie**;
+> * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización).
+>
+> Las secciones que siguen conservan su redacción original salvo aviso; **las cifras de grado 5
+> anteriores al (44,5) están retiradas** aunque el texto histórico las mencione.
 
 ---
 
@@ -190,65 +195,40 @@ el que evita perder el tiempo, y es de §1.
 construcción propia— y todos están construidos, materializados y con el grado medido sobre el
 sistema real:
 
+> ⛔ **Esta tabla está RETIRADA.** Todos sus puntos salvo los de «sin aplanar» salían de aplanados
+> con la ruta de reescritura, que producía sistemas más débiles que el original (§2.bis). La
+> frontera válida, tras arreglar el pipeline, es la de abajo.
+
 | variables | grado | receta | equivalencia |
 |---:|---:|---|---|
-| **33** | **5** | aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0 faltan / 0 sobran |
-| **30** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0 / 0 |
-| **27** | **9** | aplanar a 4 + eliminar `q,y,z` | ✅ 0 / 0 |
-| **26** | **11** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0 / 0 |
-| **25** | **13** | aplanar a 4 + eliminar `e,l,q,y,z` | ✅ 0 / 0 |
-| **24** | **15** | aplanar a 6 + eliminar `l,q,y,z` | ✅ 0 / 0 |
+| **44** | **5** | aplanar a 2 **sin reescritura** + eliminar `q,y` | ✅ 0 / 0 |
 | **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0 / 0 |
-| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ 0 / 0 |
-| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ 0 / 0 |
+| 22 | 37 | sin aplanar + eliminar `e,q,y,z` | ✅ 0 / 0 |
 
-Todos sobre el sistema **desplazado** (`a = A+2`, con la cota demostrada de §3.2o) y con
-`k_optimos=1`. Las dos últimas filas van sin negrita porque el **(19, 29)** que JSWW anuncian las
-domina en los dos ejes; se dejan porque medirlas costó lo mismo y ocultarlas sería quedarse solo con
-lo que favorece.
-
-**Sigue siendo una cota superior**, no un mínimo: subir `k_optimos` solo puede mejorarla, y el
-catálogo del optimizador ya se ha quedado corto tres veces.
-
-> **La comprobación de equivalencia no siempre estuvo en esta tabla, y conviene decirlo.** Hasta esta
-> ronda solo se le pasaba al punto de grado 5. Los demás estaban materializados y con el grado medido
-> —eso es real— pero **sin verificar que fueran el mismo objeto** que el sistema (1). Publicarlos en
-> la misma tabla, sin distinguir, era exactamente la clase de mezcla que este proyecto ya cometió una
-> vez. Ahora `barrido_pareto` verifica **cada punto que publica**, `test_dioph_jsww [9]` falla si
-> alguno no equivale, y la última columna es su veredicto.
+*(los puntos de grado 7–15 se están remidiendo sin reescritura; los que había están retirados)*
 
 ### Los resultados, y por qué son de tipos distintos
 
-No todos dicen lo mismo, y mezclarlos sería vender más de lo que hay:
+> ⛔ **Sección reescrita tras la retractación de §2.bis.** La versión anterior presentaba (33,5),
+> (25,13) y (24,15). Las tres están retiradas.
 
-**(33, 5) — nueve por debajo de una cifra ANUNCIADA.** El (42, 5) de JSWW es *una frase* en la
-página 450; nunca escribieron el polinomio. Sobre la recta de grado 5, 33 variables es el menor
-valor que consta en ninguna parte. Es el punto más llamativo, pero lo que bate es una cifra **no
-exhibida**.
+**Lo que queda en pie, y es uno solo: (23, 25).** El (26, 25) es el polinomio que JSWW **sí
+imprimieron**, el que se cita desde hace cincuenta años. Nuestro (23, 25) tiene **tres variables
+menos al mismo grado**, y —esto es lo importante ahora— **no usa aplanado en absoluto**: sale de
+eliminar `q`, `y` y `z`, que son tres sustituciones lineales con todos los coeficientes positivos.
+Ni nombres, ni reescritura, ni optimizador. Es el resultado más modesto de todos los que se llegaron
+a anunciar en este documento y es el único que ha sobrevivido a las nueve rondas de defectos —
+precisamente porque es el que menos maquinaria usa.
 
-**(24, 15) y (25, 13) — dominan en LOS DOS EJES a una cifra PUBLICADA.** El (26, 25) es el
-polinomio que JSWW sí imprimieron, el que se cita desde hace cincuenta años:
+**En la esquina de grado 5 ya no batimos a JSWW.** La mejor cifra construible y verificada es
+**(44, 5)**; ellos anunciaron **(42, 5)**. Estamos dos por encima. El (41,5) y todo lo que vino
+después dependían de la reescritura y no eran materializables: el sistema que se construía era más
+débil que el original.
 
-```
-(26, 25) publicado   vs   (25, 13)     una variable menos y doce grados menos
-(26, 25) publicado   vs   (24, 15)     dos variables menos y diez grados menos
-```
-
-No hay que elegir eje: son mejores en ambos. **Es una afirmación de clase distinta —y más sólida—
-que la del grado 5**, porque el objeto que superan existe, está impreso y se puede leer.
-
-*(El (23, 25) también lo supera, pero solo en un eje: 23 < 26 con el mismo grado.)*
-
-**Lo que estos puntos NO son: «el récord overall».** En una frontera de Pareto esa expresión no está
-definida, y aquí concretamente ninguno domina a `(19, 29)` ni a `(10, >6.000)`: **siguen existiendo
-pares con menos variables**. Lo que no existe es ninguno que gane a la vez en variables y grado al
-(26, 25).
-
-**Y su garantía tuvo que ponerse al día.** Hasta esta ronda, todos los puntos salvo el de grado 5
-estaban materializados y con el grado medido, pero **sin la comprobación de equivalencia**. O sea:
-figuraban en la misma tabla que una cifra verificada teniendo una garantía menor, sin que la tabla
-lo dijera. Corregido: `verificar_equivalencia` extraída a función reutilizable y aplicada por
-`barrido_pareto` a **cada punto que publica**. Los nueve puntos de la tabla: **0 faltan, 0 sobran**.
+**La lección de escala, que conviene no perder.** Las cifras que cayeron son exactamente las que
+usaban más maquinaria; la que sobrevive es la que se podría haber hecho a mano en una tarde. No es
+una casualidad: **cada capa de maquinaria añadió una forma nueva de estar equivocado**, y la
+verificación que se creía fuerte —«0 faltan / 0 sobran»— resultó ser ciega a esa clase de error.
 
 ### Cómo se hizo: cinco palancas
 

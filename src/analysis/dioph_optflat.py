@@ -856,7 +856,9 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
 
     cache_intentar = {}
 
-    def intentar(e, d, permitir_nombre=True):
+    profundidad = [0]
+
+    def intentar(e, d, permitir_nombre=True, prohibida=None):
         """Reduce `e` a grado <= d, o devuelve None si no puede.
 
         Devolver None en vez de lanzar es lo que permite PROBAR una particion y,
@@ -873,28 +875,50 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
         lateral, crear el simbolo de un nombre, es idempotente.
         """
         e = sympy.sympify(e)
-        clave_memo = (sympy.srepr(e), d, permitir_nombre)
+        clave_memo = (sympy.srepr(e), d, permitir_nombre, prohibida)
         if clave_memo in cache_intentar:
             return cache_intentar[clave_memo]
-        r = _intentar_crudo(e, d, permitir_nombre)
+        # TOPE DE PROFUNDIDAD, y el motivo no es cosmetico. Al prohibir que una
+        # definicion se nombre a si misma, el cuerpo de algunos nombres deja de
+        # tener CUALQUIER reduccion a grado 2 y la busqueda no termina: la
+        # autorreferencia era lo que la cortaba, dando una ecuacion `w - w` que
+        # expandia a cero. Sin tope eso es un RecursionError; con tope es un
+        # fracaso limpio, que es lo que debe ser -- el conjunto de nombres que
+        # certifico el optimizador NO se puede materializar, y hay que descartarlo
+        # en vez de construir un sistema falso.
+        if profundidad[0] > 220:
+            return None
+        profundidad[0] += 1
+        try:
+            r = _intentar_crudo(e, d, permitir_nombre, prohibida)
+        finally:
+            profundidad[0] -= 1
         cache_intentar[clave_memo] = r
         return r
 
-    def _intentar_crudo(e, d, permitir_nombre=True):
+    def _intentar_crudo(e, d, permitir_nombre=True, prohibida=None):
+        # `prohibida` es la CLAVE de la expresion que se esta definiendo. Ninguna
+        # ruta puede devolver su nombre, o la ecuacion definitoria saldria `w - w`,
+        # que expande a cero y deja el nombre suelto. El booleano `permitir_nombre`
+        # solo cubria la ruta directa: las de subsuma y REESCRITURA se anadieron
+        # despues y no lo consultaban. Ese fue el noveno defecto, y costo cuatro
+        # cifras -- (41,5), (38,5), (36,5) y (33,5).
+        def usable(cand):
+            return prohibida is None or sympy.srepr(sympy.expand(cand)) != prohibida
         if grado(e) <= d:
             return e
         k = sympy.srepr(sympy.expand(e))
         # Mismo `d >= 1` que en el optimizador, y por el mismo motivo: un nombre
         # es una incognita de grado 1, no de grado 0.
-        if permitir_nombre and d >= 1 and k in clave_elegidos:
+        if permitir_nombre and d >= 1 and k in clave_elegidos and k != prohibida:
             return simbolo(clave_elegidos[k])
         if e.is_Add:
-            partes = [intentar(a, d) for a in e.args]
+            partes = [intentar(a, d, prohibida=prohibida) for a in e.args]
             if all(p is not None for p in partes):
                 return sympy.Add(*partes)
         ex = sympy.expand(e)
         if ex != e and ex.is_Add:
-            partes = [intentar(a, d) for a in ex.args]
+            partes = [intentar(a, d, prohibida=prohibida) for a in ex.args]
             if all(p is not None for p in partes):
                 return sympy.Add(*partes)
         # REGLA ESPEJO de la ruta de subsuma del optimizador. Tiene que estar en
@@ -907,9 +931,9 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                 args_e = set(forma.args)
                 for c in elegidos_add:
                     args_c = set(c.args)
-                    if not (args_c < args_e):
+                    if not (args_c < args_e) or not usable(c):
                         continue
-                    r = intentar(sympy.Add(*(args_e - args_c)), d)
+                    r = intentar(sympy.Add(*(args_e - args_c)), d, prohibida=prohibida)
                     if r is not None:
                         return simbolo(c) + r
         expo = _como_monomio(ex, gens)
@@ -921,10 +945,10 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                 d2 = _dividir(expo, d1)
                 if d2 is None or s1 > sum(d2):
                     continue
-                r1 = intentar(_monomio_expr(d1, gens), 1)
+                r1 = intentar(_monomio_expr(d1, gens), 1, prohibida=prohibida)
                 if r1 is None:
                     continue
-                r2 = intentar(_monomio_expr(d2, gens), 1)
+                r2 = intentar(_monomio_expr(d2, gens), 1, prohibida=prohibida)
                 if r2 is None:
                     continue
                 coef = sympy.expand(ex / _monomio_expr(expo, gens))
@@ -933,7 +957,7 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
             coef, fs = _factores(e)       # la MISMA laguna estaba aqui: sin esto
             if len(fs) == 1:              # el materializador no sabe construir el
                                           # sistema que el optimizador ya eligio
-                r = intentar(fs[0], d)
+                r = intentar(fs[0], d, prohibida=prohibida)
                 if r is not None:
                     return coef * r
             elif fs and d >= 2:
@@ -941,10 +965,10 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                     for comb in itertools.combinations(range(len(fs)), r):
                         g1 = sympy.Mul(*[fs[i] for i in comb])
                         g2 = sympy.Mul(*[fs[i] for i in range(len(fs)) if i not in comb])
-                        r1 = intentar(g1, 1)
+                        r1 = intentar(g1, 1, prohibida=prohibida)
                         if r1 is None:
                             continue
-                        r2 = intentar(g2, 1)
+                        r2 = intentar(g2, 1, prohibida=prohibida)
                         if r2 is None:
                             continue
                         return coef * r1 * r2
@@ -992,7 +1016,7 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                     continue
                 if not _puede_disparar(monoms_e, reesc_lider[c]):
                     continue
-                nc = intentar(c, 1)
+                nc = intentar(c, 1, prohibida=prohibida)
                 if nc is None:
                     continue
                 r = _reescribir(e, c, gens, nc)
@@ -1005,8 +1029,8 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
                     return rr
         return None
 
-    def reducir(e, d, permitir_nombre=True):
-        r = intentar(e, d, permitir_nombre)
+    def reducir(e, d, permitir_nombre=True, prohibida=None):
+        r = intentar(e, d, permitir_nombre, prohibida=prohibida)
         if r is None:
             raise ValueError(f"no se pudo reducir a grado {d}: {e}")
         return r
@@ -1033,7 +1057,14 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
         # porque es una identidad polinomica --sustituye por la definicion-- y no
         # comprueba que el sistema IMPONGA esa definicion. Dos comprobaciones que
         # se creian independientes fallaban juntas.
-        cuerpo = reducir(c, target, permitir_nombre=False)
+        # La CLAVE PROHIBIDA viaja por todas las llamadas recursivas. El booleano
+        # `permitir_nombre` solo protegia la llamada de primer nivel: en cuanto la
+        # reduccion recurria --sobre los sumandos, sobre los factores, sobre el
+        # resto de una reescritura-- el flag se perdia y la rama directa volvia a
+        # poder nombrar la propia expresion que se estaba definiendo. De ahi salia
+        # `w - w`.
+        cuerpo = reducir(c, target, permitir_nombre=False,
+                         prohibida=sympy.srepr(sympy.expand(c)))
         ecuacion = sympy.expand(w - cuerpo)
         if ecuacion == 0:
             raise ValueError(
@@ -1234,46 +1265,62 @@ def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
     if forzar_definiciones:
         tandas.append(tuple(str(d) for d in definiciones_lineales(system)))
 
+    # REPLIEGUE A `reescritura=False`, y no es una preferencia de estilo.
+    # La ruta de reescritura produce certificados que el materializador NO puede
+    # construir: al prohibir que una definicion se nombre a si misma, el cuerpo de
+    # algunos nombres se queda sin reduccion a grado 2. Antes eso pasaba
+    # desapercibido porque la autorreferencia colapsaba la definitoria a `0 = 0` y
+    # el sistema salia -- roto. Ahora falla limpio, y hay que tener a donde caer:
+    # sin reescritura el aplanado es peor en numero de nombres pero SE PUEDE
+    # CONSTRUIR, que es la unica clase de cifra que este proyecto publica.
+    modos = [reescritura] if not reescritura else [True, False]
+
     mejor, total_vistos = None, 0
-    for forzar in tandas:
-        vistos = []
-        for i in range(max(1, k_optimos)):
-            r = aplanado_minimo_compuesto(system, target, timeout_s=timeout_s,
-                                          solo_no_negativos=solo_no_negativos,
-                                          demostrados=demostrados,
-                                          reescritura=reescritura,
-                                          sumas_parciales=sumas_parciales,
-                                          excluir=vistos, semilla=i, forzar=forzar)
-            if r["estado"] != "optimo_del_encoding":
-                break                  # se agotaron los optimos de ese tamano
-            vistos.append(r["elegidos"])
-            total_vistos += 1
-            try:
-                M = materializar(system, r["elegidos"], target, reescritura=reescritura)
-            except ValueError as err:
-                # El conjunto elegido no se puede MATERIALIZAR de forma valida: o
-                # una definitoria colapsa a 0 = 0, o una incognita original
-                # desaparece. Se descarta el candidato, no se publica la cifra.
-                # Esto es lo que ocurre con `forzar_definiciones` sobre el sistema
-                # de JSWW: ver la guarda en `materializar`.
-                if verbose:
-                    print(f"    [{'forzado' if forzar else 'libre  '}] descartado: "
-                          f"{str(err)[:110]}", flush=True)
-                continue
-            if max_equation_degree(M) > target:
-                continue               # el materializado no alcanza lo certificado
-            E = eliminar_maximo(M, target, solo=solo_eliminar)
-            gen = 1 + 2 * max_equation_degree(E)
-            v = len(E.unknowns) + 1
-            if verbose:
-                print(f"    [{'forzado' if forzar else 'libre  '}] optimo #{len(vistos)}: "
-                      f"{r['nombres']} nombres, post-elim "
-                      f"{sorted(str(t) for t, _ in E.eliminadas)} -> ({v}, {gen})", flush=True)
-            if mejor is None or (v, gen) < (mejor["variables"], mejor["grado"]):
-                mejor = {"sistema": E, "variables": v, "grado": gen,
-                         "nombres": r["nombres"], "cota": r["cota"],
-                         "eliminadas": list(E.eliminadas), "elegidos": r["elegidos"],
-                         "materializado": M, "forzado": bool(forzar)}
+    for reesc in modos:
+      if mejor is not None and reesc != modos[0]:
+          break                        # ya hay algo construible con el modo mejor
+      for forzar in tandas:
+          vistos = []
+          for i in range(max(1, k_optimos)):
+              r = aplanado_minimo_compuesto(system, target, timeout_s=timeout_s,
+                                            solo_no_negativos=solo_no_negativos,
+                                            demostrados=demostrados,
+                                            reescritura=reesc,
+                                            sumas_parciales=sumas_parciales,
+                                            excluir=vistos, semilla=i, forzar=forzar)
+              if r["estado"] != "optimo_del_encoding":
+                  break                  # se agotaron los optimos de ese tamano
+              vistos.append(r["elegidos"])
+              total_vistos += 1
+              try:
+                  M = materializar(system, r["elegidos"], target, reescritura=reesc)
+              except ValueError as err:
+                  # El conjunto elegido no se puede MATERIALIZAR de forma valida: o
+                  # una definitoria colapsa a 0 = 0, o una incognita original
+                  # desaparece. Se descarta el candidato, no se publica la cifra.
+                  # Esto es lo que ocurre con `forzar_definiciones` sobre el sistema
+                  # de JSWW: ver la guarda en `materializar`.
+                  if verbose:
+                      print(f"    [{'forzado' if forzar else 'libre  '}"
+                            f"{'/reesc' if reesc else '/sin-reesc'}] descartado: "
+                            f"{str(err)[:110]}", flush=True)
+                  continue
+              if max_equation_degree(M) > target:
+                  continue               # el materializado no alcanza lo certificado
+              E = eliminar_maximo(M, target, solo=solo_eliminar)
+              gen = 1 + 2 * max_equation_degree(E)
+              v = len(E.unknowns) + 1
+              if verbose:
+                  print(f"    [{'forzado' if forzar else 'libre  '}"
+                        f"{'/reesc' if reesc else '/sin-reesc'}] optimo #{len(vistos)}: "
+                        f"{r['nombres']} nombres, post-elim "
+                        f"{sorted(str(t) for t, _ in E.eliminadas)} -> ({v}, {gen})", flush=True)
+              if mejor is None or (v, gen) < (mejor["variables"], mejor["grado"]):
+                  mejor = {"sistema": E, "variables": v, "grado": gen,
+                           "nombres": r["nombres"], "cota": r["cota"],
+                           "eliminadas": list(E.eliminadas), "elegidos": r["elegidos"],
+                           "materializado": M, "forzado": bool(forzar),
+                           "reescritura": reesc}
     if mejor is not None:
         mejor["optimos_vistos"] = total_vistos
     return mejor
