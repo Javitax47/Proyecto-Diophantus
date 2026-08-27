@@ -53,6 +53,84 @@ Tests correspondientes en `src/tests/verification/test_dioph_*.py`, todos regist
 
 ---
 
+## 2.bis ⛔ RETRACTACIÓN: el (33, 5) y el (36, 5) NO son válidos — noveno defecto
+
+**Se retiran las cifras (33, 5) y (36, 5), y con ellas los puntos intermedios de la frontera
+obtenidos forzando definiciones.** Lo que sigue explica qué falló, qué sobrevive y cómo se detectó.
+El resto del documento está corregido, pero esta sección va delante porque una cifra retirada tiene
+que verse antes que la cifra.
+
+### Qué falló
+
+La tercera palanca —**forzar el nombre de una definición** para que la eliminación saliera gratis—
+producía sistemas **estrictamente más débiles que el original**.
+
+El mecanismo, exacto: `materializar` emite la ecuación definitoria de cada nombre `w` como
+`w − reducir(cuerpo, permitir_nombre=False)`. Ese flag existe justamente para que la definitoria de
+`w` no se exprese usando `w`. **Las rutas de subsuma y de reescritura no consultaban ese flag** —se
+añadieron después—, así que `reducir` podía devolver el propio `w`, y la ecuación emitida era
+`w − w`, que expande a **cero**.
+
+```
+la ecuacion definitoria de m1 colapsa a 0 = 0: su cuerpo se redujo a si mismo (m1 = m1)
+```
+
+Con `forzar` activo se perdían **cinco** definitorias de quince. Los nombres quedaban libres, y con
+ellos desaparecían del sistema las incógnitas originales que solo vivían ahí:
+
+| cifra | incógnitas perdidas | ecuaciones destruidas |
+|---|---|---|
+| (36, 5) | `g` | (2) |
+| (33, 5) | `g`, `r` | (2) y (7) |
+
+Un sistema al que le falta la ecuación (2) tiene soluciones que el (1) de JSWW no tiene. Como
+generador, **emitiría números que no son primos**. Es un fallo de *soundness*, el peor de los dos
+tipos.
+
+### Por qué la verificación no lo cazó, que es lo más instructivo
+
+`verificar_equivalencia` daba **0 faltan / 0 sobran** sobre un sistema roto. No es un bug suyo, es un
+límite que no estaba escrito: **es una identidad polinómica**. Sustituye cada nombre por su
+definición y comprueba que reaparecen las originales — pero **sustituye por una definición que el
+sistema ya no impone**. Comprobaba que las ecuaciones *dicen* lo mismo si uno acepta las
+definiciones, no que el sistema *obligue* a las definiciones.
+
+Dos comprobaciones que parecían independientes —«grado ≤ 2» y «0 faltan / 0 sobran»— fallaban a la
+vez, y las dos daban verde.
+
+### Cómo se detectó: intentando formalizar
+
+No lo encontró ningún test. Lo encontró **el generador de Lean**: al escribir la firma del teorema
+necesitaba la lista de variables del sistema, y `g` no estaba. Una variable que existe en el sistema
+de partida y no en el aplanado es un imposible, y este proyecto ya sabe qué hacer con un imposible.
+
+Es el noveno defecto y el primero que delata una **herramienta distinta**. Los ocho anteriores los
+cazó el propio instrumento dando un número que no podía ser cierto; este lo cazó cambiar de
+formalismo, que es exactamente el argumento por el que se formaliza.
+
+### Qué sobrevive
+
+| resultado | estado |
+|---|---|
+| **(38, 5)** — aplanado sin forzar | ✅ **válido**: ninguna incógnita desaparece |
+| (23, 25) y los puntos sin aplanar | ✅ válidos: no hay aplanado, no hay nombres |
+| `a ≥ 2` formalizado en Lean | ✅ intacto: habla del sistema (1), no del aplanado |
+| **(33, 5)**, **(36, 5)** | ⛔ **retirados** |
+| puntos intermedios con `forzar` | ⛔ retirados; se remiden sin él |
+
+La mejor cifra construida y verificada en la esquina de grado 5 vuelve a ser **(38, 5)**, cuatro por
+debajo del (42, 5) que JSWW anunciaron.
+
+### La guarda, para que no se repita
+
+Dos comprobaciones nuevas, las dos en `materializar`, que **abortan** en vez de avisar:
+
+1. ninguna ecuación definitoria puede colapsar a `0 = 0`;
+2. ninguna incógnita original puede desaparecer del sistema materializado.
+
+Y `verificar_equivalencia` incorpora la segunda a su veredicto: `ok` es ahora falso si hay incógnitas
+perdidas. `aplanado_y_eliminacion` descarta el candidato en vez de publicarlo.
+
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
 > Esta sección es **autocontenida**: se puede leer sin el resto del documento. Las secciones 3.2x que

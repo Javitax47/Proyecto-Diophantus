@@ -1015,8 +1015,47 @@ def materializar(system, elegidos, target=2, name=None, reescritura=False):
     i = 0
     while i < len(defs):
         w, c = defs[i]
-        eqs.append(sympy.expand(w - reducir(c, target, permitir_nombre=False)))
+        # GUARDA DEL NOVENO DEFECTO, y es el mas caro de los nueve.
+        #
+        # `permitir_nombre=False` existe para que la definitoria de `w` no se
+        # exprese usando `w`. Las rutas de SUBSUMA y de REESCRITURA no consultaban
+        # ese flag --se anadieron despues-- asi que `reducir(c)` podia devolver el
+        # propio `w`, y entonces la ecuacion emitida era `w - w`, que expande a
+        # CERO. El nombre quedaba sin ninguna ecuacion que lo atara.
+        #
+        # Consecuencia: el sistema resultante es ESTRICTAMENTE MAS DEBIL que el
+        # original --tiene soluciones que el original no tiene-- y ademas la
+        # incognita original que solo aparecia ahi desaparece del sistema. Medido:
+        # forzando el nombre `h + (h+j)(gk+2g+k+1)` se perdian CINCO definitorias,
+        # desaparecian `g` y `r`, y con ellas las ecuaciones (2) y (7) enteras.
+        #
+        # Y lo peor: `verificar_equivalencia` seguia dando 0 faltan / 0 sobran,
+        # porque es una identidad polinomica --sustituye por la definicion-- y no
+        # comprueba que el sistema IMPONGA esa definicion. Dos comprobaciones que
+        # se creian independientes fallaban juntas.
+        cuerpo = reducir(c, target, permitir_nombre=False)
+        ecuacion = sympy.expand(w - cuerpo)
+        if ecuacion == 0:
+            raise ValueError(
+                f"la ecuacion definitoria de {w} colapsa a 0 = 0: su cuerpo se "
+                f"redujo a si mismo ({w} = {cuerpo}). El nombre quedaria libre y el "
+                f"sistema seria mas debil que el original. Definicion: {c}")
+        eqs.append(ecuacion)
         i += 1
+
+    # Y la comprobacion estructural, que no depende de como se hayan expresado las
+    # definitorias: si una incognita ORIGINAL desaparece de todas las ecuaciones,
+    # la ecuacion que la contenia se ha perdido.
+    vistas = set()
+    for e in eqs:
+        vistas |= e.free_symbols
+    huerfanas = [u for u in system.unknowns
+                 if u not in vistas and any(u in e.free_symbols for e in system.eqs)]
+    if huerfanas:
+        raise ValueError(
+            f"estas incognitas originales desaparecen del sistema materializado: "
+            f"{sorted(map(str, huerfanas))}. Las ecuaciones que las contenian se han "
+            f"perdido y el sistema no equivale al original.")
 
     usadas = set()
     for e in eqs:
@@ -1083,6 +1122,24 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
     Y el emparejamiento es 1 A 1, no "existe alguna que case": dos ecuaciones vivas
     iguales taparian que falta una original distinta.
     """
+    # COMPROBACION QUE FALTABA, y su ausencia costo dos cifras. Lo de abajo es una
+    # IDENTIDAD POLINOMICA: sustituye cada nombre por su definicion y mira si
+    # reaparecen las originales. Eso NO comprueba que el sistema OBLIGUE al nombre
+    # a valer eso. Si una incognita original desaparece de todas las ecuaciones del
+    # materializado, la ecuacion que la contenia se ha PERDIDO: el sistema es mas
+    # DEBIL que el original --tiene soluciones que el original no tiene-- y la
+    # sustitucion de arriba sigue cuadrando, porque sustituye por una definicion
+    # que el sistema ya no impone.
+    #
+    # Caso real: forzando el nombre `h + (h+j)(gk+2g+k+1)`, la incognita `g`
+    # desaparecia del materializado y la ecuacion (2) quedaba reducida a `m1 = z`,
+    # sin nada que atara `m1` a su definicion. `verificar_equivalencia` daba
+    # 0 faltan / 0 sobran sobre un sistema que ya no era equivalente.
+    en_ecuaciones = set()
+    for e in materializado.eqs:
+        en_ecuaciones |= e.free_symbols
+    perdidas = [u for u in system.unknowns if u not in en_ecuaciones]
+
     quitadas = {u: v for u, v in getattr(final, "eliminadas", [])}
     for _ in range(len(quitadas)):
         quitadas = {u: sympy.expand(v.subs(quitadas)) for u, v in quitadas.items()}
@@ -1116,7 +1173,8 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
             faltan.append(o)
 
     veredicto = {
-        "ok": not faltan and not pendientes,
+        "ok": not faltan and not pendientes and not perdidas,
+        "perdidas": sorted(str(u) for u in perdidas),
         "definitorias": len(definitorias), "vivas": len(vivas),
         "originales": len(originales),
         "faltan": len(faltan), "sobran": len(pendientes),
@@ -1125,7 +1183,9 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
     if verbose:
         print(f"    equivalencia: {veredicto['definitorias']} definitorias se anulan, "
               f"{veredicto['vivas']} vivas vs {veredicto['originales']} originales "
-              f"-> faltan {veredicto['faltan']}, sobran {veredicto['sobran']}", flush=True)
+              f"-> faltan {veredicto['faltan']}, sobran {veredicto['sobran']}"
+              + (f", INCOGNITAS PERDIDAS {veredicto['perdidas']}" if perdidas else ""),
+              flush=True)
     return veredicto
 
 
@@ -1188,7 +1248,18 @@ def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
                 break                  # se agotaron los optimos de ese tamano
             vistos.append(r["elegidos"])
             total_vistos += 1
-            M = materializar(system, r["elegidos"], target, reescritura=reescritura)
+            try:
+                M = materializar(system, r["elegidos"], target, reescritura=reescritura)
+            except ValueError as err:
+                # El conjunto elegido no se puede MATERIALIZAR de forma valida: o
+                # una definitoria colapsa a 0 = 0, o una incognita original
+                # desaparece. Se descarta el candidato, no se publica la cifra.
+                # Esto es lo que ocurre con `forzar_definiciones` sobre el sistema
+                # de JSWW: ver la guarda en `materializar`.
+                if verbose:
+                    print(f"    [{'forzado' if forzar else 'libre  '}] descartado: "
+                          f"{str(err)[:110]}", flush=True)
+                continue
             if max_equation_degree(M) > target:
                 continue               # el materializado no alcanza lo certificado
             E = eliminar_maximo(M, target, solo=solo_eliminar)
