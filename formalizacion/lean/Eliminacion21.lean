@@ -109,7 +109,7 @@ theorem vA_ge_vN_succ {N p h j w z A : Int} (hN : 0 ≤ N) (hp : 0 ≤ p)
   unfold vA vE vN; omega
 
 /-- **`a ≥ p+1`**, igual: `e` contiene a `p` con coeficiente 1. -/
-theorem vA_ge_p_succ {N p h j w z A : Int} (hN : 0 ≤ N) (hp : 0 ≤ p)
+theorem vA_ge_p_succ {N p h j w z A : Int} (hN : 0 ≤ N) (_hp : 0 ≤ p)
     (hh : 0 ≤ h) (hj : 0 ≤ j) (hw : 0 ≤ w) (hz : 0 ≤ z) (hA : 0 ≤ A) :
     p + 1 ≤ vA N p h j w z A := by
   have := vQ_nonneg hh hj hw hz
