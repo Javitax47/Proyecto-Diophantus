@@ -17,8 +17,9 @@
 > * **(23, 25)** — tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
 >   **Es el único punto que mejora una cifra de la literatura**, no usa aplanado —son tres
 >   sustituciones lineales— y está **formalizado en Lean 4** (§2.ter);
-> * ⚠️ **(22, 25)** — una más, pero **condicional**: depende de `a ≥ n+1`, que se apoya en tres
->   teoremas estándar de Pell **citados y no demostrados aquí** (§2.ter). Va en tabla aparte;
+> * ⚠️ **(21, 25)** — **cinco** por debajo del (26,25) publicado, pero **condicional**: depende de
+>   `a ≥ e+1`, que se apoya en tres teoremas estándar de Pell **citados y no demostrados aquí**
+>   (§2.ter). Va en tabla aparte, y no se cuenta como el resultado del proyecto;
 > * **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** — caen en una zona **vacía** en la
 >   literatura, pero **ninguno domina** al (26, 25): el (27,13) baja doce grados a costa de una
 >   variable de más;
@@ -261,7 +262,7 @@ Dos comprobaciones nuevas, las dos en `materializar`, que **abortan** en vez de 
 Y `verificar_equivalencia` incorpora la segunda a su veredicto: `ok` es ahora falso si hay incógnitas
 perdidas. `aplanado_y_eliminacion` descarta el candidato en vez de publicarlo.
 
-## 2.ter ✅ FORMALIZADO: el (23, 25), y ⚠️ CONDICIONAL: un (22, 25) que depende de Pell
+## 2.ter ✅ FORMALIZADO: el (23, 25), y ⚠️ CONDICIONAL: un (21, 25) que depende de Pell
 
 Dos resultados de la misma sesión y **de garantía distinta**. Van separados a propósito.
 
@@ -293,7 +294,7 @@ Y el enunciado se comprueba, que es donde estaba el riesgo real. `test_lean_elim
 `eliminar_lineales`, y verifica que los cuantificadores son 25 y 22 con diferencia exacta `{q,y,z}` —
 sin esa cuarta comprobación el teorema podría estar cuantificando de menos y ser cierto por vacío.
 
-### El (22, 25): `a ≥ n+1`, y de dónde sale
+### El (21, 25): la cota `a ≥ e+1`, y de dónde sale
 
 Las tres eliminaciones que quedaban bloqueadas necesitaban `a ≥ n+1`, `a ≥ p+1` y `a ≥ p` — cotas
 *entre incógnitas*, que no se arreglan desplazando y sobre las que Z3 no concluye. Resulta que la
@@ -319,13 +320,41 @@ y coincide **exactamente** con el `Z_e/e` que predice el argumento. La congruenc
 se verifica término a término.
 
 Con `n = N+2` y `a = n+1+A`, la ec.(12) permite eliminar `m` — la **sexta** incógnita eliminable — y
-la esquina entera baja una variable:
+la esquina entera baja una variable: (23,25) → **(22,25)**, (22,29) → (21,29), (21,37) → (20,37).
 
-| sin la cota | con `a ≥ n+1` |
-|---|---|
-| (23, 25) | **(22, 25)** |
-| (22, 29) | (21, 29) |
-| (21, 37) | (20, 37) |
+#### Pero la cota buena es `a ≥ e+1`, y sale de la misma demostración
+
+El paso 5 no ajusta: se pasa **por órdenes de magnitud**. `Z_e/e` vale 245, 4061, 87815, 2350153…
+frente a un `e+2` que vale 6, 7, 8, 9. Así que el mismo argumento da
+
+```
+a ≥ e + 1        (para e ≥ 4, que está garantizado porque n ≥ 2 y e ≥ 2n)
+```
+
+Y **eso es lo que cambia el resultado**, porque `e = 2n + p + q + z` domina a la vez a `n` y a `p`:
+
+```
+a − n − 1  =  e + A − n  =  n + p + q + z + A     ≥ 0
+a − p − 1  =  e + A − p  =  2n + q + z + A        ≥ 0
+a − p      =                2n + q + z + A + 1    ≥ 0
+```
+
+**Una sola sustitución afín vuelve estructurales las tres restas bloqueadas**, mientras que
+`a = n+1+A` solo arreglaba la primera. Medido: **siete** incógnitas eliminables en vez de seis — entra
+también `x`, por la ecuación (13).
+
+| | sin cota Pell | con `a ≥ n+1` | con **`a ≥ e+1`** |
+|---|---|---|---|
+| grado 25 | (23, 25) | (22, 25) | **(21, 25)** |
+| grado 37 | (22, 37) | (20, 37) | (20, 37) |
+| grado 61 | — | — | (19, 61) |
+
+**(21, 25): cinco variables por debajo del (26, 25) que JSWW publicaron, al mismo grado.** Y no queda
+dominado por el (19, 29) que anuncian, porque su grado es menor.
+
+Verificado: las cinco definiciones eliminadas (`q`, `e`, `y`, `m`, `x`) tienen **todos los
+coeficientes ≥ 0** —luego la equisatisfacibilidad vale en las dos direcciones sobre ℕ— y la
+sustitución hacia atrás recupera las 9 ecuaciones originales vivas, **0 faltan y 0 sobran**.
 
 ### Y por qué esto va en una tabla aparte
 
@@ -333,9 +362,14 @@ Los pasos 4 y 5 son **teoremas estándar de Pell** —son la maquinaria con la q
 MRDP, y están en Mathlib justamente por eso— pero **aquí se citan, no se demuestran**. La
 formalización de este proyecto no usa Mathlib.
 
-O sea: el (23, 25) no depende de nada citado salvo que (1) represente los primos; el (22, 25) además
-depende de tres hechos de Pell. **No son la misma clase de resultado**, y ponerlos en la misma tabla
-sin decirlo sería exactamente el error que costó las cuatro cifras de grado 5.
+O sea: el (23, 25) no depende de nada citado salvo que (1) represente los primos; el (22, 25) y el
+(21, 25) además dependen de tres hechos de Pell. **No son la misma clase de resultado**, y ponerlos en
+la misma tabla sin decirlo sería exactamente el error que costó las cuatro cifras de grado 5.
+
+Dicho de otra forma, y es el resumen honesto de la sesión: **el resultado más fuerte del proyecto
+—(21, 25)— es también el que peor garantía tiene, y el mejor garantizado —(23, 25), formalizado— es
+más débil.** Están los dos, cada uno con su etiqueta. Lo que ya no se hace es publicar el bueno con la
+etiqueta del otro.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

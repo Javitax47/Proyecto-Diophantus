@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 from src.analysis.dioph_jsww import (
     sistema, sistema_desplazado, no_negativos_desplazados, FACTOR, PUBLICADO,
     INCOGNITAS, NO_NEGATIVOS_DEMOSTRADOS, COTA_A, COTA_N, ECUACIONES,
-    sistema_cota_pell,
+    sistema_cota_pell, sistema_cota_pell_fuerte,
 )
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
@@ -701,8 +701,8 @@ def test_frontera_de_pareto(stats):
         stats.ok()
 
 
-def test_cota_pell_a_mayor_que_n(stats):
-    """[10] `a >= n+1`: la comprobacion NUMERICA del argumento de Pell, y lo que compra.
+def test_cota_pell_a_mayor_que_e(stats):
+    """[10] `a >= e+1`: la comprobacion NUMERICA del argumento de Pell, y lo que compra.
 
     ESTE TEST NO DEMUESTRA NADA, y por eso empieza diciendolo. La cota `a >= n+1`
     descansa en tres hechos estandar de Pell que aqui se CITAN --las soluciones de
@@ -720,7 +720,7 @@ def test_cota_pell_a_mayor_que_n(stats):
       * y con `n = N+2`, `a = n+1+A` la ec.(12) permite eliminar `m`, que es la
         sexta incognita eliminable y da (22, 25).
     """
-    print(f"\n{Colors.HEADER}[10] La cota `a >= n+1` (depende de Pell) y lo que compra{Colors.ENDC}")
+    print(f"\n{Colors.HEADER}[10] Las cotas `a >= n+1` y `a >= e+1` (dependen de Pell) y lo que compran{Colors.ENDC}")
     import math
 
     def es_cuadrado(x):
@@ -765,9 +765,36 @@ def test_cota_pell_a_mayor_que_n(stats):
     if (v2, g2) != (22, 25):
         problemas.append(f"se esperaba (22, 25) y salio ({v2}, {g2})")
 
-    print(f"  {Colors.WARN}CONDICIONAL. El (23,25) esta demostrado y formalizado; este")
-    print(f"  (22,25) depende de tres teoremas de Pell CITADOS. Van en tablas")
-    print(f"  distintas a proposito: mezclarlos seria el error de agosto otra vez.{Colors.ENDC}")
+    # LA VERSION FUERTE. El mismo argumento da `a >= e+1`, no solo `a >= n+1`:
+    # el paso 5 no ajusta, se pasa por ordenes de magnitud (Z_e/e vale 245, 4061,
+    # 87815... frente a e+2 = 6, 7, 8). Y `e = 2n+p+q+z` domina A LA VEZ a `n` y a
+    # `p`, asi que UNA sustitucion vuelve estructurales las TRES restas
+    # bloqueadas. Medido: siete incognitas eliminables en vez de seis -- entra `x`.
+    SF = sistema_cota_pell_fuerte()
+    EF = eliminar_lineales(SF, 99, solo=[str(u) for u in SF.unknowns])
+    hf = sorted(str(u) for u, _ in getattr(EF, "eliminadas", []))
+    print(f"  con la version fuerte `a = e+1+A`: {hf}")
+    if "x" not in hf:
+        problemas.append("la cota fuerte no desbloquea `x`, que es lo que la distingue")
+    Ex = eliminar_lineales(SF, 99, solo=["e", "m", "q", "x", "y"])
+    v3, g3 = Ex.cost() + 1, 1 + 2 * max_equation_degree(Ex)
+    negativas = [str(u) for u, v in Ex.eliminadas if not no_negativo_sobre_N(sympy.expand(v))]
+    print(f"  {Colors.BOLD}({v3}, {g3}){Colors.ENDC} eliminando "
+          f"{sorted(str(u) for u, _ in Ex.eliminadas)}   "
+          f"-> CINCO variables por debajo del (26, 25) PUBLICADO")
+    if (v3, g3) != (21, 25):
+        problemas.append(f"se esperaba (21, 25) y salio ({v3}, {g3})")
+    if negativas:
+        problemas.append(f"definicion eliminada que puede ser negativa: {negativas}")
+    else:
+        print(f"  las 5 definiciones eliminadas tienen TODOS los coeficientes >= 0: "
+              f"la equisatisfacibilidad vale en las dos direcciones")
+
+    print(f"  {Colors.WARN}CONDICIONAL, y es toda la diferencia. El (23,25) esta demostrado y")
+    print(f"  FORMALIZADO en Lean; el (22,25) y el (21,25) dependen de tres teoremas")
+    print(f"  de Pell CITADOS -- los de MRDP, que estan en Mathlib y esta")
+    print(f"  formalizacion no usa. Van en tablas distintas a proposito: mezclarlos")
+    print(f"  seria exactamente el error que costo las cuatro cifras de grado 5.{Colors.ENDC}")
 
     if problemas:
         stats.fail(problemas[0])
@@ -787,7 +814,7 @@ def main():
     test_esquina_de_variables(stats)
     test_cota_a_mayor_igual_2(stats)
     test_frontera_de_pareto(stats)
-    test_cota_pell_a_mayor_que_n(stats)
+    test_cota_pell_a_mayor_que_e(stats)
 
     total = stats.passed + stats.failed
     print()

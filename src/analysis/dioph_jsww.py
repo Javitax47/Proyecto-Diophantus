@@ -322,6 +322,51 @@ def sistema_cota_pell(expandir=False, agrupado=False):
                  name="JSWW 1976 con n = N+2 y a = n+1+A")
 
 
+# La MISMA demostracion da una cota MAS FUERTE, y es la que vale la pena:
+#
+#     a >= e + 1     (y no solo a >= n+1)
+#
+# porque el paso 5 no da `a+1 >= n+2`, da `a+1 >= (2e+1)^(e-1)/e`, que es
+# desmesuradamente mayor que `e+2`. Comprobado: `Z_e/e` vale 245, 4061, 87815,
+# 2350153, ... frente a `e+2` = 6, 7, 8, 9. Y `e >= 4` esta garantizado porque
+# `n >= 2` y `e >= 2n`. (Para `e = 2` la cota fallaria --da 3 y haria falta 4--
+# pero `e = 2` es imposible por lo mismo.)
+#
+# POR QUE IMPORTA QUE SEA `e` Y NO `n`. Las tres restas bloqueadas son
+# `a-n-1`, `a-p-1` y `a-p`, y `e = 2n+p+q+z` domina a las tres a la vez:
+#
+#     a - n - 1 = e + A - n = n + p + q + z + A     >= 0
+#     a - p - 1 = e + A - p = 2n + q + z + A        >= 0
+#     a - p     = 2n + q + z + A + 1                >= 0
+#
+# O sea que UNA sola sustitucion afin las arregla las tres, mientras que
+# `a = n+1+A` solo arregla la primera. Medido: con `a >= n+1` hay 6 incognitas
+# eliminables y con `a >= e+1` hay SIETE -- entra tambien `x`, por la ec.(13).
+
+
+def sistema_cota_pell_fuerte(expandir=False, agrupado=False):
+    """El sistema (1) con `n = N+2` y `a = e+1+A`, o sea usando `a >= e+1`.
+
+    Es la version fuerte de `sistema_cota_pell`: `e = 2n+p+q+z` domina a la vez a
+    `n` y a `p`, asi que una sola sustitucion vuelve estructurales las TRES restas
+    que bloqueaban eliminaciones. Da siete incognitas eliminables en vez de seis.
+
+    MISMA DEPENDENCIA que `sistema_cota_pell`, ni mas ni menos: los tres hechos de
+    Pell citados. No mejora la garantia; mejora lo que se saca de ella.
+    """
+    fuente = ECUACIONES_AGRUPADAS if agrupado else ECUACIONES
+    N = sympy.Symbol('N', integer=True)
+    A = sympy.Symbol('A', integer=True)
+    nn = N + COTA_N
+    ee = 2 * nn + p + q + z
+    eqs = [x_.subs({n: nn, a: ee + 1 + A}, simultaneous=True) for x_ in fuente]
+    if expandir:
+        eqs = [sympy.expand(x_) for x_ in eqs]
+    inc = [u for u in INCOGNITAS if u not in (a, n)] + [N, A]
+    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+                 name="JSWW 1976 con n = N+2 y a = e+1+A")
+
+
 def sistema(expandir=True, agrupado=False):
     """El sistema (1) de JSWW como `Dioph`.
 
