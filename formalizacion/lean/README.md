@@ -2,9 +2,31 @@
 
 ## Qué hay aquí
 
-`CotaA.lean` — demostración **verificada por el núcleo de Lean 4** de que toda
-solución sobre ℕ del sistema (1) de Jones–Sato–Wada–Wiens cumple **`n ≥ 2`** y
-**`a ≥ 2`**.
+Dos ficheros, los dos verificados por el núcleo de Lean 4 y sin Mathlib.
+
+`Eliminacion.lean` — **el resultado del proyecto**: el sistema (1) de
+Jones–Sato–Wada–Wiens, que ellos publican con 25 incógnitas más el parámetro
+(generador de **26 variables y grado 25**), es **equisatisfacible** con uno de
+22 incógnitas del mismo grado — generador de **(23, 25)**, tres variables por
+debajo del suyo.
+
+```
+theorem equisatisfacible (k : Int) (hk : 0 ≤ k) :
+    (∃ a b c d e f g h i j l m n o p q r s t u v w x y z : Int,
+        (0 ≤ a ∧ … ∧ 0 ≤ z) ∧ completo k a … z)
+  ↔ (∃ a b c d e f g h i j l m n o p     r s t u v w x     : Int,
+        (0 ≤ a ∧ … ∧ 0 ≤ x) ∧ reducido k a … x)
+```
+
+Es formalizable justamente porque **no hay aplanado, ni optimizador, ni
+reescritura**: son tres sustituciones lineales. Las ecuaciones (1), (2) y (9)
+determinan `q`, `z` e `y`, y sus definiciones tienen todos los coeficientes **no
+negativos** — que es lo que hace válida la vuelta sobre ℕ, y aquí deja de ser un
+criterio implementado en Python para ser tres lemas (`defZ_nonneg`, `defQ_nonneg`,
+`defY_nonneg`).
+
+`CotaA.lean` — demostración de que toda solución sobre ℕ del sistema (1) cumple
+**`n ≥ 2`** y **`a ≥ 2`**.
 
 ```
 theorem a_ge_two {a e f k l n o p q v x y z : Nat}
@@ -24,7 +46,15 @@ en el teorema de JSWW, que se **cita**; esto no. Por tanto es lo único que se
 puede verificar de arriba abajo sin importar nada de fuera.
 
 Y no es un teorema decorativo: es lo que justifica la reparametrización
-`a = A + 2`, y con ella la cifra **(33, 5)**.
+`a = A + 2`, que da los puntos altos de la frontera. (Aquí ponía «y con ella la
+cifra (33, 5)»; esa cifra está **retirada** — venía de la ruta de reescritura del
+aplanado, que certificaba conjuntos no materializables.)
+
+Lo mismo vale, y más, para `Eliminacion.lean`: tampoco depende de que (1)
+represente los primos. Dice que las dos formulaciones tienen **las mismas
+soluciones**, que es exactamente donde este proyecto se ha equivocado nueve veces
+con la maquinaria de aplanado. Por eso se formaliza justo esto: es el único punto
+que mejora a la literatura y el único lo bastante simple para verificarlo entero.
 
 ## Garantías, y sus límites
 
@@ -34,7 +64,7 @@ Y no es un teorema decorativo: es lo que justifica la reparametrización
 | `sorry` / `admit` / `axiom` / `native_decide` | ninguno |
 | axiomas de los que depende | `propext`, `Classical.choice`, `Quot.sound` — los tres estándar |
 | dependencias externas | **ninguna**; no usa Mathlib |
-| el enunciado es el que se cree | comprobado por `test_lean_cota_a.py` |
+| el enunciado es el que se cree | comprobado por `test_lean_cota_a.py` y `test_lean_eliminacion.py` |
 
 Esa última fila es la que suele faltar. Que un fichero compile garantiza que la
 **demostración** es correcta, no que el **enunciado** sea el que uno quería: un
@@ -43,12 +73,34 @@ extrae las cinco hipótesis del `.lean` y comprueba con sympy que cada una es
 equivalente a su ecuación en `dioph_jsww.ECUACIONES`, y que aparecen
 literalmente en el fichero.
 
-**Lo que este teorema NO dice:** nada sobre que el sistema (1) represente los
-primos. Eso es de JSWW (1976) y aquí se cita.
+**Lo que estos teoremas NO dicen:** nada sobre que el sistema (1) represente los
+primos. Eso es de JSWW (1976) y aquí se cita. `Eliminacion.lean` tampoco dice
+nada sobre el **grado**: que el sistema reducido siga en grado 12 —y por tanto el
+generador en 25— se mide en `dioph_degree`, no se demuestra aquí. Lo que se
+verifica es la parte donde estaba el riesgo: que las soluciones sean las mismas.
+
+### Cómo se comprueba el enunciado de `Eliminacion.lean`
+
+Es más largo que en `CotaA.lean` porque hay más superficie donde equivocarse —
+catorce ecuaciones escritas a mano más once. `test_lean_eliminacion.py` extrae del
+`.lean`:
+
+1. las **14** ecuaciones de `completo`, y las empareja **1 a 1** con
+   `ECUACIONES` (que «exista alguna que case» taparía una repetida y una ausente);
+2. las tres definiciones, contra las que produce `eliminar_lineales`;
+3. las **11** ecuaciones de `reducido`, también 1 a 1;
+4. las **listas de variables cuantificadas**: 25 y 22, y que la diferencia sea
+   exactamente `{q, y, z}`. Sin esta cuarta comprobación el teorema podría estar
+   cuantificando de menos y ser cierto por vacío.
 
 ## Detalles técnicos
 
-* **Sobre ℕ y sin restas.** Las ecuaciones de JSWW están sobre ℤ con variables en
+* **`Eliminacion.lean` va sobre ℤ con `0 ≤ ·` explícito**, al revés que
+  `CotaA.lean`. Las ecuaciones de JSWW tienen restas (`a²−1`, `a−n−1`, `u²−a`)
+  que sobre `Nat` se truncarían; modelarlas en ℤ con la no negatividad como
+  hipótesis es equivalente y deja las ecuaciones **literalmente** como están
+  publicadas, que es lo que permite cotejar la transcripción a ojo.
+* **En `CotaA.lean`, sobre ℕ y sin restas.** Las ecuaciones de JSWW están sobre ℤ con variables en
   ℕ. Aquí los términos negativos pasan al otro lado: `(a²−1)y² + 1 − x² = 0` se
   escribe `a²y² + 1 = y² + x²`. La resta truncada de ℕ convierte un error de signo
   en un teorema que sigue compilando y ya no dice lo mismo; de ahí el test.

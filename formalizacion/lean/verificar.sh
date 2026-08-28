@@ -28,6 +28,8 @@ fi
 echo ">> lean: $(lean --version)"
 echo ">> compilando CotaA.lean"
 lean -o "$AQUI/CotaA.olean" "$AQUI/CotaA.lean"
+echo ">> compilando Eliminacion.lean"
+lean -o "$AQUI/Eliminacion.olean" "$AQUI/Eliminacion.lean"
 
 echo ">> auditando axiomas (deben ser solo propext / Classical.choice / Quot.sound)"
 cat > "$AQUI/.auditoria.lean" <<'LEAN'
@@ -42,8 +44,21 @@ open Diophantus
 #print axioms a_ge_two
 #check @a_ge_two
 LEAN
+cat > "$AQUI/.auditoria2.lean" <<'LEAN'
+import Eliminacion
+open Diophantus
+#print axioms defZ_nonneg
+#print axioms defQ_nonneg
+#print axioms defY_nonneg
+#print axioms completo_de_defs
+#print axioms equisatisfacible
+#check @equisatisfacible
+LEAN
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria.lean"
-rm -f "$AQUI/.auditoria.lean" "$AQUI/CotaA.olean"
+LEAN_PATH="$AQUI" lean "$AQUI/.auditoria2.lean"
+rm -f "$AQUI/.auditoria.lean" "$AQUI/.auditoria2.lean" \
+      "$AQUI/CotaA.olean" "$AQUI/Eliminacion.olean"
 
 echo ">> comprobando que el ENUNCIADO es el teorema que se cree demostrar"
 cd "$AQUI/../.." && PYTHONPATH=. python3 src/tests/verification/test_lean_cota_a.py
+PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion.py
