@@ -5,17 +5,22 @@
 > y cuál es el siguiente paso.
 > Última actualización: agosto 2026.
 
-> **⛔ AVISO: gran parte de las cifras de este documento fueron RETIRADAS.** Ver **§2.bis**. El
-> noveno defecto —la ruta de reescritura producía sistemas más débiles que el original— invalidó
-> `(41,5)`, `(38,5)`, `(36,5)` y `(33,5)` y los puntos intermedios de la frontera.
+> **⛔ AVISO: las cifras de grado 5 de este documento fueron RETIRADAS.** Ver **§2.bis**. El
+> noveno defecto —la ruta de reescritura certificaba conjuntos de nombres que **no se pueden
+> materializar**— invalidó `(41,5)`, `(38,5)`, `(36,5)` y `(33,5)`. La frontera se **remidió entera**
+> sin reescritura y con una comprobación **estructural** nueva; lo que sigue son los números de esa
+> remedida.
 >
-> **Marcador actual, tras la retractación:**
+> **Marcador actual (todo verificado: identidad polinómica + estructura + sin incógnitas perdidas):**
 >
-> * esquina de grado 5: **(44, 5)**, construida y verificada — **por encima** del (42, 5) que JSWW
->   anunciaron, o sea que **ahí ya no los batimos**;
-> * **(23, 25)**: tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
->   No usa aplanado —solo eliminaciones lineales— y es **lo que queda en pie**;
+> * **(25, 13)** — **domina al (26, 25) que JSWW publicaron en los DOS ejes**: una variable menos y
+>   doce grados menos. Es el mejor resultado del proyecto;
+> * **(24, 21)** y **(23, 25)** — también por debajo del (26, 25) publicado;
+> * esquina de grado 5: **(44, 5)** — **por encima** del (42, 5) que JSWW *anunciaron*, o sea que
+>   **ahí no los batimos**;
 > * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización).
+>
+> Ninguna de estas cifras es un mínimo demostrado: todas son **cotas superiores construidas**.
 >
 > Las secciones que siguen conservan su redacción original salvo aviso; **las cifras de grado 5
 > anteriores al (44,5) están retiradas** aunque el texto histórico las mencione.
@@ -156,19 +161,29 @@ Más nombres, pero **construible**, que es la única clase de cifra que este pro
 El límite de `verificar_equivalencia` está ahora **escrito en el código y cubierto por un test**, no
 solo en este registro. La identidad polinómica sigue haciendo falta, pero no basta: hace la
 sustitución **ella**, con el diccionario de definiciones, y por eso es ciega a que el sistema no la
-imponga. La comprobación que sí lo ve es **estructural**, y son tres condiciones independientes:
+imponga. La comprobación que sí lo ve es **estructural**, y son cuatro condiciones independientes:
 
 | condición | qué rotura caza |
 |---|---|
-| cada nombre `w` tiene **en el sistema** una ecuación igual a `±(w − cuerpo)`, emparejada **1 a 1** | la definitoria perdida o colapsada |
-| `w` **no aparece** en su propio cuerpo | el noveno defecto exacto: `w − w` expande a 0 |
+| cada nombre `w` tiene **en el sistema** una ecuación igual a `±(w − r)`, emparejada **1 a 1** | la definitoria perdida o colapsada |
+| `w` **no aparece** en su propio cuerpo `r` | el noveno defecto exacto: `w − w` expande a 0 |
 | el grafo de dependencias entre nombres es **acíclico** | `w₁ = f(w₂)`, `w₂ = g(w₁)`: las dos ecuaciones existen, ninguna es autorreferente, y aun así no determinan nada |
+| desplegando `r` hasta punto fijo reaparece la definición **declarada** | `w` bien determinado, pero por **otra cosa** que la que dice representar — y entonces la identidad polinómica habla de un sistema distinto del que se publica |
 
-Las tres juntas dan una **biyección** entre conjuntos de soluciones: cada nombre queda determinado
+Las cuatro juntas dan una **biyección** entre conjuntos de soluciones: cada nombre queda determinado
 por las originales en orden topológico. Ninguna sobra — la tercera no la habría cazado ninguna de las
-otras dos. `verificar_equivalencia` ya no puede dar `ok` sin ella, y el test `[6]` de
-`test_dioph_optflat` construye las **tres** roturas por separado y exige que se señale la causa
+otras dos. `verificar_equivalencia` ya no puede dar `ok` sin ellas, y el test `[6]` de
+`test_dioph_optflat` construye las **cuatro** roturas por separado y exige que se señale la causa
 correcta.
+
+> **Y la comprobación nueva falló primero, como todas.** Su primera pasada dio «NO» sobre (44,5),
+> (38,7), (32,9) y (30,11) — cuatro puntos que no tenían nada malo. Comparaba `w − definición
+> declarada` contra las ecuaciones, cuando lo que el sistema emite es `w − cuerpo reducido`, y el
+> cuerpo reducido menciona **otros nombres**. Son dos listas distintas y se estaba mirando la que no
+> era. Queda escrito porque el reflejo correcto ante un «NO» inesperado es el mismo que ante un
+> número imposible: sospechar del instrumento **y medir**, no publicar la retractación. El test
+> comprueba ahora las dos direcciones — que las cuatro roturas se cacen y que el caso normal de la
+> reescritura, cuerpo emitido en términos de otro nombre, **se acepte**.
 
 > La lección, dicha sin adornos: **las cifras que cayeron son exactamente las que usaban más
 > maquinaria; la que sobrevive —(23, 25)— se podría haber hecho a mano en una tarde.** Cada capa
@@ -184,12 +199,18 @@ correcta.
 | `a ≥ 2` formalizado en Lean | ✅ intacto: habla del sistema (1), no del aplanado |
 | **(44, 5)** — aplanado sin reescritura | ✅ válido, pero **peor** que el (42, 5) anunciado |
 | (41, 5), (38, 5), (36, 5), (33, 5) | ⛔ **retirados** |
-| los puntos intermedios de la frontera | ⛔ retirados; se remiden sin reescritura |
+| los puntos intermedios de la frontera | ✅ **remedidos** sin reescritura y revalidados: (38,7), (32,9), (30,11), **(25,13)**, (24,21). Vuelven, pero con otras recetas y **algunos peores** — el (27,9) pasa a (32,9) y el (24,15) a (24,21) |
 
 **Consecuencia que hay que decir sin rodeos: en la esquina de grado 5 ya no batimos a JSWW.** La
-mejor cifra válida es (44, 5) y ellos anunciaron (42, 5). Lo que sí sigue en pie es el **(23, 25)**,
-que no usa aplanado en absoluto —solo eliminaciones lineales— y mejora en tres variables el (26, 25)
-que JSWW sí imprimieron.
+mejor cifra válida es (44, 5) y ellos anunciaron (42, 5).
+
+Lo que sí sigue en pie —y es más de lo que parecía el día de la retractación, porque entonces los
+puntos intermedios estaban retirados *a la espera de remedirlos*— es **el tramo medio de la
+frontera**, que se remidió entero sin reescritura y pasó las cuatro comprobaciones:
+
+* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes;
+* **(24, 21)** y **(23, 25)**, también por debajo de él;
+* y el (23, 25) ni siquiera usa aplanado: son eliminaciones lineales.
 
 ### La guarda, para que no se repita
 
@@ -248,30 +269,40 @@ el que evita perder el tiempo, y es de §1.
 construcción propia— y todos están construidos, materializados y con el grado medido sobre el
 sistema real:
 
-> ⛔ **Esta tabla está RETIRADA.** Todos sus puntos salvo los de «sin aplanar» salían de aplanados
-> con la ruta de reescritura, que producía sistemas más débiles que el original (§2.bis). La
-> frontera válida, tras arreglar el pipeline, es la de abajo.
-
-| variables | grado | receta | equivalencia |
+| variables | grado | receta | verificación |
 |---:|---:|---|---|
-| **44** | **5** | aplanar a 2 **sin reescritura** + eliminar `q,y` | ✅ 0 / 0 |
-| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0 / 0 |
-| 22 | 37 | sin aplanar + eliminar `e,q,y,z` | ✅ 0 / 0 |
+| 44 | 5 | aplanar a 2 + eliminar `q,y` | ✅ |
+| 38 | 7 | aplanar a 3 + eliminar `q,y` | ✅ |
+| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ✅ |
+| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ✅ |
+| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ |
+| **24** | **21** | aplanar a 6 + eliminar `l,q,y,z` | ✅ |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ |
 
-*(los puntos de grado 7–15 se están remidiendo sin reescritura; los que había están retirados)*
+Todos **sin reescritura** —la ruta que falló— y sobre el sistema desplazado (`a = A+2`, §3.2o). El ✅
+significa **tres** comprobaciones, no una: identidad polinómica (0 faltan / 0 sobran), verificación
+**estructural** de que cada nombre está atado por una ecuación del sistema, y ninguna incógnita
+original perdida.
 
 ### Los resultados, y por qué son de tipos distintos
 
-> ⛔ **Sección reescrita tras la retractación de §2.bis.** La versión anterior presentaba (33,5),
-> (25,13) y (24,15). Las tres están retiradas.
+> ⛔ **Sección reescrita dos veces.** La primera versión presentaba (33,5), (25,13) y (24,15), y las
+> tres estaban mal. La segunda, escrita el día de la retractación, decía que **solo** sobrevivía el
+> (23,25) — y era pesimista de más: los puntos intermedios estaban retirados *a la espera de
+> remedirlos*, no descartados. Remedidos, el tramo medio vuelve. Esta es la tercera versión y va con
+> los números de la remedida.
 
-**Lo que queda en pie, y es uno solo: (23, 25).** El (26, 25) es el polinomio que JSWW **sí
-imprimieron**, el que se cita desde hace cincuenta años. Nuestro (23, 25) tiene **tres variables
-menos al mismo grado**, y —esto es lo importante ahora— **no usa aplanado en absoluto**: sale de
-eliminar `q`, `y` y `z`, que son tres sustituciones lineales con todos los coeficientes positivos.
-Ni nombres, ni reescritura, ni optimizador. Es el resultado más modesto de todos los que se llegaron
-a anunciar en este documento y es el único que ha sobrevivido a las nueve rondas de defectos —
-precisamente porque es el que menos maquinaria usa.
+**El mejor resultado del proyecto: (25, 13).** El (26, 25) es el polinomio que JSWW **sí
+imprimieron**, el que se cita desde hace cincuenta años. El (25, 13) lo **domina en los dos ejes** a
+la vez: una variable menos *y* doce grados menos. No hay que elegir esquina — es mejor en las dos
+direcciones. Y con él vienen **(24, 21)** y **(23, 25)**, que también quedan por debajo del (26, 25).
+
+**El más barato, y el que más ha aguantado: (23, 25).** Tres variables menos al mismo grado, y **sin
+aplanado en absoluto**: sale de eliminar `q`, `y` y `z`, tres sustituciones lineales con todos los
+coeficientes positivos. Ni nombres, ni reescritura, ni optimizador. Es el único punto que no ha
+cambiado ni una vez en nueve rondas de defectos, precisamente porque es el que menos maquinaria usa.
 
 **En la esquina de grado 5 ya no batimos a JSWW.** La mejor cifra construible y verificada es
 **(44, 5)**; ellos anunciaron **(42, 5)**. Estamos dos por encima. El (41,5) y todo lo que vino
@@ -279,9 +310,12 @@ después dependían de la reescritura y no eran materializables: el sistema que 
 débil que el original.
 
 **La lección de escala, que conviene no perder.** Las cifras que cayeron son exactamente las que
-usaban más maquinaria; la que sobrevive es la que se podría haber hecho a mano en una tarde. No es
-una casualidad: **cada capa de maquinaria añadió una forma nueva de estar equivocado**, y la
-verificación que se creía fuerte —«0 faltan / 0 sobran»— resultó ser ciega a esa clase de error.
+usaban más maquinaria, y la que nunca se movió es la que se podría haber hecho a mano en una tarde.
+No es casualidad: **cada capa de maquinaria añadió una forma nueva de estar equivocado**, y la
+verificación que se creía fuerte —«0 faltan / 0 sobran»— resultó ser ciega a esa clase de error. El
+tramo medio vuelve, pero vuelve **con otras recetas y algunas peores** que las que se anunciaron: el
+(27,9) es ahora (32,9) y el (24,15) es (24,21). Lo que la reescritura prometía era real como
+promesa y falso como construcción.
 
 ### Cómo se hizo: cinco palancas
 
@@ -543,7 +577,9 @@ theorem a_ge_two {a e f k l n o p q v x y z : Nat}
 que el sistema (1) represente los primos**: habla de las soluciones del sistema, sea cual sea el
 conjunto que represente. Todo lo demás se apoya en el teorema de JSWW, que se *cita*. Este no
 depende de nadie, así que es lo único verificable de arriba abajo. Y no es decorativo: es lo que
-justifica la reparametrización `a = A + 2` y con ella el **(33, 5)**.
+justifica la reparametrización `a = A + 2`, que es la que da los puntos **(24, 21)**, **(22, 29)** y
+**(21, 37)** del tramo alto de la frontera. (Se escribió aquí que justificaba «el (33, 5)»; esa cifra
+está retirada, §2.bis, y de hecho la reparametrización **no** mejora la esquina de grado 5.)
 
 | garantía | estado |
 |---|---|
@@ -1345,19 +1381,23 @@ encaja escaneaba los ~600 llamando a `sympy.reduced` en cada uno, y construir el
 terminaba en 40 minutos. Con el tope sobre intentos el coste queda acotado —23 s— a cambio de que la
 ruta sea **incompleta**: la cota resultante sigue siendo del encoding, no del problema.
 
-### 3.2p ✅ (33, 5) — NUEVE por debajo del 42 anunciado, y la FRONTERA COMPLETA
+### 3.2p ⛔→✅ La FRONTERA COMPLETA — el (33,5) retirado, el tramo medio revalidado
 
-Este apartado sustituye al 3.2n como cifra de portada. El (41, 5) sigue siendo correcto; lo que
-cambia es que ya no es lo mejor construido, ni de lejos.
+> **⛔ Esta sección se escribió alrededor del (33, 5) y esa cifra está RETIRADA** (§2.bis): venía de
+> la ruta de reescritura, cuyos certificados no son materializables. Se conserva el texto porque el
+> **razonamiento sobre las palancas sigue siendo correcto** y explica la forma de la curva; lo que se
+> corrige son los **números**, remedidos sin reescritura y revalidados con la comprobación
+> estructural. La tabla de más abajo es la buena. La esquina de grado 5 queda en **(44, 5)**, por
+> encima del (42,5) anunciado.
 
-La cifra sale de **tres palancas**, y ninguna es «buscar mejor»:
+La curva sale de **tres palancas**, y ninguna es «buscar mejor»:
 
 | Paso | Resultado |
 |---|---|
 | Sistema (1) publicado de JSWW | 25 incógnitas, grado 12 ⇒ (26, 25) |
 | Reparametrizar `a = A + 2` (cota **demostrada**, §3.2o) | mismas incógnitas, catálogo más rico |
-| Aplanado con **subsumas** y **forzando las definiciones**: 16 nombres | grado 2 por ecuación |
-| Post-eliminar `e`, `q`, `y`, `z` (todos los órdenes) | 32 incógnitas ⇒ **(33, 5)** |
+| Aplanado a grado `d` por ecuación | generador de grado `1+2d`, tantos nombres como haga falta |
+| Post-eliminar incógnitas lineales (todos los órdenes) | una variable menos cada una, a costa de grado |
 
 **Verificado con cinco comprobaciones**, ninguna relajada:
 
@@ -1452,33 +1492,44 @@ algo que decir. Pero hay **dos palancas continuas y opuestas**: aplanar a grado 
 un generador de grado `1+2d` y cuanto más alto `d`, menos nombres hacen falta; eliminar una incógnita
 lineal quita una variable y sube el grado. Barrerlas juntas da una **curva**:
 
-| variables | grado | receta | equivalencia |
-|---:|---:|---|---|
-| **33** | **5** | aplanar a 2 forzando definiciones + eliminar `e,q,y,z` | ✅ 0/0 |
-| **30** | **7** | aplanar a 3 + eliminar `e,q,y` | ✅ 0/0 |
-| **27** | **9** | aplanar a 4 + eliminar `q,y,z` | ✅ 0/0 |
-| **26** | **11** | aplanar a 4 + eliminar `e,q,y,z` | ✅ 0/0 |
-| **25** | **13** | aplanar a 4 + eliminar `e,l,q,y,z` | ✅ 0/0 |
-| **24** | **15** | aplanar a 6 + eliminar `l,q,y,z` | ✅ 0/0 |
-| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ 0/0 |
-| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ 0/0 |
-| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ 0/0 |
+**Frontera remedida (sin reescritura, `k_optimos=1`).** Cada punto está materializado y pasa las
+**tres** comprobaciones: identidad polinómica (0 faltan / 0 sobran), verificación **estructural** de
+los nombres, y ninguna incógnita original perdida.
 
-Todos sobre el sistema **desplazado** (`a = A+2`, §3.2o) y con `k_optimos=1`. Sobre el sistema sin
-desplazar el grado 5 sale en (36, 5) y los intermedios en (32,7), (28,9), (27,11), (25,13): la
-reparametrización paga en **toda** la curva, no solo en la esquina.
+| variables | grado | receta | verificación |
+|---:|---:|---|---|
+| 44 | 5 | aplanar a 2 + eliminar `q,y` | ✅ |
+| 38 | 7 | aplanar a 3 + eliminar `q,y` | ✅ |
+| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ✅ |
+| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ✅ |
+| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ |
+| **24** | **21** | aplanar a 6 + eliminar `l,q,y,z` | ✅ |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ |
+
+Sobre el sistema **desplazado** (`a = A+2`, §3.2o). Sin desplazar sale lo mismo hasta el (25,13) y
+después se queda corto —(23,25) y (22,37), sin los puntos (24,21) ni (22,29) ni (21,37)—: la
+reparametrización **no** paga en la esquina de grado 5, que es donde se creyó que pagaba, sino en el
+**tramo alto** de la curva.
+
+> Comparado con la tabla retirada: los puntos intermedios **siguen ahí**, pero con **otras recetas** y
+> algunos peor —el (27,9) pasa a (32,9), el (26,11) a (30,11), el (24,15) a (24,21)—. El (25,13)
+> sobrevive con el mismo par y distinta construcción. La esquina de grado 5 es la que se hunde
+> entera: de (33,5) a (44,5).
 
 Contra la literatura (`(10, >6000)`, `(12, 13697)`, `(19, 29)`, `(26, 25)`, `(42, 5)`):
 
-* **(33, 5)** — nueve por debajo del (42, 5) anunciado por JSWW y nunca escrito;
-* **(30, 7)**, **(27, 9)**, **(26, 11)**, **(25, 13)**, **(24, 15)** — zona **literalmente vacía** en
-  la literatura: entre el grado 5 y el grado 25 no hay ningún par publicado;
-* **(25, 13)** y **(24, 15)** dominan al **(26, 25) publicado** en los **dos** ejes — una y dos
-  variables menos, y doce y diez grados menos;
-* **(23, 25)** — tres variables menos que el (26, 25), al mismo grado;
-* `(22, 29)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso no se
-  presentan como récord. Se dejan en la tabla porque medirlos costó lo mismo y ocultarlos sería
-  quedarse solo con lo que favorece.
+* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes: una variable menos y doce
+  grados menos. **Es el mejor resultado del proyecto**;
+* **(24, 21)** también lo domina en los dos ejes, y **(23, 25)** lo mejora en tres variables al mismo
+  grado;
+* **(38, 7)**, **(32, 9)**, **(30, 11)**, **(25, 13)**, **(24, 21)** caen en zona **literalmente
+  vacía** en la literatura: entre el grado 5 y el grado 25 no hay ningún par publicado;
+* **(44, 5)** queda **por encima** del (42, 5) que JSWW anuncian: en esa esquina **no** los batimos, y
+  el punto se publica igual porque ocultarlo sería quedarse solo con lo que favorece;
+* `(22, 29)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso tampoco se
+  presentan como récord.
 
 Los puntos intermedios son **mecánicos**: nadie los reclamó porque nadie los escribió. Exhibirlos
 cuesta lo mismo que exhibir uno solo, y sin ellos se estaba publicando menos de lo que se tenía.
@@ -1610,6 +1661,9 @@ Tres cosas que se midieron y que ya **no** hay que reintentar:
    |---|---|---|
    | sin desplazar | 16 nombres → **(36, 5)** en 62 s | 16 nombres → **(36, 5)** en 60 s |
    | `a = A+2` | 16 nombres → **(33, 5)** en 314 s | 16 nombres → **(33, 5)** en 313 s |
+
+   *(Las cifras de esta tabla están **retiradas** —§2.bis— y se conservan porque lo que la medida
+   establece es que las semillas **no diversifican**, y eso sigue siendo cierto.)*
 
    **Idéntico.** Y ese empate es la primera evidencia real de saturación que tiene este proyecto:
    las tres ampliaciones anteriores del catálogo bajaron la cifra cada vez —46 → 17 → 15 nombres—,
@@ -2095,7 +2149,8 @@ exigirían **demostrar su no-negatividad**, exactamente el mismo patrón que en 
 Se anotan porque medirlos costó lo mismo, pero **no son récord**: el (19, 29) los supera en los dos
 ejes. Presentarlos como mejora sería quedarse con la comparación que favorece —«a igual grado»—
 ignorando que existe un par mejor en ambas coordenadas. La `l` sí paga, y mucho, en la **otra**
-esquina: es parte de lo que lleva el grado 5 de (38,5) a (33,5).
+esquina: es parte de lo que llevaba el grado 5 de (38,5) a (33,5) — dos cifras **retiradas** (§2.bis),
+así que lo que sigue vale como registro del razonamiento, no como cifra.
 
 **Intento de desbloquear las cuatro restantes: FALLIDO, con la frontera medida.** Eliminar `m` o
 `x` exigiría demostrar `a > n` y `a > p` —las mismas condiciones que bloquean la esquina de grado—,
@@ -2154,7 +2209,7 @@ Combinación de Relaciones** (§6.1), aún sin implementar.
 
   | ruta | punto | estado |
   |---|---|---|
-  | aplanar el sistema **publicado** de JSWW 1976 | **(33, 5)** | mejor cifra construida y verificada (§3.2p); **no** un mínimo |
+  | aplanar el sistema **publicado** de JSWW 1976 | **(25, 13)** | mejor cifra del proyecto: domina en los dos ejes al (26,25) publicado (§3.2p); **no** un mínimo |
   | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo del *encoding* del aplanado (18 nombres, cota 18) |
 
   La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La
