@@ -15,8 +15,10 @@
 > **reproducible** — dos barridos sucesivos dan lo mismo):**
 >
 > * **(23, 25)** — tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
->   **Es el único punto que mejora una cifra de la literatura**, y no usa aplanado: son tres
->   sustituciones lineales;
+>   **Es el único punto que mejora una cifra de la literatura**, no usa aplanado —son tres
+>   sustituciones lineales— y está **formalizado en Lean 4** (§2.ter);
+> * ⚠️ **(22, 25)** — una más, pero **condicional**: depende de `a ≥ n+1`, que se apoya en tres
+>   teoremas estándar de Pell **citados y no demostrados aquí** (§2.ter). Va en tabla aparte;
 > * **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** — caen en una zona **vacía** en la
 >   literatura, pero **ninguno domina** al (26, 25): el (27,13) baja doce grados a costa de una
 >   variable de más;
@@ -258,6 +260,82 @@ Dos comprobaciones nuevas, las dos en `materializar`, que **abortan** en vez de 
 
 Y `verificar_equivalencia` incorpora la segunda a su veredicto: `ok` es ahora falso si hay incógnitas
 perdidas. `aplanado_y_eliminacion` descarta el candidato en vez de publicarlo.
+
+## 2.ter ✅ FORMALIZADO: el (23, 25), y ⚠️ CONDICIONAL: un (22, 25) que depende de Pell
+
+Dos resultados de la misma sesión y **de garantía distinta**. Van separados a propósito.
+
+### El (23, 25), verificado en Lean 4 de punta a punta
+
+`formalizacion/lean/Eliminacion.lean` demuestra:
+
+```
+theorem equisatisfacible (k : Int) (hk : 0 ≤ k) :
+    (∃ a b … q … y … z : Int, (0 ≤ a ∧ … ∧ 0 ≤ z) ∧ completo  k a … z)
+  ↔ (∃ a b …           … x : Int, (0 ≤ a ∧ … ∧ 0 ≤ x) ∧ reducido k a … x)
+```
+
+25 incógnitas a la izquierda, **22** a la derecha, mismo `k`. Con el parámetro, el generador pasa de
+**(26, 25)** —lo que JSWW imprimieron— a **(23, 25)**. Sin `sorry`, sin Mathlib, y los axiomas son
+`propext` y `Quot.sound` (ni siquiera `Classical.choice`).
+
+**Por qué este resultado sí se puede formalizar y el de grado 5 no:** no hay aplanado, ni optimizador,
+ni reescritura. Son **tres sustituciones lineales**. Las ecuaciones (1), (2) y (9) determinan `q`, `z`
+e `y`, y sus definiciones tienen todos los coeficientes no negativos — que es exactamente lo que hace
+válida la vuelta sobre ℕ. Ese criterio, que en Python es «mira los signos de los coeficientes», aquí
+**pasa a ser tres lemas demostrados** (`defZ_nonneg`, `defQ_nonneg`, `defY_nonneg`).
+
+Va sobre **ℤ con `0 ≤ ·` explícito**, no sobre ℕ: las ecuaciones de JSWW tienen restas (`a²−1`,
+`a−n−1`, `u²−a`) que `Nat` truncaría, y así quedan **literalmente** como están publicadas.
+
+Y el enunciado se comprueba, que es donde estaba el riesgo real. `test_lean_eliminacion.py` empareja
+**1 a 1** las 14 ecuaciones de `completo` con `ECUACIONES` y las 11 de `reducido` con lo que devuelve
+`eliminar_lineales`, y verifica que los cuantificadores son 25 y 22 con diferencia exacta `{q,y,z}` —
+sin esa cuarta comprobación el teorema podría estar cuantificando de menos y ser cierto por vacío.
+
+### El (22, 25): `a ≥ n+1`, y de dónde sale
+
+Las tres eliminaciones que quedaban bloqueadas necesitaban `a ≥ n+1`, `a ≥ p+1` y `a ≥ p` — cotas
+*entre incógnitas*, que no se arreglan desplazando y sobre las que Z3 no concluye. Resulta que la
+primera **es cierta, y con un margen enorme**. El argumento:
+
+1. La ec.(3) da `e = 2n+p+q+z ≥ 2n`, luego `n ≤ e/2`; y con `n ≥ 2` (ya demostrado), `e ≥ 4`.
+2. La ec.(5) es `o² = e³(e+2)(a+1)² + 1`, y **la clave es factorizar**:
+   `e³(e+2) = e²·((e+1)² − 1)`.
+3. Poniendo `Z = e(a+1)` queda la **Pell clásica** `o² − ((e+1)²−1)Z² = 1`, con solución fundamental
+   `(e+1, 1)`.
+4. Sus soluciones son `Z_j` con `Z_{j+1} = 2(e+1)Z_j − Z_{j−1}`, y **`Z_j ≡ j (mod e)`**. Como
+   `Z = e(a+1)` es múltiplo de `e`, hace falta `e | j`, luego **`j ≥ e`**.
+5. `Z_j` crece exponencialmente, así que `a + 1 = Z_j/e ≥ (2e+1)^{e−1}/e`, que para `e ≥ 4` es
+   astronómicamente mayor que `e/2 + 2 ≥ n + 2`.
+
+**Comprobado numéricamente** (test [10]): el mínimo `a+1` que admite la ec.(5), por fuerza bruta, es
+
+| e | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|
+| mín `a+1` | 3 | 21 | 245 | 4061 | 87815 |
+
+y coincide **exactamente** con el `Z_e/e` que predice el argumento. La congruencia `Z_j ≡ j (mod e)`
+se verifica término a término.
+
+Con `n = N+2` y `a = n+1+A`, la ec.(12) permite eliminar `m` — la **sexta** incógnita eliminable — y
+la esquina entera baja una variable:
+
+| sin la cota | con `a ≥ n+1` |
+|---|---|
+| (23, 25) | **(22, 25)** |
+| (22, 29) | (21, 29) |
+| (21, 37) | (20, 37) |
+
+### Y por qué esto va en una tabla aparte
+
+Los pasos 4 y 5 son **teoremas estándar de Pell** —son la maquinaria con la que Matiyasevich cerró
+MRDP, y están en Mathlib justamente por eso— pero **aquí se citan, no se demuestran**. La
+formalización de este proyecto no usa Mathlib.
+
+O sea: el (23, 25) no depende de nada citado salvo que (1) represente los primos; el (22, 25) además
+depende de tres hechos de Pell. **No son la misma clase de resultado**, y ponerlos en la misma tabla
+sin decirlo sería exactamente el error que costó las cuatro cifras de grado 5.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

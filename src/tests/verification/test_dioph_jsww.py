@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 from src.analysis.dioph_jsww import (
     sistema, sistema_desplazado, no_negativos_desplazados, FACTOR, PUBLICADO,
     INCOGNITAS, NO_NEGATIVOS_DEMOSTRADOS, COTA_A, COTA_N, ECUACIONES,
+    sistema_cota_pell,
 )
 from src.analysis.dioph_degree import (
     flatten_greedy, flatten_tree, to_generator, max_equation_degree,
@@ -700,6 +701,80 @@ def test_frontera_de_pareto(stats):
         stats.ok()
 
 
+def test_cota_pell_a_mayor_que_n(stats):
+    """[10] `a >= n+1`: la comprobacion NUMERICA del argumento de Pell, y lo que compra.
+
+    ESTE TEST NO DEMUESTRA NADA, y por eso empieza diciendolo. La cota `a >= n+1`
+    descansa en tres hechos estandar de Pell que aqui se CITAN --las soluciones de
+    `x^2-(A^2-1)y^2=1` son la sucesion `y_j`, `y_j = j mod (A-1)`, y `y_j` crece
+    exponencialmente--. Son la maquinaria con la que Matiyasevich cerro MRDP, pero
+    no estan demostradas en este proyecto. `a >= 2` si lo esta, y ademas en Lean:
+    NO son la misma clase de resultado.
+
+    Lo que si se puede hacer aqui es comprobar que el argumento CUADRA con los
+    numeros, que es lo que separa un razonamiento de una corazonada:
+
+      * el minimo `a+1` que admite la ec.(5), hallado por FUERZA BRUTA, coincide
+        con `Z_e/e` que predice el argumento -- 3, 21, 245, 4061, 87815;
+      * la congruencia `Z_j = j (mod e)` se verifica termino a termino;
+      * y con `n = N+2`, `a = n+1+A` la ec.(12) permite eliminar `m`, que es la
+        sexta incognita eliminable y da (22, 25).
+    """
+    print(f"\n{Colors.HEADER}[10] La cota `a >= n+1` (depende de Pell) y lo que compra{Colors.ENDC}")
+    import math
+
+    def es_cuadrado(x):
+        r = math.isqrt(x)
+        return r * r == x
+
+    def zetas(A, cuantos):
+        Z = [0, 1]
+        for _ in range(cuantos):
+            Z.append(2 * A * Z[-1] - Z[-2])
+        return Z
+
+    problemas = []
+    print(f"  {Colors.BOLD}minimo a+1 en la ec.(5), fuerza bruta vs prediccion Z_e/e{Colors.ENDC}")
+    for e in range(2, 7):
+        D = e ** 3 * (e + 2)
+        bruto = next(A for A in range(1, 200000) if es_cuadrado(D * A * A + 1))
+        Z = zetas(e + 1, e + 2)
+        predicho = Z[e] // e
+        ok = bruto == predicho and Z[e] % e == 0
+        marca = Colors.OKGREEN + "OK" + Colors.ENDC if ok else Colors.FAIL + "MAL" + Colors.ENDC
+        print(f"    {marca}  e={e}: fuerza bruta {bruto:>8}   Z_{e}/{e} = {predicho:>8}")
+        if not ok:
+            problemas.append(f"e={e}: fuerza bruta da {bruto}, el argumento predice {predicho}")
+        # y la congruencia sobre la que descansa el paso 4
+        if [Z[j] % e for j in range(1, e + 1)] != list(range(1, e)) + [0]:
+            problemas.append(f"e={e}: falla `Z_j = j (mod e)`")
+
+    S = sistema_cota_pell()
+    E = eliminar_lineales(S, 99, solo=[str(u) for u in S.unknowns])
+    hechas = sorted(str(u) for u, _ in getattr(E, "eliminadas", []))
+    variables, grado = E.cost() + 1, 1 + 2 * max_equation_degree(E)
+    print(f"  eliminables con `n = N+2, a = n+1+A`: {hechas}")
+    if "m" not in hechas:
+        problemas.append("la cota no desbloquea `m`, que es lo unico que aporta")
+
+    Em = eliminar_lineales(S, 99, solo=["q", "y", "z", "m"])
+    v2, g2 = Em.cost() + 1, 1 + 2 * max_equation_degree(Em)
+    print(f"  {Colors.BOLD}({v2}, {g2}){Colors.ENDC} eliminando "
+          f"{sorted(str(u) for u, _ in Em.eliminadas)}   "
+          f"frente al (23, 25) que NO depende de Pell")
+    if (v2, g2) != (22, 25):
+        problemas.append(f"se esperaba (22, 25) y salio ({v2}, {g2})")
+
+    print(f"  {Colors.WARN}CONDICIONAL. El (23,25) esta demostrado y formalizado; este")
+    print(f"  (22,25) depende de tres teoremas de Pell CITADOS. Van en tablas")
+    print(f"  distintas a proposito: mezclarlos seria el error de agosto otra vez.{Colors.ENDC}")
+
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -712,6 +787,7 @@ def main():
     test_esquina_de_variables(stats)
     test_cota_a_mayor_igual_2(stats)
     test_frontera_de_pareto(stats)
+    test_cota_pell_a_mayor_que_n(stats)
 
     total = stats.passed + stats.failed
     print()

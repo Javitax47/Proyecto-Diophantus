@@ -245,6 +245,83 @@ def no_negativos_desplazados(desplazamiento=COTA_A):
                  for s in NO_NEGATIVOS_DEMOSTRADOS)
 
 
+# ---------------------------------------------------------------------------
+#  LA COTA `a >= n+1`, QUE ES OTRA COSA: DEPENDE DE PELL, NO ES ELEMENTAL
+# ---------------------------------------------------------------------------
+#
+# `COTA_A = 2` de arriba esta demostrada de forma elemental y esta FORMALIZADA en
+# Lean. Lo que sigue NO. Se separa deliberadamente porque su garantia es distinta
+# y mezclarlas seria repetir el error que este proyecto ya cometio.
+#
+# AFIRMACION.  En toda solucion sobre N del sistema (1):   a >= n+1.
+#
+# DEMOSTRACION (modulo tres hechos ESTANDAR sobre la ecuacion de Pell):
+#
+#   1. La ec.(3) da `e = 2n + p + q + z >= 2n`, luego `n <= e/2`. Y como
+#      `n >= 2` (demostrado, COTA_N), es `e >= 4`.
+#
+#   2. La ec.(5) es `o^2 = e^3(e+2)(a+1)^2 + 1`. La clave es factorizar:
+#
+#          e^3(e+2) = e^2 * (e^2 + 2e) = e^2 * ((e+1)^2 - 1)
+#
+#      Poniendo `Z = e(a+1)` queda la Pell CLASICA con `A = e+1`:
+#
+#          o^2 - ((e+1)^2 - 1) * Z^2 = 1
+#
+#      cuya solucion fundamental es `(A, 1)`, o sea `(e+1, 1)`.
+#
+#   3. [PELL 1] Sus soluciones son exactamente `Z = Z_j`, con
+#      `Z_0 = 0`, `Z_1 = 1`, `Z_{j+1} = 2A*Z_j - Z_{j-1}`.
+#
+#   4. [PELL 2] `Z_j = j (mod A-1)`, o sea `mod e`. Como `Z = e(a+1)` es
+#      multiplo de `e`, hace falta `e | j`; y `Z > 0` obliga a `j >= 1`, luego
+#      `j >= e`.
+#
+#   5. [PELL 3] `Z_j >= (2A-1)^(j-1) = (2e+1)^(j-1)`. Con `j >= e`:
+#
+#          a + 1 = Z_j / e >= (2e+1)^(e-1) / e
+#
+#   6. Para `e >= 4` eso es astronomicamente mayor que `e/2 + 2 >= n + 2`.
+#      Luego `a >= n+1`, y con un margen enorme.
+#
+# COMPROBADO NUMERICAMENTE (test [10]): el minimo `a+1` que admite solucion de la
+# ec.(5) es 3, 21, 245, 4061, 87815 para e = 2..6 -- exactamente `Z_e/e`, que es
+# lo que predice el argumento, y la fuerza bruta lo confirma hasta donde llega.
+#
+# LO QUE ESTO CUESTA, dicho claro: [PELL 1..3] son teoremas estandar --son la
+# maquinaria con la que Matiyasevich cerro MRDP, y estan en Mathlib justamente
+# por eso-- pero AQUI SE CITAN, no se demuestran. La formalizacion de este
+# proyecto no usa Mathlib, asi que esta cota NO esta al nivel de `a >= 2`. Se
+# marca por separado y las cifras que dependen de ella se publican aparte.
+#
+#: Cota `a - n >= COTA_A_MENOS_N`. Depende de Pell (ver arriba); NO formalizada.
+COTA_A_MENOS_N = 1
+
+
+def sistema_cota_pell(expandir=False, agrupado=False):
+    """El sistema (1) con `n = N+2` y `a = n+1+A`, o sea usando `a >= n+1`.
+
+    Mismo numero de incognitas --`N` y `A` sustituyen a `n` y `a`-- pero ahora
+    `a - n - 1 = A >= 0` es estructural, y con ello la ec.(12) permite eliminar
+    `m`: una incognita mas que con `a = A+2` a secas.
+
+    OJO CON LA GARANTIA. Esto descansa en `a >= n+1`, que depende de tres hechos
+    estandar de Pell CITADOS y no demostrados aqui (ver el comentario de arriba).
+    `sistema_desplazado` no depende de nada citado. No son la misma clase de
+    resultado y no deben ir en la misma tabla sin decirlo.
+    """
+    fuente = ECUACIONES_AGRUPADAS if agrupado else ECUACIONES
+    N = sympy.Symbol('N', integer=True)
+    A = sympy.Symbol('A', integer=True)
+    eqs = [x_.subs({n: N + COTA_N, a: N + COTA_N + COTA_A_MENOS_N + A},
+                   simultaneous=True) for x_ in fuente]
+    if expandir:
+        eqs = [sympy.expand(x_) for x_ in eqs]
+    inc = [u for u in INCOGNITAS if u not in (a, n)] + [N, A]
+    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+                 name="JSWW 1976 con n = N+2 y a = n+1+A")
+
+
 def sistema(expandir=True, agrupado=False):
     """El sistema (1) de JSWW como `Dioph`.
 
