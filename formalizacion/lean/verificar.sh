@@ -26,6 +26,8 @@ PY
 fi
 
 echo ">> lean: $(lean --version)"
+echo ">> compilando Aplanado.lean"
+lean -o "$AQUI/Aplanado.olean" "$AQUI/Aplanado.lean"
 echo ">> compilando CotaA.lean"
 lean -o "$AQUI/CotaA.olean" "$AQUI/CotaA.lean"
 echo ">> compilando Eliminacion.lean"
@@ -36,6 +38,12 @@ echo ">> compilando Eliminacion21.lean"
 LEAN_PATH="$AQUI" lean -o "$AQUI/Eliminacion21.olean" "$AQUI/Eliminacion21.lean"
 
 echo ">> auditando axiomas (deben ser solo propext / Classical.choice / Quot.sound)"
+cat > "$AQUI/.auditoria0.lean" <<'LEAN'
+import Aplanado
+open Aplanado
+#print axioms aplanado_implica_original
+#print axioms original_implica_aplanado
+LEAN
 cat > "$AQUI/.auditoria.lean" <<'LEAN'
 import CotaA
 open Diophantus
@@ -75,6 +83,7 @@ open Diophantus
 #print axioms equisatisfacible21
 #check @equisatisfacible21
 LEAN
+LEAN_PATH="$AQUI" lean "$AQUI/.auditoria0.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria2.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria3.lean"
