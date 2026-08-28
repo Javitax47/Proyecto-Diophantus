@@ -91,7 +91,8 @@ LEAN_PATH="$AQUI" lean "$AQUI/.auditoria4.lean"
 rm -f "$AQUI"/.auditoria*.lean "$AQUI"/*.olean
 
 echo ">> comprobando que el ENUNCIADO es el teorema que se cree demostrar"
-cd "$AQUI/../.." && PYTHONPATH=. python3 src/tests/verification/test_lean_cota_a.py
+cd "$AQUI/../.." && PYTHONPATH=. python3 src/tests/verification/test_lean_aplanado.py
+PYTHONPATH=. python3 src/tests/verification/test_lean_cota_a.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_pell.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion21.py

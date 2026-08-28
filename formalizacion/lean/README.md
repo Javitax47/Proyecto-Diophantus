@@ -2,7 +2,16 @@
 
 ## Qué hay aquí
 
-Cuatro ficheros, todos verificados por el núcleo de Lean 4 y **sin Mathlib**.
+Cinco ficheros, todos verificados por el núcleo de Lean 4 y **sin Mathlib**.
+
+`Aplanado.lean` — **generado** por `dioph_lean.py`, no escrito a mano: el
+aplanado a grado 2 del sistema (1), o sea el **(44, 5)**. Llevaba tiempo en el
+repo sin compilar y sin auditar; era el artefacto del noveno defecto. Al
+arreglarlo aparecieron **tres** defectos de enunciado en el generador, dos de
+ellos capaces de producir un fichero que compila diciendo otra cosa (ver el
+registro). Ahora compila, está en `verificar.sh` y `test_lean_aplanado.py`
+comprueba su enunciado **posicionalmente** — que es lo único que caza un
+argumento de menos.
 
 `Pell.lean` — la ecuación `x² − (A²−1)y² = 1` desde cero: **completitud** (toda
 solución está en la sucesión, por descenso), **congruencia** (`Y j ≡ j mod A−1`)
