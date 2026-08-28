@@ -11,11 +11,15 @@
 > sin reescritura y con una comprobación **estructural** nueva; lo que sigue son los números de esa
 > remedida.
 >
-> **Marcador actual (todo verificado: identidad polinómica + estructura + sin incógnitas perdidas):**
+> **Marcador actual (todo verificado: identidad polinómica + estructura + sin incógnitas perdidas, y
+> **reproducible** — dos barridos sucesivos dan lo mismo):**
 >
-> * **(25, 13)** — **domina al (26, 25) que JSWW publicaron en los DOS ejes**: una variable menos y
->   doce grados menos. Es el mejor resultado del proyecto;
-> * **(24, 21)** y **(23, 25)** — también por debajo del (26, 25) publicado;
+> * **(23, 25)** — tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
+>   **Es el único punto que mejora una cifra de la literatura**, y no usa aplanado: son tres
+>   sustituciones lineales;
+> * **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** — caen en una zona **vacía** en la
+>   literatura, pero **ninguno domina** al (26, 25): el (27,13) baja doce grados a costa de una
+>   variable de más;
 > * esquina de grado 5: **(44, 5)** — **por encima** del (42, 5) que JSWW *anunciaron*, o sea que
 >   **ahí no los batimos**;
 > * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización).
@@ -190,6 +194,38 @@ correcta.
 > añadió una manera nueva de estar equivocado, y la verificación que se presentaba como fuerte era
 > ciega a esa clase de error.
 
+### Y una décima rotura, del mismo palo: la cifra no era reproducible
+
+Al remedir la frontera apareció esto, que no es un defecto de código sino de **método**:
+
+```
+rep 1:  [libre/reesc] optimo #1: 2 nombres, post-elim ['q','y','z']  ->  (25, 13)
+rep 2:  [libre/reesc] descartado: no se pudo reducir a grado 6: (a + u^2*(-a+u^2))^2 - 1
+        [libre/sin-reesc] optimo #1: 4 nombres                       ->  (27, 13)
+```
+
+**Dos llamadas idénticas, en el mismo proceso, una detrás de otra.** La causa es que el optimizador
+corre con un `timeout` de **pared**: bajo carga distinta Z3 devuelve modelos distintos del mismo
+tamaño, y los conjuntos que *solo* la reescritura sabe certificar son justamente los que a veces no
+se pueden construir. Uno se materializó y el otro no.
+
+Esto ya tenía nombre en este documento —«una cifra que depende de qué modelo devuelva Z3 esa vez no
+es un resultado», §3.2m, escrito cuando dos tests publicaron (36,5) y (38,5)— y aun así se volvió a
+publicar una tabla con un punto así dentro. La regla no basta con enunciarla: hay que **ejecutarla**.
+
+Dos cambios, los dos en el código:
+
+* **`reescritura=False` por defecto** en `barrido_pareto` y en `aplanado_y_eliminacion`, con la
+  medida escrita en el docstring. Quien la quiera, la pide;
+* **el barrido se publica solo si dos repeticiones consecutivas coinciden**. Sin reescritura
+  coinciden exactamente, en los dos sistemas.
+
+> Y hay que decir lo incómodo: la tabla anterior de este mismo documento —la que anunciaba que el
+> (25,13) dominaba al (26,25) en los dos ejes— se escribió con el barrido en su **modo por defecto**,
+> que intentaba la reescritura primero. O sea que la frase «todos sin reescritura» que la acompañaba
+> era **falsa**, y lo era por no haber mirado el valor por defecto de un parámetro. Duró tres
+> commits.
+
 ### Qué sobrevive
 
 | resultado | estado |
@@ -199,7 +235,7 @@ correcta.
 | `a ≥ 2` formalizado en Lean | ✅ intacto: habla del sistema (1), no del aplanado |
 | **(44, 5)** — aplanado sin reescritura | ✅ válido, pero **peor** que el (42, 5) anunciado |
 | (41, 5), (38, 5), (36, 5), (33, 5) | ⛔ **retirados** |
-| los puntos intermedios de la frontera | ✅ **remedidos** sin reescritura y revalidados: (38,7), (32,9), (30,11), **(25,13)**, (24,21). Vuelven, pero con otras recetas y **algunos peores** — el (27,9) pasa a (32,9) y el (24,15) a (24,21) |
+| los puntos intermedios de la frontera | ✅ **remedidos** sin reescritura y revalidados: (38,7), (32,9), (30,11), (27,13). Vuelven, pero **todos peores** que los anunciados — el (27,9) pasa a (32,9), el (26,11) a (30,11) y el (25,13) a (27,13) — y **ninguno domina ya** al (26,25) publicado |
 
 **Consecuencia que hay que decir sin rodeos: en la esquina de grado 5 ya no batimos a JSWW.** La
 mejor cifra válida es (44, 5) y ellos anunciaron (42, 5).
@@ -208,9 +244,10 @@ Lo que sí sigue en pie —y es más de lo que parecía el día de la retractaci
 puntos intermedios estaban retirados *a la espera de remedirlos*— es **el tramo medio de la
 frontera**, que se remidió entero sin reescritura y pasó las cuatro comprobaciones:
 
-* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes;
-* **(24, 21)** y **(23, 25)**, también por debajo de él;
-* y el (23, 25) ni siquiera usa aplanado: son eliminaciones lineales.
+* **(23, 25)** mejora en tres variables el **(26, 25) publicado**, al mismo grado, y ni siquiera usa
+  aplanado: son eliminaciones lineales;
+* el tramo (38,7)–(27,13) llena una zona vacía de la literatura, pero **ninguno de esos puntos
+  domina** al (26,25): bajan grado a costa de variables.
 
 ### La guarda, para que no se repita
 
@@ -269,28 +306,16 @@ el que evita perder el tiempo, y es de §1.
 construcción propia— y todos están construidos, materializados y con el grado medido sobre el
 sistema real:
 
-> ⚠️ **PROVISIONAL — medición en curso.** Esta tabla se obtuvo con el barrido en su modo por
-> defecto, que **intenta la reescritura primero** y solo se repliega a no usarla cuando falla. O sea
-> que **no todos los puntos son «sin reescritura»**, al contrario de lo que decía la frase de debajo
-> cuando se escribió: el de grado 5 sí, pero el de grado 13 salió *con* reescritura.
->
-> Y eso importa, porque medido después: **dos llamadas idénticas, en el mismo proceso, dan (25,13) y
-> (27,13)**. El punto de grado 13 depende de qué modelo devuelva Z3 esa vez —hay un `timeout` de
-> pared en el optimizador— y **una cifra así no es un resultado**, que es exactamente la regla que
-> este proyecto ya se impuso. Se está remidiendo la frontera entera con la reescritura **desactivada**
-> y por duplicado, para publicar solo lo reproducible.
-
-| variables | grado | receta | verificación |
-|---:|---:|---|---|
-| 44 | 5 | aplanar a 2 + eliminar `q,y` | ✅ |
-| 38 | 7 | aplanar a 3 + eliminar `q,y` | ✅ |
-| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ✅ |
-| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ✅ |
-| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ |
-| **24** | **21** | aplanar a 6 + eliminar `l,q,y,z` | ✅ |
-| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ |
-| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ |
-| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ |
+| variables | grado | receta | sistema | verificación |
+|---:|---:|---|---|---|
+| 44 | 5 | aplanar a 2 + eliminar `q,y` | ambos | ✅ |
+| 38 | 7 | aplanar a 3 + eliminar `q,y` | ambos | ✅ |
+| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ambos | ✅ |
+| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ambos | ✅ |
+| 27 | 13 | aplanar a 6 + eliminar `q,y,z` | sin desplazar | ✅ |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ambos | ✅ |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | `a=A+2` | ✅ |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | `a=A+2` | ✅ |
 
 Sobre el sistema desplazado (`a = A+2`, §3.2o). El ✅ significa **tres** comprobaciones, no una: identidad polinómica (0 faltan / 0 sobran), verificación
 **estructural** de que cada nombre está atado por una ecuación del sistema, y ninguna incógnita
@@ -298,19 +323,17 @@ original perdida.
 
 ### Los resultados, y por qué son de tipos distintos
 
-> ⛔ **Sección reescrita dos veces.** La primera versión presentaba (33,5), (25,13) y (24,15), y las
-> tres estaban mal. La segunda, escrita el día de la retractación, decía que **solo** sobrevivía el
-> (23,25) — y era pesimista de más: los puntos intermedios estaban retirados *a la espera de
-> remedirlos*, no descartados. Remedidos, el tramo medio vuelve. Esta es la tercera versión y va con
-> los números de la remedida.
+> ⛔ **Sección reescrita tres veces, y las dos primeras estaban mal en direcciones opuestas.** La
+> primera presentaba (33,5), (25,13) y (24,15): las tres venían de la reescritura y cayeron. La
+> segunda, escrita el día de la retractación, decía que **solo** sobrevivía el (23,25), y era
+> pesimista de más: los puntos intermedios estaban retirados *a la espera de remedirlos*. La tercera
+> los recuperó… **usando otra vez la reescritura sin darse cuenta**, y anunció que el (25,13) dominaba
+> al (26,25) en los dos ejes. Medido después: **dos llamadas idénticas daban (25,13) y (27,13)**.
+> Esta es la cuarta y va con la reescritura desactivada y el barrido repetido dos veces.
 
-**El mejor resultado del proyecto: (25, 13).** El (26, 25) es el polinomio que JSWW **sí
-imprimieron**, el que se cita desde hace cincuenta años. El (25, 13) lo **domina en los dos ejes** a
-la vez: una variable menos *y* doce grados menos. No hay que elegir esquina — es mejor en las dos
-direcciones. Y con él vienen **(24, 21)** y **(23, 25)**, que también quedan por debajo del (26, 25).
-
-**El más barato, y el que más ha aguantado: (23, 25).** Tres variables menos al mismo grado, y **sin
-aplanado en absoluto**: sale de eliminar `q`, `y` y `z`, tres sustituciones lineales con todos los
+**El único punto que mejora una cifra de la literatura: (23, 25).** El (26, 25) es el polinomio que
+JSWW **sí imprimieron**, el que se cita desde hace cincuenta años. El (23, 25) tiene **tres variables
+menos al mismo grado**, y **sin aplanado en absoluto**: sale de eliminar `q`, `y` y `z`, tres sustituciones lineales con todos los
 coeficientes positivos. Ni nombres, ni reescritura, ni optimizador. Es el único punto que no ha
 cambiado ni una vez en nueve rondas de defectos, precisamente porque es el que menos maquinaria usa.
 
@@ -319,13 +342,20 @@ cambiado ni una vez en nueve rondas de defectos, precisamente porque es el que m
 después dependían de la reescritura y no eran materializables: el sistema que se construía era más
 débil que el original.
 
+**El tramo medio vuelve, pero peor, y no bate a nadie.** (38,7), (32,9), (30,11) y (27,13) caen en
+una región donde la literatura no tiene **ningún** par publicado —entre el grado 5 y el grado 25—,
+así que exhibirlos vale algo. Pero **ninguno domina al (26,25)**: el (27,13) baja doce grados a costa
+de una variable de más. Y comparados con lo que se llegó a anunciar, todos son peores: el (27,9) es
+ahora (32,9), el (26,11) es (30,11), el (25,13) es (27,13).
+
 **La lección de escala, que conviene no perder.** Las cifras que cayeron son exactamente las que
 usaban más maquinaria, y la que nunca se movió es la que se podría haber hecho a mano en una tarde.
 No es casualidad: **cada capa de maquinaria añadió una forma nueva de estar equivocado**, y la
-verificación que se creía fuerte —«0 faltan / 0 sobran»— resultó ser ciega a esa clase de error. El
-tramo medio vuelve, pero vuelve **con otras recetas y algunas peores** que las que se anunciaron: el
-(27,9) es ahora (32,9) y el (24,15) es (24,21). Lo que la reescritura prometía era real como
-promesa y falso como construcción.
+verificación que se creía fuerte —«0 faltan / 0 sobran»— resultó ser ciega a esa clase de error. Y
+hubo una forma más, descubierta al remedir: la reescritura no solo certificaba conjuntos **no
+materializables**, sino que su resultado **no era reproducible** —dos llamadas idénticas, en el mismo
+proceso, daban (25,13) y (27,13)—, porque el optimizador corre con un `timeout` de pared. Por eso
+ahora está **desactivada por defecto** y el barrido solo se publica si dos repeticiones coinciden.
 
 ### Cómo se hizo: cinco palancas
 
@@ -1506,47 +1536,33 @@ lineal quita una variable y sube el grado. Barrerlas juntas da una **curva**:
 **tres** comprobaciones: identidad polinómica (0 faltan / 0 sobran), verificación **estructural** de
 los nombres, y ninguna incógnita original perdida.
 
-> ⚠️ **PROVISIONAL — medición en curso.** Esta tabla se obtuvo con el barrido en su modo por
-> defecto, que **intenta la reescritura primero** y solo se repliega a no usarla cuando falla. O sea
-> que **no todos los puntos son «sin reescritura»**, al contrario de lo que decía la frase de debajo
-> cuando se escribió: el de grado 5 sí, pero el de grado 13 salió *con* reescritura.
->
-> Y eso importa, porque medido después: **dos llamadas idénticas, en el mismo proceso, dan (25,13) y
-> (27,13)**. El punto de grado 13 depende de qué modelo devuelva Z3 esa vez —hay un `timeout` de
-> pared en el optimizador— y **una cifra así no es un resultado**, que es exactamente la regla que
-> este proyecto ya se impuso. Se está remidiendo la frontera entera con la reescritura **desactivada**
-> y por duplicado, para publicar solo lo reproducible.
+| variables | grado | receta | sistema | verificación |
+|---:|---:|---|---|---|
+| 44 | 5 | aplanar a 2 + eliminar `q,y` | ambos | ✅ |
+| 38 | 7 | aplanar a 3 + eliminar `q,y` | ambos | ✅ |
+| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ambos | ✅ |
+| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ambos | ✅ |
+| 27 | 13 | aplanar a 6 + eliminar `q,y,z` | sin desplazar | ✅ |
+| **23** | **25** | sin aplanar + eliminar `q,y,z` | ambos | ✅ |
+| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | `a=A+2` | ✅ |
+| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | `a=A+2` | ✅ |
 
-| variables | grado | receta | verificación |
-|---:|---:|---|---|
-| 44 | 5 | aplanar a 2 + eliminar `q,y` | ✅ |
-| 38 | 7 | aplanar a 3 + eliminar `q,y` | ✅ |
-| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | ✅ |
-| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | ✅ |
-| **25** | **13** | aplanar a 6 + eliminar `q,y,z` | ✅ |
-| **24** | **21** | aplanar a 6 + eliminar `l,q,y,z` | ✅ |
-| **23** | **25** | sin aplanar + eliminar `q,y,z` | ✅ |
-| 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ |
-| 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ |
+La columna «sistema» importa: la reparametrización `a = A+2` (§3.2o) **no** paga en la esquina de
+grado 5 —que es donde se creyó que pagaba— y de hecho **empeora** el punto de grado 13 (28 frente a
+27). Lo que aporta es el **tramo alto**: (22,29) y (21,37), que el sistema sin desplazar no alcanza.
 
-Sobre el sistema **desplazado** (`a = A+2`, §3.2o). Sin desplazar sale lo mismo hasta el (25,13) y
-después se queda corto —(23,25) y (22,37), sin los puntos (24,21) ni (22,29) ni (21,37)—: la
-reparametrización **no** paga en la esquina de grado 5, que es donde se creyó que pagaba, sino en el
-**tramo alto** de la curva.
-
-> Comparado con la tabla retirada: los puntos intermedios **siguen ahí**, pero con **otras recetas** y
-> algunos peor —el (27,9) pasa a (32,9), el (26,11) a (30,11), el (24,15) a (24,21)—. El (25,13)
-> sobrevive con el mismo par y distinta construcción. La esquina de grado 5 es la que se hunde
-> entera: de (33,5) a (44,5).
+> Comparado con la tabla retirada: los puntos intermedios **siguen ahí**, pero con otras recetas y
+> **todos peores** —el (27,9) pasa a (32,9), el (26,11) a (30,11), el (25,13) a (27,13)—. La esquina
+> de grado 5 se hunde entera: de (33,5) a (44,5). Y **ninguno de los intermedios domina ya** al
+> (26,25) publicado, que es lo que la tabla retirada afirmaba de dos de ellos.
 
 Contra la literatura (`(10, >6000)`, `(12, 13697)`, `(19, 29)`, `(26, 25)`, `(42, 5)`):
 
-* **(25, 13)** domina al **(26, 25) publicado** en los **dos** ejes: una variable menos y doce
-  grados menos. **Es el mejor resultado del proyecto**;
-* **(24, 21)** también lo domina en los dos ejes, y **(23, 25)** lo mejora en tres variables al mismo
-  grado;
-* **(38, 7)**, **(32, 9)**, **(30, 11)**, **(25, 13)**, **(24, 21)** caen en zona **literalmente
-  vacía** en la literatura: entre el grado 5 y el grado 25 no hay ningún par publicado;
+* **(23, 25)** mejora en tres variables el **(26, 25) publicado**, al mismo grado. **Es el único
+  punto del proyecto que bate una cifra de la literatura**;
+* **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** caen en zona **literalmente vacía** en la
+  literatura —entre el grado 5 y el grado 25 no hay ningún par publicado—, pero **ninguno domina** al
+  (26, 25): bajan grado a costa de variables;
 * **(44, 5)** queda **por encima** del (42, 5) que JSWW anuncian: en esa esquina **no** los batimos, y
   el punto se publica igual porque ocultarlo sería quedarse solo con lo que favorece;
 * `(22, 29)` y `(21, 37)` **quedan dominados** por el (19, 29) que JSWW anuncian, y por eso tampoco se
@@ -2230,7 +2246,7 @@ Combinación de Relaciones** (§6.1), aún sin implementar.
 
   | ruta | punto | estado |
   |---|---|---|
-  | aplanar el sistema **publicado** de JSWW 1976 | **(25, 13)** | mejor cifra del proyecto: domina en los dos ejes al (26,25) publicado (§3.2p); **no** un mínimo |
+  | eliminar sobre el sistema **publicado** de JSWW 1976 | **(23, 25)** | única cifra del proyecto que bate a la literatura: 3 variables menos que el (26,25) publicado (§3.2p); **no** un mínimo |
   | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo del *encoding* del aplanado (18 nombres, cota 18) |
 
   La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La

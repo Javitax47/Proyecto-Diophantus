@@ -1335,9 +1335,22 @@ def verificar_equivalencia(system, materializado, final, verbose=False):
 
 def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
                            timeout_s=900, solo_no_negativos=True, demostrados=(),
-                           reescritura=True, sumas_parciales=True,
+                           reescritura=False, sumas_parciales=True,
                            forzar_definiciones=True, verbose=False):
     """Aplana y post-elimina, quedandose con el MEJOR de varios optimos distintos.
+
+    `reescritura=False` POR DEFECTO, y la razon es una medida, no una preferencia.
+    Con la reescritura activa, DOS LLAMADAS IDENTICAS EN EL MISMO PROCESO dieron
+    (25,13) y (27,13) sobre el sistema de JSWW: en una el conjunto certificado se
+    materializo y en la otra no ("no se pudo reducir a grado 6"). El optimizador
+    corre con un `timeout` de PARED, asi que bajo carga distinta devuelve modelos
+    distintos, y los conjuntos que solo la reescritura sabe certificar son
+    justamente los que a veces no se pueden construir.
+
+    Una cifra que depende de que modelo devuelva Z3 esa vez NO es un resultado --es
+    la regla que este proyecto ya se impuso cuando dos tests publicaron (36,5) y
+    (38,5)--. Sin reescritura el barrido sale IDENTICO en repeticiones sucesivas,
+    que es la condicion minima para publicarlo. Quien la quiera, la pide.
 
     POR QUE NO BASTA LLAMAR AL OPTIMIZADOR UNA VEZ. El optimo en numero de
     nombres **no es unico**, y el numero de nombres **no es la cifra final**:
@@ -1441,7 +1454,7 @@ def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
 
 def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
                    timeout_s=900, solo_no_negativos=True, demostrados=(),
-                   reescritura=True, sumas_parciales=True, k_optimos=4,
+                   reescritura=False, sumas_parciales=True, k_optimos=4,
                    verbose=False):
     """FRONTERA DE PARETO (variables, grado), no un punto suelto.
 
