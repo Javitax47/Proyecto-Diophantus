@@ -269,6 +269,17 @@ el que evita perder el tiempo, y es de §1.
 construcción propia— y todos están construidos, materializados y con el grado medido sobre el
 sistema real:
 
+> ⚠️ **PROVISIONAL — medición en curso.** Esta tabla se obtuvo con el barrido en su modo por
+> defecto, que **intenta la reescritura primero** y solo se repliega a no usarla cuando falla. O sea
+> que **no todos los puntos son «sin reescritura»**, al contrario de lo que decía la frase de debajo
+> cuando se escribió: el de grado 5 sí, pero el de grado 13 salió *con* reescritura.
+>
+> Y eso importa, porque medido después: **dos llamadas idénticas, en el mismo proceso, dan (25,13) y
+> (27,13)**. El punto de grado 13 depende de qué modelo devuelva Z3 esa vez —hay un `timeout` de
+> pared en el optimizador— y **una cifra así no es un resultado**, que es exactamente la regla que
+> este proyecto ya se impuso. Se está remidiendo la frontera entera con la reescritura **desactivada**
+> y por duplicado, para publicar solo lo reproducible.
+
 | variables | grado | receta | verificación |
 |---:|---:|---|---|
 | 44 | 5 | aplanar a 2 + eliminar `q,y` | ✅ |
@@ -281,8 +292,7 @@ sistema real:
 | 22 | 29 | sin aplanar + eliminar `l,q,y,z` | ✅ |
 | 21 | 37 | sin aplanar + eliminar `e,l,q,y,z` | ✅ |
 
-Todos **sin reescritura** —la ruta que falló— y sobre el sistema desplazado (`a = A+2`, §3.2o). El ✅
-significa **tres** comprobaciones, no una: identidad polinómica (0 faltan / 0 sobran), verificación
+Sobre el sistema desplazado (`a = A+2`, §3.2o). El ✅ significa **tres** comprobaciones, no una: identidad polinómica (0 faltan / 0 sobran), verificación
 **estructural** de que cada nombre está atado por una ecuación del sistema, y ninguna incógnita
 original perdida.
 
@@ -1495,6 +1505,17 @@ lineal quita una variable y sube el grado. Barrerlas juntas da una **curva**:
 **Frontera remedida (sin reescritura, `k_optimos=1`).** Cada punto está materializado y pasa las
 **tres** comprobaciones: identidad polinómica (0 faltan / 0 sobran), verificación **estructural** de
 los nombres, y ninguna incógnita original perdida.
+
+> ⚠️ **PROVISIONAL — medición en curso.** Esta tabla se obtuvo con el barrido en su modo por
+> defecto, que **intenta la reescritura primero** y solo se repliega a no usarla cuando falla. O sea
+> que **no todos los puntos son «sin reescritura»**, al contrario de lo que decía la frase de debajo
+> cuando se escribió: el de grado 5 sí, pero el de grado 13 salió *con* reescritura.
+>
+> Y eso importa, porque medido después: **dos llamadas idénticas, en el mismo proceso, dan (25,13) y
+> (27,13)**. El punto de grado 13 depende de qué modelo devuelva Z3 esa vez —hay un `timeout` de
+> pared en el optimizador— y **una cifra así no es un resultado**, que es exactamente la regla que
+> este proyecto ya se impuso. Se está remidiendo la frontera entera con la reescritura **desactivada**
+> y por duplicado, para publicar solo lo reproducible.
 
 | variables | grado | receta | verificación |
 |---:|---:|---|---|
