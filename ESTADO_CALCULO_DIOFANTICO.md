@@ -1761,9 +1761,14 @@ anotarlo: una palanca puede parecer inútil solo porque otra pieza está rota.
 > 20 nombres. Habría parecido que el desplazamiento empeora la cifra cuando era un fallo de
 > emparejado de cadenas. Por eso existe `no_negativos_desplazados()`.
 
-**Lo que esto NO da, y es la frontera que sigue abierta.** Las otras tres eliminaciones (`m`, `p`,
-`x`, de las ecuaciones 12–14) necesitan `a ≥ n+1`, `a ≥ p+1` y `a ≥ p`: relaciones **entre
-incógnitas**, que un desplazamiento constante no arregla. Siguen sin demostración.
+**Lo que esto NO da.** Las otras tres eliminaciones (`m`, `p`, `x`, de las ecuaciones 12–14)
+necesitan `a ≥ n+1`, `a ≥ p+1` y `a ≥ p`: relaciones **entre incógnitas**, que un desplazamiento
+constante no arregla.
+
+> ✅ **RESUELTO después** (§2.ter). Las tres se siguen de `a ≥ e+1`, porque `e = 2n+p+q+z` domina a
+> `n` y a `p` a la vez y por tanto **una sola sustitución afín** las vuelve estructurales. La cota sale
+> de la estructura de Pell de la ec.(5) y da **(21, 25)** — pero apoyándose en tres teoremas de Pell
+> **citados**, así que no está al nivel del (23,25), que sí está formalizado.
 
 ### 3.2q Rutas CERRADAS en esta ronda (para no volver a intentarlas)
 
@@ -1870,7 +1875,7 @@ varias están sin resolver por **coste de cómputo**, no por imposibilidad.
 
 | Ruta | Qué podría dar | Estado medido |
 |---|---|---|
-| **Demostrar las no-negatividades restantes** | cada una puede quitar un nombre | **1 de 5 resuelta** (§3.2n, corolario) y dio (41,5). Quedan 4; Z3 **no concluye** sobre grado 12 en 26 variables |
+| **Demostrar las no-negatividades restantes** | cada una puede quitar un nombre | **1 de 5 resuelta** (§3.2n, corolario) y dio (41,5) — cifra luego **retirada**. Z3 **no concluye** sobre grado 12 en 26 variables, pero las que bloqueaban *eliminaciones* se resolvieron por otra vía: `a ≥ e+1` vía Pell (§2.ter) |
 | **Eliminación completa** (no solo `q` e `y`) | cada incógnita extra eliminada = −1 variable | la búsqueda exhaustiva **no termina** (medido: >40 min sobre las 43 incógnitas) |
 | **Objetivo del optimizador = variables, no nombres** | podría preferir 19 nombres con 4 eliminaciones a 18 con 2 | **sin implementar** |
 | **Forma agrupada del paper** (`ECUACIONES_AGRUPADAS`) | expone `(n+1)` y `(n+1)²` como nombrables | **sin medir** con reescritura |
@@ -2352,13 +2357,15 @@ Combinación de Relaciones** (§6.1), aún sin implementar.
 - Y esa partida **sigue abierta**, con evidencia directa: el «óptimo» del optimizador ha caído
   tres veces —46 → 17 → 15 nombres— y las tres por **ampliar el catálogo**, nunca por buscar mejor.
   No hay motivo para creer que el catálogo esté completo ahora. Lo que queda por probar:
-  candidatos que aún no están (¿productos de subsumas? ¿reescrituras encadenadas?), y las **dos
-  no-negatividades** que bloquean las tres eliminaciones restantes (§3.2p).
+  candidatos que aún no están (¿productos de subsumas? ¿reescrituras encadenadas?). Las
+  no-negatividades que bloqueaban las tres eliminaciones restantes ya **no** son el cuello de
+  botella: se siguen de `a ≥ e+1` (§2.ter), a cambio de citar Pell.
 - **Dos puntos, y no son el mismo:**
 
   | ruta | punto | estado |
   |---|---|---|
-  | eliminar sobre el sistema **publicado** de JSWW 1976 | **(23, 25)** | única cifra del proyecto que bate a la literatura: 3 variables menos que el (26,25) publicado (§3.2p); **no** un mínimo |
+  | eliminar sobre el sistema **publicado** de JSWW 1976 | **(23, 25)** | 3 variables menos que el (26,25) publicado; **formalizado en Lean** (§2.ter). No es un mínimo |
+  | lo mismo, usando además `a ≥ e+1` | ⚠️ **(21, 25)** | 5 menos, pero **condicional**: cita tres teoremas de Pell (§2.ter) |
   | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo del *encoding* del aplanado (18 nombres, cota 18) |
 
   La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La
