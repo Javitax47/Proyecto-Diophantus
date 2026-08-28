@@ -358,6 +358,26 @@ Verificado: las cinco definiciones eliminadas (`q`, `e`, `y`, `m`, `x`) tienen *
 coeficientes ≥ 0** —luego la equisatisfacibilidad vale en las dos direcciones sobre ℕ— y la
 sustitución hacia atrás recupera las 9 ecuaciones originales vivas, **0 faltan y 0 sobran**.
 
+### La frontera completa, que es la UNION de dos sistemas
+
+Medida por duplicado, con la reescritura desactivada, y las dos repeticiones coinciden.
+
+| variables | grado | receta | sistema |
+|---:|---:|---|---|
+| 44 | 5 | aplanar a 2 + eliminar `q,y` | sin Pell |
+| 38 | 7 | aplanar a 3 + eliminar `q,y` | sin Pell |
+| 32 | 9 | aplanar a 4 + eliminar `q,y,z` | sin Pell |
+| 30 | 11 | aplanar a 5 + eliminar `q,y,z` | sin Pell |
+| 27 | 13 | aplanar a 6 + eliminar `q,y,z` | sin Pell |
+| **21** | **25** | sin aplanar + eliminar `e,m,q,x,y` | **con Pell** |
+| 20 | 37 | sin aplanar + eliminar `e,l,m,q,x,y` | **con Pell** |
+| 19 | 61 | sin aplanar + eliminar `e,l,m,q,x,y,z` | **con Pell** |
+
+Con la cota de Pell, el (23,25) pasa a **(21,25)** y el (22,37) a (20,37): los puntos sin Pell de esa
+zona quedan **dominados** y salen de la tabla.
+
+*(La zona de grado 15–23 sobre el sistema con Pell está pendiente de medir; ver más abajo.)*
+
 ### El hueco, y cómo se cerró
 
 Los pasos 4 y 5 son **teoremas estándar de Pell** —la maquinaria con la que Matiyasevich cerró MRDP, y

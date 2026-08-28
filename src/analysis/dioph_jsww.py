@@ -226,8 +226,10 @@ def sistema_desplazado(desplazamiento=COTA_A, expandir=False, agrupado=False):
     if expandir:
         eqs = [sympy.expand(x_) for x_ in eqs]
     inc = [A if s is a else s for s in INCOGNITAS]
-    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
-                 name=f"JSWW 1976 con a = A+{desplazamiento}")
+    D = Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+              name=f"JSWW 1976 con a = A+{desplazamiento}")
+    D.no_negativos = no_negativos_desplazados(desplazamiento)
+    return D
 
 
 def no_negativos_desplazados(desplazamiento=COTA_A):
@@ -318,8 +320,10 @@ def sistema_cota_pell(expandir=False, agrupado=False):
     if expandir:
         eqs = [sympy.expand(x_) for x_ in eqs]
     inc = [u for u in INCOGNITAS if u not in (a, n)] + [N, A]
-    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
-                 name="JSWW 1976 con n = N+2 y a = n+1+A")
+    D = Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+              name="JSWW 1976 con n = N+2 y a = n+1+A")
+    D.no_negativos = ()
+    return D
 
 
 # La MISMA demostracion da una cota MAS FUERTE, y es la que vale la pena:
@@ -344,6 +348,26 @@ def sistema_cota_pell(expandir=False, agrupado=False):
 # eliminables y con `a >= e+1` hay SIETE -- entra tambien `x`, por la ec.(13).
 
 
+def no_negativos_pell():
+    """`NO_NEGATIVOS_DEMOSTRADOS` reescrito para `sistema_cota_pell_fuerte`.
+
+    LA MISMA TRAMPA QUE CON EL DESPLAZAMIENTO, y volvio a picar. El optimizador
+    reconoce una expresion demostrada comparando su `str()`; tras sustituir
+    `n = N+2` y `a = e+1+A` las cadenas ya no casan y la demostracion se pierde
+    EN SILENCIO. Medido: con la lista vacia el aplanado del sistema de Pell sale
+    `unsat` en todos los grados --sin poder nombrar `a + u^2(u^2-a)` la ec.(8) no
+    se puede bajar de grado-- y parece que la reparametrizacion destruye la
+    esquina de aplanado. No la destruye: faltaba pasar esta lista.
+    """
+    N = sympy.Symbol('N', integer=True)
+    A = sympy.Symbol('A', integer=True)
+    nn = N + COTA_N
+    sub = {n: nn, a: 2 * nn + p + q + z + 1 + A}
+    loc = {str(s_): s_ for s_ in _SIMBOLOS}
+    return tuple(str(sympy.sympify(s_, locals=loc).subs(sub, simultaneous=True))
+                 for s_ in NO_NEGATIVOS_DEMOSTRADOS)
+
+
 def sistema_cota_pell_fuerte(expandir=False, agrupado=False):
     """El sistema (1) con `n = N+2` y `a = e+1+A`, o sea usando `a >= e+1`.
 
@@ -363,8 +387,10 @@ def sistema_cota_pell_fuerte(expandir=False, agrupado=False):
     if expandir:
         eqs = [sympy.expand(x_) for x_ in eqs]
     inc = [u for u in INCOGNITAS if u not in (a, n)] + [N, A]
-    return Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
-                 name="JSWW 1976 con n = N+2 y a = e+1+A")
+    D = Dioph(params=[PARAMETRO], unknowns=inc, eqs=eqs, witness=None,
+              name="JSWW 1976 con n = N+2 y a = e+1+A")
+    D.no_negativos = no_negativos_pell()
+    return D
 
 
 def sistema(expandir=True, agrupado=False):
@@ -388,5 +414,7 @@ def sistema(expandir=True, agrupado=False):
     """
     fuente = ECUACIONES_AGRUPADAS if agrupado else ECUACIONES
     eqs = [sympy.expand(x_) for x_ in fuente] if expandir else list(fuente)
-    return Dioph(params=[PARAMETRO], unknowns=list(INCOGNITAS), eqs=eqs,
+    D = Dioph(params=[PARAMETRO], unknowns=list(INCOGNITAS), eqs=eqs,
                  witness=None, name="JSWW 1976 (26 variables, grado 25)")
+    D.no_negativos = NO_NEGATIVOS_DEMOSTRADOS
+    return D

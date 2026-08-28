@@ -1373,6 +1373,21 @@ def aplanado_y_eliminacion(system, target=2, k_optimos=8, solo_eliminar=None,
     `optimos_vistos`.
     """
     from src.analysis.dioph_degree import eliminar_maximo, max_equation_degree
+    # EL SISTEMA DECLARA SUS PROPIAS NO-NEGATIVIDADES. El optimizador reconoce una
+    # expresion demostrada comparando su `str()`, asi que tras una
+    # reparametrizacion --`a = A+2`, `a = e+1+A`-- las cadenas dejan de casar y
+    # las demostraciones se pierden EN SILENCIO. Ya paso con el desplazamiento
+    # (el aplanado subio de 15 a 20 nombres y parecio que desplazar empeoraba la
+    # cifra) y volvio a pasar con Pell: con la lista vacia el aplanado sale
+    # `unsat` en TODOS los grados --sin poder nombrar `a + u^2(u^2-a)` la ec.(8)
+    # no baja de grado-- y parecia que la reparametrizacion destruia la esquina
+    # de aplanado. No la destruia: faltaba pasar la lista.
+    #
+    # Se arregla en la ESTRUCTURA, no con otro comentario: cada constructor de
+    # `dioph_jsww` deja sus no-negatividades en el propio objeto, y aqui se cogen
+    # de ahi si quien llama no pasa ninguna. Olvidarlas deja de ser posible.
+    if not demostrados:
+        demostrados = getattr(system, "no_negativos", ())
 
     if solo_eliminar is None:
         solo_eliminar = list(system.unknowns)
@@ -1480,6 +1495,21 @@ def barrido_pareto(system, grados=(2, 3, 4, 5, 6), eliminables=None,
     queda con lo primero que encuentra.
     """
     from src.analysis.dioph_degree import eliminar_lineales, max_equation_degree
+    # EL SISTEMA DECLARA SUS PROPIAS NO-NEGATIVIDADES. El optimizador reconoce una
+    # expresion demostrada comparando su `str()`, asi que tras una
+    # reparametrizacion --`a = A+2`, `a = e+1+A`-- las cadenas dejan de casar y
+    # las demostraciones se pierden EN SILENCIO. Ya paso con el desplazamiento
+    # (el aplanado subio de 15 a 20 nombres y parecio que desplazar empeoraba la
+    # cifra) y volvio a pasar con Pell: con la lista vacia el aplanado sale
+    # `unsat` en TODOS los grados --sin poder nombrar `a + u^2(u^2-a)` la ec.(8)
+    # no baja de grado-- y parecia que la reparametrizacion destruia la esquina
+    # de aplanado. No la destruia: faltaba pasar la lista.
+    #
+    # Se arregla en la ESTRUCTURA, no con otro comentario: cada constructor de
+    # `dioph_jsww` deja sus no-negatividades en el propio objeto, y aqui se cogen
+    # de ahi si quien llama no pasa ninguna. Olvidarlas deja de ser posible.
+    if not demostrados:
+        demostrados = getattr(system, "no_negativos", ())
 
     originales = [str(u) for u in system.unknowns]
     if eliminables is None:
