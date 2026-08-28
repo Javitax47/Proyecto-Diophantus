@@ -32,6 +32,8 @@ echo ">> compilando Eliminacion.lean"
 lean -o "$AQUI/Eliminacion.olean" "$AQUI/Eliminacion.lean"
 echo ">> compilando Pell.lean"
 lean -o "$AQUI/Pell.olean" "$AQUI/Pell.lean"
+echo ">> compilando Eliminacion21.lean"
+LEAN_PATH="$AQUI" lean -o "$AQUI/Eliminacion21.olean" "$AQUI/Eliminacion21.lean"
 
 echo ">> auditando axiomas (deben ser solo propext / Classical.choice / Quot.sound)"
 cat > "$AQUI/.auditoria.lean" <<'LEAN'
@@ -66,13 +68,21 @@ open Diophantus
 #print axioms a_ge_e_succ_de_sistema
 #check @a_ge_e_succ_de_sistema
 LEAN
+cat > "$AQUI/.auditoria4.lean" <<'LEAN'
+import Eliminacion21
+open Diophantus
+#print axioms completo_de_defs21
+#print axioms equisatisfacible21
+#check @equisatisfacible21
+LEAN
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria2.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria3.lean"
-rm -f "$AQUI/.auditoria.lean" "$AQUI/.auditoria2.lean" "$AQUI/.auditoria3.lean" \
-      "$AQUI/CotaA.olean" "$AQUI/Eliminacion.olean" "$AQUI/Pell.olean"
+LEAN_PATH="$AQUI" lean "$AQUI/.auditoria4.lean"
+rm -f "$AQUI"/.auditoria*.lean "$AQUI"/*.olean
 
 echo ">> comprobando que el ENUNCIADO es el teorema que se cree demostrar"
 cd "$AQUI/../.." && PYTHONPATH=. python3 src/tests/verification/test_lean_cota_a.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_pell.py
+PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion21.py

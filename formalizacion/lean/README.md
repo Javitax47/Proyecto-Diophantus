@@ -2,7 +2,15 @@
 
 ## Qué hay aquí
 
-Dos ficheros, los dos verificados por el núcleo de Lean 4 y sin Mathlib.
+Cuatro ficheros, todos verificados por el núcleo de Lean 4 y **sin Mathlib**.
+
+`Pell.lean` — la ecuación `x² − (A²−1)y² = 1` desde cero: **completitud** (toda
+solución está en la sucesión, por descenso), **congruencia** (`Y j ≡ j mod A−1`)
+y **crecimiento**. Con ellas, `a ≥ e+1` en el sistema (1), a partir de sólo tres
+de sus catorce ecuaciones. Existe porque esos tres hechos se estaban *citando*.
+
+`Eliminacion21.lean` — usando esas cotas, **25 incógnitas ⟶ 20**: generador
+**(21, 25)**, cinco variables por debajo del (26, 25) publicado.
 
 `Eliminacion.lean` — **el resultado del proyecto**: el sistema (1) de
 Jones–Sato–Wada–Wiens, que ellos publican con 25 incógnitas más el parámetro

@@ -17,9 +17,9 @@
 > * **(23, 25)** — tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
 >   **Es el único punto que mejora una cifra de la literatura**, no usa aplanado —son tres
 >   sustituciones lineales— y está **formalizado en Lean 4** (§2.ter);
-> * ⚠️ **(21, 25)** — **cinco** por debajo del (26,25) publicado, pero **condicional**: depende de
->   `a ≥ e+1`, que se apoya en tres teoremas estándar de Pell **citados y no demostrados aquí**
->   (§2.ter). Va en tabla aparte, y no se cuenta como el resultado del proyecto;
+> * **(21, 25)** — **cinco** por debajo del (26,25) publicado, y también **formalizado en Lean 4**
+>   (§2.ter). Los tres hechos de Pell que sostenían la cota `a ≥ e+1` **ya no se citan: se
+>   demuestran** en `Pell.lean`, sin Mathlib;
 > * **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** — caen en una zona **vacía** en la
 >   literatura, pero **ninguno domina** al (26, 25): el (27,13) baja doce grados a costa de una
 >   variable de más;
@@ -262,9 +262,11 @@ Dos comprobaciones nuevas, las dos en `materializar`, que **abortan** en vez de 
 Y `verificar_equivalencia` incorpora la segunda a su veredicto: `ok` es ahora falso si hay incógnitas
 perdidas. `aplanado_y_eliminacion` descarta el candidato en vez de publicarlo.
 
-## 2.ter ✅ FORMALIZADO: el (23, 25), y ⚠️ CONDICIONAL: un (21, 25) que depende de Pell
+## 2.ter ✅ FORMALIZADO: el (23, 25) y el (21, 25), los dos verificados por el núcleo de Lean
 
-Dos resultados de la misma sesión y **de garantía distinta**. Van separados a propósito.
+Dos resultados. El segundo empezó siendo **condicional** —dependía de tres teoremas de Pell que se
+citaban— y dejó de serlo al demostrarlos. Se conserva el relato de las dos fases porque el orden
+importa: **primero se midió qué compraba la cota, y sólo después se pagó el precio de demostrarla.**
 
 ### El (23, 25), verificado en Lean 4 de punta a punta
 
@@ -356,20 +358,68 @@ Verificado: las cinco definiciones eliminadas (`q`, `e`, `y`, `m`, `x`) tienen *
 coeficientes ≥ 0** —luego la equisatisfacibilidad vale en las dos direcciones sobre ℕ— y la
 sustitución hacia atrás recupera las 9 ecuaciones originales vivas, **0 faltan y 0 sobran**.
 
-### Y por qué esto va en una tabla aparte
+### El hueco, y cómo se cerró
 
-Los pasos 4 y 5 son **teoremas estándar de Pell** —son la maquinaria con la que Matiyasevich cerró
-MRDP, y están en Mathlib justamente por eso— pero **aquí se citan, no se demuestran**. La
-formalización de este proyecto no usa Mathlib.
+Los pasos 4 y 5 son **teoremas estándar de Pell** —la maquinaria con la que Matiyasevich cerró MRDP, y
+están en Mathlib justamente por eso—. Durante un rato **aquí se citaban**, y eso dejaba al (21,25) en
+una clase de garantía distinta de la del (23,25): el resultado más fuerte del proyecto era también el
+peor garantizado. Estaban los dos en tablas separadas, con su etiqueta.
 
-O sea: el (23, 25) no depende de nada citado salvo que (1) represente los primos; el (22, 25) y el
-(21, 25) además dependen de tres hechos de Pell. **No son la misma clase de resultado**, y ponerlos en
-la misma tabla sin decirlo sería exactamente el error que costó las cuatro cifras de grado 5.
+**Ya no.** `formalizacion/lean/Pell.lean` (397 líneas, sin Mathlib, sin `sorry`) demuestra los tres:
 
-Dicho de otra forma, y es el resumen honesto de la sesión: **el resultado más fuerte del proyecto
-—(21, 25)— es también el que peor garantía tiene, y el mejor garantizado —(23, 25), formalizado— es
-más débil.** Están los dos, cada uno con su etiqueta. Lo que ya no se hace es publicar el bueno con la
-etiqueta del otro.
+| hecho | enunciado | para qué |
+|---|---|---|
+| **completitud** | toda solución de `x²−(A²−1)y²=1` con `x,y ≥ 0` es `(X j, Y j)` | permite **indexar** una solución cualquiera; sin él los otros dos no sirven |
+| **congruencia** | `Y j ≡ j (mod A−1)` | convierte «`e` divide al **valor**» en «`e` divide al **índice**», y de ahí `j ≥ e` |
+| **crecimiento** | `Y` estrictamente creciente, `Y 3 = 4A²−1` | de `j ≥ 4` a la cota cuadrática que hace falta |
+
+Y culmina en
+
+```
+theorem a_ge_e_succ_de_sistema :
+  0 ≤ k → … → 2*n + p + q + z = e                                  -- ec.(3)
+            → 16*(k+1)*(k+1)*(k+1)*(k+2)*((n+1)*(n+1)) + 1 = f*f   -- ec.(4)
+            → e*e*e*(e+2)*((a+1)*(a+1)) + 1 = o*o                   -- ec.(5)
+            → e + 1 ≤ a
+```
+
+Hipótesis: **tres** de las catorce ecuaciones, más las no negatividades. Nada más.
+
+**Por qué era abordable sin Mathlib**, que es la parte no obvia: la teoría general de Pell es grande,
+pero aquí `D = A²−1` está *un cuadrado por debajo* de `A²`, y eso hace que el paso y su inverso sean
+fórmulas cerradas —`(x,y) ↦ (Ax+Dy, x+Ay)` y `(x,y) ↦ (Ax−Dy, Ay−x)`— que son inversas por `A²−D=1`.
+Las tres desigualdades del descenso (`x' ≥ 0`, `y' ≥ 0`, `y' < y`) salen todas de **comparar
+cuadrados**, que es exactamente la técnica de encaje que ya se usaba en `CotaA.lean`. Y la inducción
+va sobre una **cota** de `y`, no sobre `y`, para no necesitar recursión bien fundada.
+
+### Y el (21,25) entero, no sólo la cota
+
+`Eliminacion21.lean` cierra el último tramo: **25 incógnitas ⟶ 20**, con la misma forma de teorema
+que el (23,25).
+
+```
+theorem equisatisfacible21 (k : Int) (hk : 0 ≤ k) :
+    (∃ 25 incógnitas, no-negativas ∧ completo   k …) ↔
+    (∃ 20 incógnitas, no-negativas ∧ reducido21 k …)
+```
+
+La **ida** usa las dos cotas de Pell para producir `N = n−2 ≥ 0` y `A = a−e−1 ≥ 0`; la **vuelta** usa
+que las cinco definiciones eliminadas son `≥ 0`, y ahí es donde las cotas son imprescindibles: sin
+ellas `m` y `x` podrían salir negativas y no habría solución sobre ℕ que exhibir. El teorema sería
+falso, no sólo indemostrable.
+
+El enunciado se comprueba aparte (`test_lean_eliminacion21.py`, 4/4), y es el que más superficie de
+error tenía de todo el proyecto: catorce ecuaciones a mano, más nueve, más siete definiciones, más una
+reparametrización que **renombra** dos incógnitas. Se verifica que las siete definiciones son las que
+produce `eliminar_lineales`, que las nueve ecuaciones casan **1 a 1** con el sistema eliminado —suman
+109.512 caracteres al expandir, por eso en el `.lean` van con las definiciones dentro— y que los
+cuantificadores son 25 y 20 con la diferencia exacta «se van `{a,e,m,n,q,x,y}`, entran `{N,A}`».
+
+### Lo que queda citado, que ya es sólo una cosa
+
+Que el sistema (1) represente los primos. Eso es el teorema de JSWW (1976) y no se demuestra aquí.
+Todo lo demás —las cotas, las eliminaciones, la equisatisfacibilidad— está verificado por el núcleo de
+Lean 4, sin Mathlib, con axiomas `propext`, `Classical.choice` y `Quot.sound`.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
@@ -1767,8 +1817,8 @@ constante no arregla.
 
 > ✅ **RESUELTO después** (§2.ter). Las tres se siguen de `a ≥ e+1`, porque `e = 2n+p+q+z` domina a
 > `n` y a `p` a la vez y por tanto **una sola sustitución afín** las vuelve estructurales. La cota sale
-> de la estructura de Pell de la ec.(5) y da **(21, 25)** — pero apoyándose en tres teoremas de Pell
-> **citados**, así que no está al nivel del (23,25), que sí está formalizado.
+> de la estructura de Pell de la ec.(5), da **(21, 25)**, y está **formalizada en Lean** junto con los
+> tres teoremas de Pell en que se apoya.
 
 ### 3.2q Rutas CERRADAS en esta ronda (para no volver a intentarlas)
 
@@ -2359,13 +2409,13 @@ Combinación de Relaciones** (§6.1), aún sin implementar.
   No hay motivo para creer que el catálogo esté completo ahora. Lo que queda por probar:
   candidatos que aún no están (¿productos de subsumas? ¿reescrituras encadenadas?). Las
   no-negatividades que bloqueaban las tres eliminaciones restantes ya **no** son el cuello de
-  botella: se siguen de `a ≥ e+1` (§2.ter), a cambio de citar Pell.
+  botella: se siguen de `a ≥ e+1` (§2.ter), y Pell está demostrado, no citado.
 - **Dos puntos, y no son el mismo:**
 
   | ruta | punto | estado |
   |---|---|---|
   | eliminar sobre el sistema **publicado** de JSWW 1976 | **(23, 25)** | 3 variables menos que el (26,25) publicado; **formalizado en Lean** (§2.ter). No es un mínimo |
-  | lo mismo, usando además `a ≥ e+1` | ⚠️ **(21, 25)** | 5 menos, pero **condicional**: cita tres teoremas de Pell (§2.ter) |
+  | lo mismo, usando además `a ≥ e+1` | **(21, 25)** | 5 menos, **también formalizado**: los tres teoremas de Pell que sostienen la cota se demuestran en `Pell.lean` (§2.ter) |
   | cadena **propia** anclada por `L_psi` | **(68, 5)** | óptimo del *encoding* del aplanado (18 nombres, cota 18) |
 
   La primera es el mejor punto del proyecto y la que se compara con la literatura (§3.2f–h). La
