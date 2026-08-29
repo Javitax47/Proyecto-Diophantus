@@ -480,7 +480,7 @@ Que el sistema (1) represente los primos. Eso es el teorema de JSWW (1976) y no 
 Todo lo demás —las cotas, las eliminaciones, la equisatisfacibilidad— está verificado por el núcleo de
 Lean 4, sin Mathlib, con axiomas `propext`, `Classical.choice` y `Quot.sound`.
 
-## 2.quater El intento de bajar de (44,5) a (42,5): cuatro ataques, ninguno mueve el 20
+## 2.quater El (42,5) de JSWW: cinco ataques al 20, y la fuente primaria que cierra el caso
 
 `44 = 26 + 20 − 2`: los 26 de JSWW, más 20 nombres para aplanar a grado 2, menos 2 eliminaciones.
 Ellos anuncian 42, o sea **16 nombres**. La brecha está entera en el aplanado. Esto es lo que se
@@ -562,20 +562,61 @@ una pareja desalineada. Se sube el tope a 8 (`TOPE_FACTORES`), que cubre el nodo
 Medido: con tope 6, 7, 8 y 10 el óptimo sigue siendo **20 con cota 20**. El tope no era lo que ataba
 la cifra — pero ahora la cota significa lo que dice.
 
+### 6. RESUELTO: el (42, 5) no sale del método que ellos citan
+
+Se consiguió la fuente primaria — Davis, *Hilbert's tenth problem is unsolvable*, Amer. Math. Monthly
+**80** (1973) 233–269, **p. 263**, que es la referencia [3] de JSWW. El método está escrito entero, y
+permite **exactamente** estas sustituciones:
+
+```
+z_j = y_i·y_k      z_j = y_i²      z_j = x·y_i      z_j = x²
+```
+
+O sea: **los nombres son monomios de grado 2** sobre las variables, incluidas las ya introducidas
+(«by successive substitutions»). Nada de subexpresiones compuestas — ni `(k+1)³(k+2)`, ni `c·u+x`, ni
+`a+u²(u²−a)`, que son **cuatro de los veinte** nombres que usa este proyecto.
+
+`aplanado_minimo` implementa ese método, y su formulación es **exacta**, no «del encoding»: los
+candidatos son *todos* los divisores de los monomios del sistema —un nombre que no divida a ninguno
+es inútil— y se enumeran *todas* las particiones de exponentes, con la condición de que un nombre de
+grado > 2 se construya a su vez de dos partes disponibles, que es la sustitución sucesiva.
+
+| | nombres | generador |
+|---|---:|---|
+| **Skolem/Davis sobre (1)**, mínimo exacto | **25** | **(51, 5)** |
+| este proyecto (subexpresiones arbitrarias + 2 eliminaciones) | 20 | **(44, 5)** |
+| lo que JSWW **anuncian** | 16 | (42, 5) |
+
+Medido sobre las dos formas del sistema, la original y la agrupada del Teorema 2.12: **25 en ambas,
+con cota 25**.
+
+**El (42, 5) exigiría 16 nombres por ese método, y el mínimo es 25. No es alcanzable.** Y nuestro
+(44, 5) bate a su propio procedimiento citado por **siete** variables.
+
+> **Esto invierte el sentido del «imposible», y es la primera vez.** Cuatro veces en este proyecto una
+> cota por encima de una cifra publicada delató que el instrumento estaba incompleto — y las cuatro
+> veces la lección fue la misma: sospechar del instrumento. Esta vez el instrumento aguantó cinco
+> ataques (catálogo hasta 3.469 candidatos, prueba de caída sobre el materializador, alineamiento de
+> las reglas de partición) y lo que no cuadra es **la cifra anunciada**.
+>
+> Conviene decirlo con la misma prudencia con la que se retiraron las nuestras: lo medido es que **el
+> procedimiento que JSWW citan, aplicado al sistema que citan, no da 42**. No queda demostrado que no
+> exista *otra* construcción que sí lo dé. Pero su frase es explícita sobre cuál y sobre a qué se
+> aplica.
+
 ### Conclusión, y qué queda
 
-El 20 se sostiene desde cuatro ángulos independientes, y el (44,5) con él. La brecha con el 42
-anunciado sigue abierta, con dos lecturas y sin forma de distinguirlas desde aquí:
+El 20 se sostiene desde cinco ángulos independientes, y el (44,5) con él. Con la fuente primaria en la
+mano, la brecha con el 42 **se cierra en contra de la cifra anunciada**, no de nuestro instrumento:
 
-* **la codificación sigue siendo incompleta** en sus *particiones*. El catálogo está descartado
-  (ataque 3) y la asimetría del tope de factores, corregida (ataque 5), pero sigue habiendo precedente
-  documentado de sobreestimación: sobre el sistema con `e` eliminada devuelve cota 21 y existe un
-  aplanado de 20 construido a mano;
-* **el 42 de JSWW no es alcanzable** por Skolem sobre (1). Es una frase suelta de la p. 450, nunca
-  escrita, igual que el (19,29) y el (12,13697).
+* el (42, 5) es **una frase suelta de la p. 450**, nunca escrita, igual que el (19,29) y el
+  (12,13697) — y ahora, además, **medida y no reproducible** por el método que la acompaña;
+* la codificación *podría* seguir siendo incompleta en sus particiones —hay precedente: sobre el
+  sistema con `e` eliminada devuelve cota 21 y existe un aplanado de 20 hecho a mano— pero eso ya no
+  hace falta para explicar la brecha.
 
-Distinguirlas exige reconstruir la sustitución de Skolem de la p. 263 de su referencia [3] y contar
-sus variables sobre (1). Eso es cotejo de fuente primaria, no una medición nuestra.
+**Marcador de esta esquina, con la fuente primaria cotejada: (44, 5) es la mejor cifra construida y
+verificada, y supera en siete variables al procedimiento que la literatura cita para llegar ahí.**
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

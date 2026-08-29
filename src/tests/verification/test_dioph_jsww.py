@@ -38,7 +38,8 @@ from src.analysis.dioph_degree import (
     eliminar_lineales, eliminar_maximo,
 )
 from src.analysis.dioph_optflat import (
-    Z3_DISPONIBLE, aplanado_minimo_compuesto, materializar, no_negativo_sobre_N,
+    Z3_DISPONIBLE, aplanado_minimo, aplanado_minimo_compuesto, materializar,
+    no_negativo_sobre_N,
     barrido_pareto, aplanado_y_eliminacion,
 )
 
@@ -802,6 +803,68 @@ def test_cota_pell_a_mayor_que_e(stats):
         stats.ok()
 
 
+def test_skolem_de_davis_no_da_42(stats):
+    """[11] El (42,5) anunciado NO es alcanzable por el metodo que ellos citan.
+
+    JSWW escriben (p. 450): "All that is necessary to reduce the degree to 5 is
+    the Skolem substitution method (cf. [3], p. 263). However, this procedure
+    increases the number of variables (to 42 when applied to (1))."
+
+    Su referencia [3] es Davis, "Hilbert's tenth problem is unsolvable", Amer.
+    Math. Monthly 80 (1973) 233-269, y en la p. 263 el metodo esta escrito
+    entero. Permite EXACTAMENTE estas sustituciones:
+
+        z_j = y_i*y_k      z_j = y_i^2      z_j = x*y_i      z_j = x^2
+
+    O sea: los nombres son MONOMIOS DE GRADO 2 sobre las variables, incluidas las
+    ya introducidas ("by successive substitutions"). Nada de subexpresiones
+    compuestas -- ni `(k+1)^3*(k+2)`, ni `c*u+x`, ni `a+u^2(u^2-a)`, que son
+    cuatro de los veinte nombres que usa este proyecto.
+
+    `aplanado_minimo` implementa ESE metodo, y su formulacion es EXACTA, no "del
+    encoding": los candidatos son todos los divisores de los monomios del
+    sistema --un nombre que no divida a ninguno es inutil-- y se enumeran TODAS
+    las particiones de exponentes, con la condicion de que un nombre de grado > 2
+    se construya a su vez de dos partes disponibles, que es la sustitucion
+    sucesiva.
+
+    Medido: el minimo es 25, no 16. Su procedimiento aplicado a su sistema da
+    26 + 25 = 51 variables, o sea (51, 5).
+
+    ESTO INVIERTE EL SENTIDO DEL "IMPOSIBLE". Cuatro veces en este proyecto una
+    cota por encima de una cifra publicada delato que el instrumento estaba
+    incompleto. Esta vez el instrumento aguanto cinco ataques --catalogo hasta
+    3469 candidatos, prueba de caida sobre el materializador, alineamiento de las
+    reglas de particion-- y lo que no cuadra es la cifra anunciada.
+    """
+    print(f"\n{Colors.HEADER}[11] El (42,5) anunciado no sale del metodo que citan{Colors.ENDC}")
+    if not Z3_DISPONIBLE:
+        print("  (z3 no disponible: omitido)"); return
+    problemas = []
+    for agrupado in (False, True):
+        S = sistema(expandir=False, agrupado=agrupado)
+        r = aplanado_minimo(S, 2, timeout_s=1800)
+        n = r["nombres"]
+        marca = (Colors.OKGREEN + "OK" + Colors.ENDC if r["estado"] == "optimo"
+                 else Colors.FAIL + "SIN OPTIMO" + Colors.ENDC)
+        print(f"  {marca}  forma {'agrupada ' if agrupado else 'original '}: "
+              f"minimo {n} nombres (cota {r['cota']}) => GENERADOR "
+              f"({len(S.unknowns) + n + 1}, 5)")
+        if r["estado"] != "optimo":
+            problemas.append(f"no se alcanzo el optimo con agrupado={agrupado}")
+        elif n != 25:
+            problemas.append(f"se esperaban 25 nombres y salieron {n}")
+    print(f"  {Colors.BOLD}Skolem/Davis sobre (1): 25 nombres => (51, 5){Colors.ENDC}")
+    print(f"  {Colors.BOLD}este proyecto:          20 nombres + 2 elim => (44, 5){Colors.ENDC}")
+    print(f"  {Colors.WARN}JSWW anuncian (42,5), que exigiria 16 nombres por ese metodo.")
+    print(f"  No es alcanzable: el minimo EXACTO del metodo es 25. Y nuestro (44,5)")
+    print(f"  bate a su propio procedimiento citado por SIETE variables.{Colors.ENDC}")
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== JSWW 1976: PATRON DE MEDIDA EXTERNO ==={Colors.ENDC}")
     stats = Stats()
@@ -815,6 +878,7 @@ def main():
     test_cota_a_mayor_igual_2(stats)
     test_frontera_de_pareto(stats)
     test_cota_pell_a_mayor_que_e(stats)
+    test_skolem_de_davis_no_da_42(stats)
 
     total = stats.passed + stats.failed
     print()
