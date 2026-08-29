@@ -176,7 +176,14 @@ def _nodos(e, acc, sumas_parciales=False, tope_suma=6, productos_subsuma=False):
     acc.add(e)
     if e.is_Add or e.is_Mul:
         for a in e.args:
-            _nodos(a, acc, sumas_parciales, tope_suma)
+            # LAS BANDERAS VIAJAN. `productos_subsuma` no se propagaba, y como las
+            # ecuaciones son `Add` en la raiz, la cuarta clase de candidatos NO SE
+            # GENERABA NUNCA: activarla anadia exactamente CERO expresiones. El
+            # censo que conto 111 candidatos ausentes los conto por su cuenta, con
+            # otro codigo, asi que la conclusion registrada --"no cambia nada"--
+            # media un no-op. Es el mismo defecto de propagacion que el de la
+            # clave prohibida en `reducir`, en otro sitio.
+            _nodos(a, acc, sumas_parciales, tope_suma, productos_subsuma)
     if sumas_parciales and e.is_Add:
         for forma in {e, sympy.expand(e)}:
             if not forma.is_Add:
@@ -194,6 +201,14 @@ def _nodos(e, acc, sumas_parciales=False, tope_suma=6, productos_subsuma=False):
         # sistema -- `(h+j)*(g*k+k+1)` dentro de `(g*k+2*g+k+1)*(h+j)` no estaba en
         # ninguno de los tres espacios anteriores. Medido: 111 expresiones asi
         # faltaban, 35 de ellas nombrables sin demostracion.
+        #
+        # OJO CON LA MEDIDA ANTERIOR. Durante mucho tiempo esta bandera no se
+        # propagaba en la recursion, y como las ecuaciones son `Add` en la raiz,
+        # activarla anadia CERO candidatos. La conclusion registrada --"no cambia
+        # nada"-- medía un no-op. Con la propagacion arreglada entran 107
+        # expresiones nuevas (145 -> 358 -> 465 candidatos) y el optimo de grado 2
+        # SIGUE siendo 20 nombres con cota 20. O sea que la conclusion era cierta,
+        # pero ahora esta medida de verdad.
         coef, resto = e.as_coeff_Mul()
         fs = list(resto.args) if resto.is_Mul else [resto]
         if len(fs) <= 4:
@@ -215,7 +230,7 @@ def _nodos(e, acc, sumas_parciales=False, tope_suma=6, productos_subsuma=False):
                     acc.add(sympy.Mul(*[fs[i] for i in comb]))
     if e.is_Pow:
         base, exp = e.args
-        _nodos(base, acc)
+        _nodos(base, acc, sumas_parciales, tope_suma, productos_subsuma)
         if exp.is_Integer and 2 <= int(exp) <= 8:
             for k in range(2, int(exp)):
                 acc.add(base ** k)
