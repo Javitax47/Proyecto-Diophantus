@@ -376,7 +376,44 @@ Medida por duplicado, con la reescritura desactivada, y las dos repeticiones coi
 Con la cota de Pell, el (23,25) pasa a **(21,25)** y el (22,37) a (20,37): los puntos sin Pell de esa
 zona quedan **dominados** y salen de la tabla.
 
-*(La zona de grado 15–23 sobre el sistema con Pell está pendiente de medir; ver más abajo.)*
+#### Por qué la tabla mezcla dos sistemas: la cota de Pell NO es gratis
+
+Medido grado a grado sobre los dos sistemas, la reparametrización `a = e+1+A` **empeora la esquina de
+aplanado en todos los grados** y sólo gana en la de eliminación:
+
+| grado del generador | sin Pell | con Pell |
+|---:|---:|---:|
+| 5 | **44** | 49 |
+| 7 | **38** | 43 |
+| 9 | **32** | 37 |
+| 11 | **30** | 35 |
+| 13 | **27** | 31 |
+| 25 | 23 | **21** |
+| 37 | 22 | **20** |
+| 61 | — | **19** |
+
+La razón es mecánica: `a` pasa a ser un polinomio de cinco variables (`e = 2n+p+q+z`) y aparece hasta
+a la cuarta potencia en la ecuación (8), así que aplanar exige **más nombres** — 25 en vez de 20 para
+llegar a grado 2. En cambio cada eliminación desbloqueada quita una variable entera.
+
+Por eso la frontera publicada es la **unión**, con cada punto etiquetado, y por eso **el (23,25) y el
+(22,37) salen de la tabla**: quedan dominados por sus versiones con Pell.
+
+> **Y aquí estuve a punto de publicar una afirmación falsa.** La primera medición de esta tabla dio
+> que sobre el sistema con Pell **no había ningún punto aplanado en ningún grado**, y casi escribo que
+> la reparametrización destruye esa esquina. Al diagnosticarlo, el optimizador no estaba agotando el
+> tiempo: devolvía **`unsat`**. La causa era mía — pasé la lista de no-negatividades demostradas
+> **vacía**, y sin poder nombrar `a + u²(u²−a)` la ecuación (8) no baja de grado, así que el problema
+> es *genuinamente* insatisfacible.
+>
+> Es **exactamente la trampa que este documento ya tenía escrita** para el desplazamiento `a = A+2`
+> (§3.2o): el optimizador reconoce una expresión demostrada comparando su `str()`, y tras
+> reparametrizar las cadenas dejan de casar. Que haya vuelto a picar significa que el comentario no
+> bastaba, así que ahora **cada sistema declara sus no-negatividades en el propio objeto** y el
+> optimizador las toma de ahí si quien llama no pasa ninguna. Olvidarlas ya no es posible.
+>
+> Con la lista puesta, los cinco grados se resuelven en **73–182 segundos cada uno**. La diferencia
+> entre «imposible» y «tres minutos» era un parámetro.
 
 ### El hueco, y cómo se cerró
 
