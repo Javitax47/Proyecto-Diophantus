@@ -2,7 +2,7 @@
 
 ## Qué hay aquí
 
-Cinco ficheros, todos verificados por el núcleo de Lean 4 y **sin Mathlib**.
+Seis ficheros, todos verificados por el núcleo de Lean 4 y **sin Mathlib**.
 
 `Aplanado.lean` — **generado** por `dioph_lean.py`, no escrito a mano: el
 aplanado a grado 2 del sistema (1), o sea el **(44, 5)**. Llevaba tiempo en el
@@ -20,6 +20,21 @@ de sus catorce ecuaciones. Existe porque esos tres hechos se estaban *citando*.
 
 `Eliminacion21.lean` — usando esas cotas, **25 incógnitas ⟶ 20**: generador
 **(21, 25)**, cinco variables por debajo del (26, 25) publicado.
+
+`Cotas3.lean` — **siete de las ocho cotas** que bloquean las catorce
+eliminaciones del Teorema 3.9 (el sistema de la sección 3 de JSWW, el «método
+del cociente»). El criterio estructural del proyecto —todos los coeficientes
+≥ 0— es *suficiente pero no necesario*, y allí sólo licencia 6 de 14; con estas
+cotas, **13**. Tres ideas: una cadena elemental (`M ≥ 1 → A ≥ 1 → D ≥ 1 →
+E ≥ 2 → F ≥ A → G ≥ 1 → I ≥ 1`); el encaje de cuadrados de `Pell.n_ge_two`
+**reutilizado tal cual** para (I) y (II), porque `U(2k,n)` desarrollado *es* la
+ecuación (4) del sistema (1); y la lectura de esa misma (I) como una Pell de
+`A = 2k+3` con `y = 2(k+1)(n+1)` —`16m³(m+1) = ((2m+1)²−1)·4m²`— que da
+`n+1 ≥ 8k` con `completitud`, `Y_mod`, `Y_mono` e `Y_tres` sin escribir Pell
+otra vez. Usa 15 de las 21 condiciones y **no usa (XIV)**, la única con
+hipótesis heredada. La que falta, `S`, está demostrada para todo `k ≥ 1` y sólo
+queda abierta en `k = 0`, donde resulta ser el mismo hueco que (XIV) — escrito
+como pendiente, no disimulado.
 
 `Eliminacion.lean` — **el resultado del proyecto**: el sistema (1) de
 Jones–Sato–Wada–Wiens, que ellos publican con 25 incógnitas más el parámetro

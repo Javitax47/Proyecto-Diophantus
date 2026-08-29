@@ -74,6 +74,7 @@ TESTS = [
     ("test_lean_eliminacion.py",      "Calculo diofantico: la eliminacion (26,25) -> (23,25) formalizada dice lo que creemos"),
     ("test_lean_pell.py",             "Calculo diofantico: Pell formalizado -- `a >= e+1` deja de ser una cita"),
     ("test_lean_eliminacion21.py",    "Calculo diofantico: el (21,25) formalizado dice lo que creemos"),
+    ("test_lean_cotas3.py",           "Calculo diofantico: seis de las ocho cotas de la seccion 3, formalizadas"),
     ("test_discovery_campaign.py",    "Campaña de descubrimiento: barrido de familias paramétricas (certificado)"),
     ("test_product.py",               "Producto monetizable: verifier + recheck independiente + metering + atlas"),
     ("test_qubo.py",                  "Exportador a QUBO (sistema diofántico -> optimización binaria / annealing)"),

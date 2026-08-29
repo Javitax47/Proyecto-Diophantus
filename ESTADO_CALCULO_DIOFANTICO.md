@@ -28,7 +28,11 @@
 >   variable de más;
 > * esquina de grado 5: **(44, 5)** — **por encima** del (42, 5) que JSWW *anunciaron*, o sea que
 >   **ahí no los batimos**;
-> * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización).
+> * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización);
+> * **trece de las catorce eliminaciones de la sección 3 de JSWW**, que ellos despachan con «*the
+>   unknowns … eliminate by substitution*» y nosotros sólo podíamos licenciar seis, quedan
+>   **demostradas y formalizadas** en `Cotas3.lean` (§2.septies). La que falta, `S`, está demostrada
+>   para todo `k ≥ 1`: el hueco entero cabe en `k = 0`, y coincide con la hipótesis heredada de (XIV).
 >
 > Ninguna de estas cifras es un mínimo demostrado: todas son **cotas superiores construidas**.
 >
@@ -747,7 +751,8 @@ Dos cosas, y las dos importan:
   puntos están, por tanto, en la misma situación en la que estuvo el (21,25) antes de formalizar
   Pell: **construidos y medidos, pendientes de una demostración que se sabe cómo hacer**.
 
-El paso siguiente es demostrarlas — y son mucho más fáciles que la de Pell.
+De esas ocho cotas hay ahora **siete demostradas y formalizadas** (§2.septies). Los tres puntos
+siguen siendo condicionales: falta una, y hacen falta las catorce sustituciones.
 
 ## 2.sexies ⛔ LA ESQUINA DE GRADO 5, CERRADA: seis vías medidas y agotadas
 
@@ -780,6 +785,112 @@ literatura, no sobre nosotros.
 Que (44,5) sea un mínimo. No lo es: la cota del optimizador sigue siendo **de su codificación**, y hay
 precedente documentado de que puede sobreestimar. Lo que está agotado son las vías que este proyecto
 sabe recorrer, no el problema.
+
+## 2.septies ✅ LAS COTAS DE LA SECCIÓN 3: SIETE DE OCHO, DEMOSTRADAS Y FORMALIZADAS
+
+El criterio de soundness del proyecto para eliminar una incógnita `u` definida por `u = expr` es que
+`expr` tenga **todos los coeficientes ≥ 0**, y por tanto sea `≥ 0` automáticamente sobre ℕ. Ese
+criterio es **suficiente, no necesario**, y sobre el sistema del Teorema 3.9 se queda corto: de las
+catorce que JSWW eliminan «*by substitution*» (p. 461), sólo seis lo pasan. Las ocho restantes están
+bloqueadas por **una resta cada una**.
+
+Ahora hay siete más demostradas, en `formalizacion/lean/Cotas3.lean` — compila con Lean 4.33.1, sin
+Mathlib, sin `sorry` y sin axiomas propios (sólo `propext`, `Classical.choice`, `Quot.sound`).
+
+### El censo, que es lo que hay que mirar
+
+| incógnita | valor definitorio | estado |
+|---|---|---|
+| `M`, `A`, `B`, `C`, `E`, `H` | sin restas | **estructural** (ya pasaban) |
+| `D` | `A²C² − C² + 1` | **demostrada** — `A ≥ 1` |
+| `F` | `A²E² − E² + 1` | **demostrada** — `A ≥ 1` |
+| `G` | `F² − AF + A` | **demostrada** — `F ≥ A` |
+| `I` | `G²H² − H² + 1` | **demostrada** — `G ≥ 1` |
+| `K` | `Mp − k + n − p + 1` | **demostrada** — `k ≤ n+1` |
+| `L` | `Mlx + k − l + 1` | **demostrada** — `Mx ≥ 1` |
+| `R` | `Mnrx + k − r + 1` | **demostrada** — `Mnx ≥ 1` |
+| `S` | `kz + k + z − 1` | ⛔ pendiente **sólo en `k = 0`** — demostrada para `k ≥ 1` |
+
+**De 6 licenciadas se pasa a 13 de 14.** Reproducible con `dioph_jsww3.censo_eliminaciones()`.
+
+### Las tres ideas, y son sólo tres
+
+**La cadena.** `M = 16nx(w+2)+1 ≥ 1` porque todo vive en ℕ; de ahí `A = M(x+1) ≥ 1`, y de ahí
+`A²−1 ≥ 0`, que es exactamente el `−1` que bloqueaba `D` y `F`. Luego `C = m+n+1 ≥ 1`, `D ≥ 1`,
+`E = 2(i+1)DC² ≥ 2`, y con `E ≥ 2` sale
+
+```
+F = (A²−1)E² + 1  ≥  4(A²−1) + 1 = 4A² − 3  ≥  A     porque  4A²−A−3 = (A−1)(4A+3) ≥ 0
+```
+
+que es `F ≥ A`, la resta que bloqueaba `G`; y `G = A + F(F−A) ≥ A ≥ 1` desbloquea `I`.
+
+**El encaje de cuadrados, reutilizado.** `U(X,0) = t⁴+2t³+1` con `t = X+2`, y eso **no es cuadrado**
+para `t ≥ 2` porque cae estrictamente entre dos consecutivos:
+
+```
+(t²+t−1)²  <  t⁴ + 2t³ + 1  <  (t²+t)²          huecos: t²+2t  y  t²−1
+```
+
+Luego (I) `U(2k,n) = c₁²` fuerza `n ≥ 1` y (II) `U(2n,x) = c₂²` fuerza `x ≥ 1`, que es lo que da
+`Mx ≥ 1` y `Mnx ≥ 1`. Y el lema **ya estaba formalizado**: `U(2k,n)` desarrollado es literalmente la
+ecuación (4) del sistema (1), así que `Pell.n_ge_two` sirve para las dos sin tocarlo — instanciado
+con `k := n`, `n := x` para (II). De hecho da `≥ 2`, no `≥ 1`.
+
+**La misma ecuación (I), leída como una Pell.** `K = n−k+1+p(M−1)` pide `k ≤ n+1`, y eso parecía
+salirse de lo que hay: `Pell.lean` trata `x² − (A²−1)y² = 1`, y el coeficiente de (I) es
+`16(k+1)³(k+2)`, que con `m = k+1` da la Pell de `d = m(m+1)` — **no** de la forma `A²−1`. Pero sí lo
+es, y la cuenta es de una línea:
+
+```
+16m³(m+1)(n+1)²  =  (4m² + 4m) · (2m(n+1))²  =  ((2m+1)² − 1) · (2m(n+1))²
+```
+
+O sea `A = 2m+1 = 2k+3` e `y = 2(k+1)(n+1)`, y `Pell.lean` **se aplica tal cual, sin tocarlo**. La
+congruencia `Y_j ≡ j (mod A−1)` manda la divisibilidad `2(k+1) ∣ y` al índice, luego `j ≥ 2(k+1) ≥ 4`
+—esto para `k ≥ 1`; en `k = 0` la conclusión `k ≤ n+1` es trivial y se despacha aparte—;
+el crecimiento desde `Y₃ = 4A²−1` da `2(k+1)(n+1) ≥ 16k²+48k+35`, o sea **`n+1 ≥ 8k`**. La cota fina
+de JSWW es `n > (2k)^(2k)`; para eliminar `K` basta ésta, mucho más burda. Contrastado numéricamente:
+el mínimo `n+1` es **3, 245, 87 815, 75 117 609, 118 742 236 811** para `k = 0..4`.
+
+El teorema final usa **quince de las veintiuna condiciones**, y en particular **no usa (XIV)**, que
+es la única de la transcripción con hipótesis heredada. Menos hipótesis, teorema más fuerte.
+
+### La que falta, y por qué no es la misma clase de cosa
+
+**`S` pide `(z+1)(k+1) ≥ 2`**, y falla exactamente en `z = k = 0`. Para **todo `k ≥ 1` sale gratis**
+—`(z+1)(k+1) ≥ 1·2 = 2` sin usar ninguna otra ecuación— y eso está demostrado
+(`Cotas3.S_nonneg_de_k_pos`). En `k = 0` no hay demostración que buscar por el camino habitual: `z`
+aparece **sólo** en (XXI), así que ninguna otra ecuación lo restringe. Lo que `S ≥ 0` dice en el
+sistema original es precisamente que ese par no es solución, y al eliminar `S` esa información se
+pierde. Recuperarla obliga a mirar (XIV) con `S+1 = 0` — y (XIV) ya arrastra su propia hipótesis
+heredada (`De > 0`, la fórmula (15) de la p. 458).
+
+**`S` y (XIV) son el mismo hueco, no dos, y ese hueco vive en un único valor del parámetro.** Esa es la
+conclusión que se ha aprendido aquí y que no se sabía: toda cifra que salga del sistema reducido es
+correcta **para todo `k ≥ 1`**, y la duda entera cabe en `k = 0`.
+
+### Un hallazgo lateral que conviene tener escrito
+
+La eliminación en la sección 3 **no se puede materializar expandiendo**. Sustituir `A` dentro de `D`,
+`D` dentro de `E`, `E` dentro de `F`, `F` dentro de `G` y `G` dentro de `I` dobla el grado en cada
+paso; `sympy.expand` no termina (medido: >10 minutos sin salida, incluso quitando (XIV), que es la
+ecuación cara). Por eso el censo es **estático** —mira cada ecuación definitoria por separado— y por
+eso los grados de esta sección se calculan recorriendo el árbol. No es una preferencia: es lo único
+que corre.
+
+### Lo que esto NO consigue
+
+Dos cosas, y las dos importan más que lo conseguido:
+
+* **los tres puntos (17,521), (16,1137) y (15,3233) siguen siendo condicionales.** Necesitan las
+  catorce sustituciones y falta una, más la hipótesis de (XIV) — que resulta ser el mismo hueco que
+  `S`. O sea que lo que queda es **un** hueco, no dos, y vive entero en `k = 0`;
+* **la frontera de Pareto no se mueve, y ya estaba medido.** Concediendo las ocho cotas, lo mejor era
+  (26,29) y de ahí hacia abajo hasta (21,69): todo dominado por el **(21,25)** del sistema (1). Estas
+  siete cotas no se demostraron para ganar un punto; se demostraron porque siete pasos que la
+  literatura da por sabidos pasan de creídos a verificados por máquina, y el hueco restante queda
+  reducido a **un enunciado exacto** en vez de a una nota al pie.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

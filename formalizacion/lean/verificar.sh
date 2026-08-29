@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verifica `CotaA.lean` desde cero: descarga Lean si hace falta, compila y audita
+# Verifica los seis .lean desde cero: descarga Lean si hace falta, compila y audita
 # los axiomas. Sin Mathlib -- solo el nucleo, asi que no hay que construir nada.
 set -euo pipefail
 VER=4.33.1
@@ -36,6 +36,8 @@ echo ">> compilando Pell.lean"
 lean -o "$AQUI/Pell.olean" "$AQUI/Pell.lean"
 echo ">> compilando Eliminacion21.lean"
 LEAN_PATH="$AQUI" lean -o "$AQUI/Eliminacion21.olean" "$AQUI/Eliminacion21.lean"
+echo ">> compilando Cotas3.lean"
+LEAN_PATH="$AQUI" lean -o "$AQUI/Cotas3.olean" "$AQUI/Cotas3.lean"
 
 echo ">> auditando axiomas (deben ser solo propext / Classical.choice / Quot.sound)"
 cat > "$AQUI/.auditoria0.lean" <<'LEAN'
@@ -83,11 +85,25 @@ open Diophantus
 #print axioms equisatisfacible21
 #check @equisatisfacible21
 LEAN
+cat > "$AQUI/.auditoria5.lean" <<'LEAN'
+import Cotas3
+open Diophantus
+#print axioms one_le_mul
+#print axioms D_ge_one
+#print axioms F_ge_A
+#print axioms n_ge_two_de_I
+#print axioms x_ge_two_de_II
+#print axioms n_succ_ge_k
+#print axioms K_nonneg
+#print axioms cotas_seccion_tres
+#check @cotas_seccion_tres
+LEAN
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria0.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria2.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria3.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria4.lean"
+LEAN_PATH="$AQUI" lean "$AQUI/.auditoria5.lean"
 rm -f "$AQUI"/.auditoria*.lean "$AQUI"/*.olean
 
 echo ">> comprobando que el ENUNCIADO es el teorema que se cree demostrar"
@@ -96,3 +112,4 @@ PYTHONPATH=. python3 src/tests/verification/test_lean_cota_a.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_pell.py
 PYTHONPATH=. python3 src/tests/verification/test_lean_eliminacion21.py
+PYTHONPATH=. python3 src/tests/verification/test_lean_cotas3.py

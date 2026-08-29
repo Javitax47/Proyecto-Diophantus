@@ -172,6 +172,11 @@ def sistema3(expandir=False):
     Dp = Dioph(params=[k], unknowns=list(INCOGNITAS_3), eqs=eqs, witness=None,
                name="JSWW 1976, Teorema 3.9 (metodo del cociente)")
     Dp.no_negativos = ()
+    # Las seis cuya no-negatividad esta DEMOSTRADA (ver `COTAS_DEMOSTRADAS`) y
+    # que el test estructural rechaza. Sin esto solo se eliminan seis de las
+    # catorce que JSWW eliminan; con esto, doce. Las dos que faltan --`K` y
+    # `S`-- estan en `COTAS_PENDIENTES` con el hueco senalado.
+    Dp.no_negativas_incognitas = DESBLOQUEADAS
     return Dp
 
 
@@ -230,3 +235,230 @@ def sistema3(expandir=False):
 # 521-553-- que vale SIETE variables y sigue sin implementar. Este proyecto midio
 # una vez su "techo" y lo descarto, pero lo midio sobre el sistema (1), donde
 # apenas hay condiciones que colapsar. Aqui hay ocho.
+
+
+# ===========================================================================
+#  LAS OCHO COTAS QUE BLOQUEAN LAS ELIMINACIONES -- SEIS DEMOSTRADAS
+# ===========================================================================
+#
+# El test estructural del proyecto ("todos los coeficientes >= 0") es SUFICIENTE
+# pero no necesario, y sobre este sistema se queda corto: de las catorce
+# incognitas que JSWW eliminan por sustitucion, solo seis pasan el test. Las
+# otras ocho estan bloqueadas por una resta cada una. Abajo estan las ocho, con
+# demostracion completa las que la tienen y con el hueco senalado las que no.
+#
+# TODAS las variables recorren N (>= 0). `k` es el parametro.
+
+#: `U(X, 0) = t^4 + 2t^3 + 1` con `t = X+2`, y ese numero NO es un cuadrado
+#: cuando `t >= 2`, porque cae ESTRICTAMENTE entre dos cuadrados consecutivos:
+#:
+#:     (t^2+t-1)^2  <  t^4 + 2t^3 + 1  <  (t^2+t)^2
+#:
+#: las dos diferencias son `t^2+2t > 0` y `t^2-1 > 0`. Comprobado ademas por
+#: fuerza bruta hasta t = 4000 (`cotas_verificadas`).
+#:
+#: Consecuencia inmediata, y es la que desbloquea `L` y `R`:
+#:   * (I) dice `U(2k,n) = c1^2`, luego **n >= 1**  (si n=0, t=2k+2>=2);
+#:   * (II) dice `U(2n,x) = c2^2`, luego **x >= 1**  (si x=0, t=2n+2>=2).
+LEMA_CUADRADO = "U(X,0) no es cuadrado para X >= 0: (t^2+t-1)^2 < t^4+2t^3+1 < (t^2+t)^2"
+
+COTAS_DEMOSTRADAS = {
+    # ---- las que salen de que todo es >= 0, sin usar ninguna ecuacion ----
+    'M': ("M >= 1", "M = 16nx(w+2)+1 y todo es >= 0."),
+    'A': ("A >= 1", "A = M(x+1) >= 1*1 con M >= 1."),
+    'B': ("B >= 1", "B = n+1."),
+    'C': ("C >= 1", "C = m+B >= 0+1."),
+    # ---- la cadena, cada una apoyada en la anterior ----
+    'D': ("D >= 1",
+          "D = (A^2-1)C^2 + 1 y A >= 1, luego A^2-1 >= 0. DESBLOQUEA la "
+          "eliminacion de D, que el test rechaza por el -1 de (A^2-1)."),
+    'E': ("E >= 2",
+          "E = 2(i+1)DC^2 >= 2*1*1*1 con D >= 1 y C >= 1."),
+    'F': ("F >= A",
+          "F = (A^2-1)E^2 + 1 >= 4(A^2-1)+1 = 4A^2-3 usando E >= 2, y "
+          "4A^2-3-A = (A-1)(4A+3) >= 0 porque A >= 1. Tambien F >= 1. "
+          "DESBLOQUEA F (mismo -1 que D) y, via F-A >= 0, tambien G."),
+    'G': ("G >= 1",
+          "G = A + F(F-A) >= A >= 1, porque F >= 0 y F-A >= 0. DESBLOQUEA G, "
+          "que el test rechaza por la resta F-A."),
+    'I': ("I >= 1",
+          "I = (G^2-1)H^2 + 1 y G >= 1. DESBLOQUEA I (el -1 de G^2-1)."),
+    # ---- las dos que salen del lema del cuadrado ----
+    'L': ("L >= 0  (porque Mx >= 1)",
+          "L = k+1 + l(Mx-1); basta Mx >= 1, y eso sale de M >= 1 y x >= 1, "
+          "donde x >= 1 es el LEMA_CUADRADO aplicado a (II)."),
+    'R': ("R >= 0  (porque Mnx >= 1)",
+          "R = k+1 + r(Mnx-1); basta Mnx >= 1, y eso sale de M >= 1, n >= 1 y "
+          "x >= 1, donde n >= 1 y x >= 1 son el LEMA_CUADRADO en (I) y (II)."),
+    # ---- la que sale de Pell, releyendo la MISMA ecuacion (I) ----
+    'K': ("K >= 0  (porque k <= n+1)",
+          "K = n-k+1 + p(M-1); basta k <= n+1 y M >= 1. La ecuacion (I) parecia "
+          "no ser una Pell de la forma que `Pell.lean` trata --su coeficiente es "
+          "16(k+1)^3(k+2)-- pero LO ES: con m = k+1, "
+          "16m^3(m+1)(n+1)^2 = ((2m+1)^2 - 1)(2m(n+1))^2, o sea A = 2k+3 e "
+          "y = 2(k+1)(n+1). Con eso la congruencia `Y_j = j (mod A-1)` manda "
+          "`2(k+1) | y` al indice, `j >= 2(k+1) >= 4 > 3`, y el crecimiento desde "
+          "`Y_3 = 4A^2-1` da 2(k+1)(n+1) >= 16k^2+48k+35, luego n+1 >= 8k. La "
+          "cota fina de JSWW es n > (2k)^(2k); para eliminar `K` basta la burda."),
+}
+
+#: Las incognitas cuya eliminacion queda LICENCIADA por las cotas de arriba.
+#: `M`, `A`, `B`, `C`, `E`, `H` ya pasaban el test estructural; estas siete no.
+#: Con las dos listas van TRECE de las catorce que JSWW eliminan en la p. 461.
+DESBLOQUEADAS = ('D', 'F', 'G', 'I', 'K', 'L', 'R')
+
+COTAS_PENDIENTES = {
+    'S': ("(z+1)(k+1) >= 2, y SOLO en k = 0",
+          """EL UNICO HUECO QUE QUEDA, y esta acotado a un punto. `S` pide
+          `(z+1)(k+1) >= 2`, que falla en `z = 0` y `k = 0` y en ningun otro
+          sitio: para `k >= 1` sale gratis, `(z+1)(k+1) >= 1*2 = 2`, sin usar
+          ninguna otra ecuacion. Eso esta DEMOSTRADO en `Cotas3.S_nonneg_de_k_pos`.
+
+          En `k = 0` no hay demostracion que buscar por el camino habitual: `z`
+          aparece SOLO en (XXI), asi que ninguna otra ecuacion lo restringe. Lo
+          que `S >= 0` dice en el sistema original es exactamente que el par
+          `z = k = 0` no es solucion; al eliminar `S` esa informacion se pierde y
+          el sistema reducido podria ganar soluciones espureas en `k = 0`.
+          Recuperarla exige mirar (XIV) con `S+1 = 0`, y (XIV) ya arrastra su
+          propia hipotesis heredada (`De > 0`, la formula (15) de la p. 458).
+
+          O sea: `S` y la desigualdad (XIV) son EL MISMO hueco, no dos, y ese
+          hueco vive en un unico valor del parametro. Toda cifra que salga del
+          sistema reducido es correcta para todo `k >= 1`."""),
+}
+
+
+def cotas_verificadas(tope=4000, casos=200000, semilla=0):
+    """Comprueba numericamente las seis cotas demostradas. Devuelve un informe.
+
+    No sustituye a la demostracion --esta en `Cotas3.lean`-- pero atrapa erratas
+    de transcripcion, que es de lo que este proyecto ha muerto varias veces.
+    """
+    import math
+    import random
+
+    fallos = []
+    # el lema del cuadrado, por fuerza bruta
+    for t_ in range(2, tope):
+        v = t_ ** 4 + 2 * t_ ** 3 + 1
+        if math.isqrt(v) ** 2 == v:
+            fallos.append(f"U(X,0) cuadrado en t={t_}")
+    # el lema del cuadrado, simbolicamente (las dos diferencias)
+    T = sympy.Symbol('T')
+    medio = T ** 4 + 2 * T ** 3 + 1
+    if sympy.expand(U(T - 2, 0) - medio) != 0:
+        fallos.append("U(X,0) no es t^4+2t^3+1")
+    if sympy.expand(medio - (T ** 2 + T - 1) ** 2) != T ** 2 + 2 * T:
+        fallos.append("hueco inferior del lema mal")
+    if sympy.expand((T ** 2 + T) ** 2 - medio) != T ** 2 - 1:
+        fallos.append("hueco superior del lema mal")
+
+    # LA IDENTIDAD DE LA QUE CUELGA LA COTA DE `K`, y es donde se colaria el
+    # error: que (I) SEA la Pell de `A = 2k+3` con `y = 2(k+1)(n+1)`. Si esto
+    # fuera falso, `Cotas3.n_succ_ge_k` compilaria hablando de otra ecuacion.
+    K_ = sympy.Symbol('K_')
+    if sympy.expand(16 * (K_ + 1) ** 3 * (K_ + 2)
+                    - ((2 * K_ + 3) ** 2 - 1) * 4 * (K_ + 1) ** 2) != 0:
+        fallos.append("(I) no es la Pell de A = 2k+3 con y = 2(k+1)(n+1)")
+    # y la cota que se saca de ella:  2(k+1)(n+1) >= 4(2k+3)^2 - 1  =>  n+1 >= 8k
+    if sympy.expand((16 * K_ ** 2 + 48 * K_ + 35) - 8 * K_ * (2 * K_ + 2)) \
+            != 32 * K_ + 35:
+        fallos.append("la cota n+1 >= 8k no se sigue de 4(2k+3)^2 - 1")
+
+    rnd = random.Random(semilla)
+    for _ in range(casos):
+        kk, nn, xx, ww, mm, ii, jj = [rnd.randint(0, 6) for _ in range(7)]
+        M_ = 16 * nn * xx * (ww + 2) + 1
+        A_ = M_ * (xx + 1)
+        B_ = nn + 1
+        C_ = mm + B_
+        D_ = (A_ ** 2 - 1) * C_ ** 2 + 1
+        E_ = 2 * (ii + 1) * D_ * C_ ** 2
+        F_ = (A_ ** 2 - 1) * E_ ** 2 + 1
+        G_ = A_ + F_ * (F_ - A_)
+        H_ = B_ + 2 * (jj + 1) * C_
+        I_ = (G_ ** 2 - 1) * H_ ** 2 + 1
+        for cond, etiqueta in ((M_ >= 1, 'M>=1'), (A_ >= 1, 'A>=1'),
+                               (B_ >= 1, 'B>=1'), (C_ >= 1, 'C>=1'),
+                               (D_ >= 1, 'D>=1'), (E_ >= 2, 'E>=2'),
+                               (F_ >= A_, 'F>=A'), (G_ >= 1, 'G>=1'),
+                               (H_ >= 1, 'H>=1'), (I_ >= 1, 'I>=1')):
+            if not cond:
+                fallos.append(f"{etiqueta} falla en {(kk,nn,xx,ww,mm,ii,jj)}")
+    return {"ok": not fallos, "fallos": fallos,
+            "cotas": sorted(COTAS_DEMOSTRADAS), "desbloqueadas": DESBLOQUEADAS}
+
+
+def censo_eliminaciones():
+    """Cuenta cuantas de las catorce eliminaciones estan licenciadas, y por que.
+
+    ESTATICO A PROPOSITO, y la razon es una medida, no una preferencia. Mirar
+    cada ecuacion definitoria POR SEPARADO --sin sustituir en cascada-- da la
+    respuesta en dos segundos. Hacerlo de verdad, con `eliminar_lineales`, es
+    INABORDABLE: al sustituir `A` dentro de `D`, `D` dentro de `E`, `E` dentro
+    de `F`, `F` dentro de `G` y `G` dentro de `I`, el grado se dobla en cada
+    paso y `sympy.expand` no termina (medido: >10 minutos sin salida ni con
+    (XIV) fuera, que es la ecuacion cara). Los grados de la seccion 3 hay que
+    calcularlos recorriendo el arbol, como hace `dioph_combinar.grado_combinado`;
+    expandir no es una opcion en este sistema y conviene tenerlo escrito.
+
+    Lo que este censo SI decide, que es lo que importa, es CUALES se pueden
+    eliminar -- y eso no depende del orden: la cota es un hecho sobre el valor
+    de la incognita en toda solucion.
+    """
+    from src.analysis.dioph_degree import _coeficientes_no_negativos_expr
+
+    sim = {str(s): s for s in INCOGNITAS_3 + [k]}
+    filas = []
+    for nombre in ELIMINABLES_JSWW:
+        u = sim[nombre]
+        for e in ECUACIONES_3:
+            if u not in e.free_symbols:
+                continue
+            ex = sympy.expand(e)
+            coef = ex.coeff(u, 1)
+            if coef not in (1, -1) or ex.coeff(u, 2) != 0:
+                continue
+            resto = sympy.expand(ex - coef * u)
+            if u in resto.free_symbols:
+                continue
+            valor = sympy.expand(-resto / coef)
+            libre = _coeficientes_no_negativos_expr(valor)
+            estado = ("estructural" if libre else
+                      "demostrada" if nombre in DESBLOQUEADAS else
+                      "pendiente" if nombre in COTAS_PENDIENTES else "sin clasificar")
+            filas.append((nombre, str(sympy.factor(valor)), estado))
+            break
+    cuenta = {est: sum(1 for _, _, e in filas if e == est)
+              for est in ("estructural", "demostrada", "pendiente", "sin clasificar")}
+    return {"filas": filas, "cuenta": cuenta,
+            "licenciadas": cuenta["estructural"] + cuenta["demostrada"],
+            "total": len(filas)}
+
+
+# ---------------------------------------------------------------------------
+#  LO QUE CAMBIA CON LAS SEIS COTAS, Y LO QUE NO
+# ---------------------------------------------------------------------------
+#
+# ANTES:  6 de 14 eliminaciones licenciadas (M, A, B, C, E, H).
+# AHORA: 13 de 14 (mas D, F, G, I, K, L, R), demostradas en `Cotas3.lean` sin
+#        Mathlib, sin axiomas propios y sin usar la desigualdad (XIV).
+# FALTA:  S, y solo S -- y solo en `k = 0`: para `k >= 1` tambien esta
+#         demostrada (`Cotas3.S_nonneg_de_k_pos`). Ver `COTAS_PENDIENTES`.
+#
+# LO QUE ESTO NO ARREGLA, y hay que decirlo antes que nada:
+#
+#   1. Los tres puntos (17,521), (16,1137) y (15,3233) del teorema de combinacion
+#      NO dejan de ser condicionales. Necesitan las CATORCE sustituciones y falta
+#      una. Ademas descansan en la hipotesis heredada de (XIV) (`De > 0`, la
+#      formula (15) de la p. 458) -- que resulta ser EL MISMO hueco que el de `S`,
+#      asi que lo que queda es UN hueco, no dos.
+#
+#   2. La frontera de Pareto no se mueve. Ya estaba medido --concediendo las ocho
+#      cotas, lo mejor era (26,29) y de ahi hacia abajo hasta (21,69)-- y todo
+#      eso lo domina el (21,25) que ya tenemos del sistema (1).
+#
+# LO QUE SI CAMBIA: siete de los ocho pasos que la literatura da por sabidos
+# ("the unknowns ... eliminate by substitution", p. 461) pasan de creidos a
+# demostrados y verificados por maquina, y el hueco que queda esta reducido a UN
+# enunciado exacto en vez de a una nota al pie.

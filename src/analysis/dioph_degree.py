@@ -509,7 +509,7 @@ def flatten_best(system, target=2, name=None):
     a = flatten_greedy(system, target, name)
     b = flatten_tree(system, target, name)
     return a if a.cost() <= b.cost() else b
-def eliminar_lineales(system, target=2, solo=None, name=None):
+def eliminar_lineales(system, target=2, solo=None, name=None, demostradas=None):
     """Elimina incognitas definidas por una ecuacion lineal, ANTES de aplanar.
 
     Si una ecuacion tiene la forma `u = expr` con `u` de grado 1 y coeficiente
@@ -526,7 +526,26 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     Compensacion: la sustitucion SUBE el grado donde `u` aparecia, asi que puede
     salir cara al aplanar despues. `solo` permite fijar que incognitas eliminar
     (por nombre) para medir cada una por separado en vez de aplicarlas a ciegas.
+
+    `demostradas` (o el atributo `system.no_negativas_incognitas`) es la puerta
+    de escape HONESTA: nombres de incognitas cuya no-negatividad esta demostrada
+    fuera del test estructural. El test de "todos los coeficientes >= 0" es
+    SUFICIENTE, no necesario, y sin esta puerta el sistema de la seccion 3 se
+    queda en seis eliminaciones de catorce por culpa de restas como `A^2-1` que
+    son no negativas por razones que el test no ve. Cada nombre que entre aqui
+    tiene que tener su demostracion escrita en alguna parte; ver
+    `dioph_jsww3.COTAS_DEMOSTRADAS` y `formalizacion/lean/Cotas3.lean`.
     """
+    # Se indexa por NOMBRE de incognita, no por la cadena de la expresion, y la
+    # diferencia importa: el valor sustituido depende de que eliminaciones se
+    # hayan hecho antes, asi que casar cadenas se pierde EN SILENCIO en cuanto
+    # cambia el orden (ya paso, ver `dioph_jsww.no_negativos_pell`). El nombre
+    # es estable: la cota es un hecho sobre el VALOR de esa incognita en toda
+    # solucion, y ese valor no depende del orden de sustitucion.
+    if demostradas is None:
+        demostradas = getattr(system, "no_negativas_incognitas", ())
+    demostradas = set(str(u) for u in demostradas)
+
     params = list(system.params)
     unknowns = list(system.unknowns)
     # DOS COPIAS A PROPOSITO. `plano` se expande porque la deteccion de
@@ -546,6 +565,7 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     plano = [sympy.expand(e) for e in system.eqs]
     eqs = list(system.eqs)
     eliminadas = []
+    por_demostracion = []      # las que pasaron por cota demostrada, no por el test
 
     cambiado = True
     while cambiado:
@@ -563,7 +583,9 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
                     continue
                 valor = sympy.expand(-resto / coef)
                 if not _coeficientes_no_negativos_expr(valor):
-                    continue          # u >= 0 dejaria de estar garantizado
+                    if str(u) not in demostradas:
+                        continue      # u >= 0 dejaria de estar garantizado
+                    por_demostracion.append(str(u))
                 # La sustitucion se hace sobre el arbol SIN expandir despues:
                 # `subs` respeta la estructura, y esa estructura es la que el
                 # optimizador aprovecha.
@@ -588,6 +610,7 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     out = Dioph(params, unknowns, eqs, witness=w_ext,
                 name=name or f"{system.name} [sin lineales]")
     out.eliminadas = eliminadas
+    out.por_demostracion = por_demostracion
     return out
 
 
