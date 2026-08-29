@@ -591,6 +591,103 @@ def eliminar_lineales(system, target=2, solo=None, name=None):
     return out
 
 
+def definiciones_disponibles(system, solo=None):
+    """TODAS las parejas (incognita, indice de ecuacion, valor) que se pueden usar.
+
+    POR QUE HACE FALTA, y es un hueco que estuvo abierto toda la vida del
+    proyecto. `eliminar_lineales` recorre las ecuaciones y se queda con la
+    PRIMERA que define la incognita. Pero una misma incognita suele estar
+    definida por VARIAS: en el sistema (1) de JSWW, `q` lo esta por las
+    ecuaciones (1), (3) y (13), y `z` por la (2), la (3) y la (14). Cada eleccion
+    sustituye una expresion distinta y por tanto **deja el sistema en un grado
+    distinto** -- y la que se cogia era la primera del bucle, o sea un accidente
+    del orden en que estan escritas.
+
+    Medido: eliminando las siete incognitas disponibles con la eleccion por
+    defecto sale un generador de grado 61; JSWW anuncian 29 con el mismo numero
+    de variables. Esa brecha no es de catalogo ni de particiones: es de ELECCION
+    DE DEFINICION.
+    """
+    params, unknowns = list(system.params), list(system.unknowns)
+    plano = [sympy.expand(e) for e in system.eqs]
+    out = []
+    for idx, e in enumerate(plano):
+        for u in unknowns:
+            if solo is not None and str(u) not in solo:
+                continue
+            coef = e.coeff(u, 1)
+            if coef not in (1, -1) or e.coeff(u, 2) != 0:
+                continue
+            resto = sympy.expand(e - coef * u)
+            if u in resto.free_symbols:
+                continue
+            valor = sympy.expand(-resto / coef)
+            if not _coeficientes_no_negativos_expr(valor):
+                continue
+            out.append((u, idx, valor))
+    return out
+
+
+def eliminar_una(system, u, idx, valor, name=None):
+    """Elimina `u` usando LA ecuacion `idx`, no la primera que sirva.
+
+    Es `eliminar_lineales` partida en dos para que quien llama pueda elegir la
+    definicion. La sustitucion se hace sobre el arbol sin expandir, por el mismo
+    motivo documentado alli: expandir destruye los nodos compuestos que el
+    optimizador aprovecha.
+    """
+    eqs = [q.subs(u, valor) for kk, q in enumerate(system.eqs) if kk != idx]
+    unknowns = [x for x in system.unknowns if x is not u]
+
+    def w_ext(param_vals):
+        if system.witness is None:
+            return None
+        base = system.witness(param_vals)
+        if base is None:
+            return None
+        return {a: b for a, b in base.items() if a in unknowns}
+
+    out = Dioph(list(system.params), unknowns, eqs, witness=w_ext,
+                name=name or f"{system.name} [-{u}]")
+    out.eliminadas = list(getattr(system, "eliminadas", [])) + [(u, valor)]
+    return out
+
+
+def frontera_eliminando(system, solo=None, tope_grado=None, max_pasos=None):
+    """Frontera (variables, grado) explorando ORDEN **y ELECCION DE DEFINICION**.
+
+    El DFS que habia exploraba todos los ORDENES pero una sola definicion por
+    incognita. Aqui se ramifica sobre las parejas (incognita, ecuacion), que es
+    el espacio completo.
+    """
+    puntos, vistos = {}, set()
+    pila = [(system, ())]
+    while pila:
+        cur, hechas = pila.pop()
+        clave = frozenset(hechas)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        g = max_equation_degree(cur)
+        v = len(cur.unknowns) + 1
+        if g not in puntos or v < puntos[g][0]:
+            puntos[g] = (v, sorted(hechas))
+        if max_pasos is not None and len(hechas) >= max_pasos:
+            continue
+        for u, idx, valor in definiciones_disponibles(cur, solo=solo):
+            E = eliminar_una(cur, u, idx, valor)
+            if tope_grado is not None and max_equation_degree(E) > tope_grado:
+                continue
+            pila.append((E, hechas + (str(u),)))
+    frontera, mejor = [], None
+    for g in sorted(puntos):
+        v, h = puntos[g]
+        if mejor is None or v < mejor:
+            frontera.append((v, 1 + 2 * g, h))
+            mejor = v
+    return frontera
+
+
 def techo_combinacion_relaciones(system):
     """Cuanto podria ahorrar el TEOREMA DE COMBINACION DE RELACIONES en `system`.
 
