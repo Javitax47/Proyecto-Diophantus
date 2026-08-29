@@ -480,7 +480,7 @@ Que el sistema (1) represente los primos. Eso es el teorema de JSWW (1976) y no 
 Todo lo demás —las cotas, las eliminaciones, la equisatisfacibilidad— está verificado por el núcleo de
 Lean 4, sin Mathlib, con axiomas `propext`, `Classical.choice` y `Quot.sound`.
 
-## 2.quater El (42,5) de JSWW: cinco ataques al 20, y la fuente primaria que cierra el caso
+## 2.quater El (42,5) de JSWW: cinco ataques al 20, el método cotejado, y una cita nuestra retirada
 
 `44 = 26 + 20 − 2`: los 26 de JSWW, más 20 nombres para aplanar a grado 2, menos 2 eliminaciones.
 Ellos anuncian 42, o sea **16 nombres**. La brecha está entera en el aplanado. Esto es lo que se
@@ -562,11 +562,11 @@ una pareja desalineada. Se sube el tope a 8 (`TOPE_FACTORES`), que cubre el nodo
 Medido: con tope 6, 7, 8 y 10 el óptimo sigue siendo **20 con cota 20**. El tope no era lo que ataba
 la cifra — pero ahora la cota significa lo que dice.
 
-### 6. RESUELTO: el (42, 5) no sale del método que ellos citan
+### 6. El método de Skolem, cotejado — y una cita de este proyecto que era falsa
 
-Se consiguió la fuente primaria — Davis, *Hilbert's tenth problem is unsolvable*, Amer. Math. Monthly
-**80** (1973) 233–269, **p. 263**, que es la referencia [3] de JSWW. El método está escrito entero, y
-permite **exactamente** estas sustituciones:
+Se consiguió la fuente primaria del **método**: Davis, *Hilbert's tenth problem is unsolvable*, Amer.
+Math. Monthly **80** (1973) 233–269, **p. 263**. Está escrito entero, y permite **exactamente** estas
+sustituciones:
 
 ```
 z_j = y_i·y_k      z_j = y_i²      z_j = x·y_i      z_j = x²
@@ -590,27 +590,51 @@ grado > 2 se construya a su vez de dos partes disponibles, que es la sustitució
 Medido sobre las dos formas del sistema, la original y la agrupada del Teorema 2.12: **25 en ambas,
 con cota 25**.
 
-**El (42, 5) exigiría 16 nombres por ese método, y el mínimo es 25. No es alcanzable.** Y nuestro
-(44, 5) bate a su propio procedimiento citado por **siete** variables.
+**Un (42, 5) por ese método exigiría 16 nombres, y el mínimo exacto es 25.** Nuestro (44, 5) bate a
+ese procedimiento por **siete** variables. Lo que ya no puede afirmarse —hasta cotejar la página
+correcta— es que JSWW lo atribuyan a ese método; ver el aviso de abajo.
 
-> **Esto invierte el sentido del «imposible», y es la primera vez.** Cuatro veces en este proyecto una
-> cota por encima de una cifra publicada delató que el instrumento estaba incompleto — y las cuatro
-> veces la lección fue la misma: sospechar del instrumento. Esta vez el instrumento aguantó cinco
-> ataques (catálogo hasta 3.469 candidatos, prueba de caída sobre el materializador, alineamiento de
-> las reglas de partición) y lo que no cuadra es **la cifra anunciada**.
->
-> Conviene decirlo con la misma prudencia con la que se retiraron las nuestras: lo medido es que **el
-> procedimiento que JSWW citan, aplicado al sistema que citan, no da 42**. No queda demostrado que no
-> exista *otra* construcción que sí lo dé. Pero su frase es explícita sobre cuál y sobre a qué se
-> aplica.
+#### ⛔ Y aquí este documento tenía una cita falsa
+
+`dioph_jsww.py` presentaba, desde el principio y como **«textual (p. 450)»**, la frase de JSWW que
+atribuye el (42,5) a la sustitución de Skolem sobre (1). **Cotejada la p. 450 del original, no está
+ahí.** Lo que sí hay en esa página, y queda confirmado:
+
+* la ecuación (4), la construcción de Putnam: `(k+2){1 − M(k,x₁,…,xₙ)}` — o sea que el `FACTOR = k+2`
+  del módulo **es correcto**;
+* el **Teorema 3**: los primos son el rango exacto de `2 + k·0^{M(k,x₁,…,xₙ)}` con **n ≤ 11**
+  (representación *exponencial*, 12 variables contando `k`);
+* el Teorema 4, sobre `pₙ`;
+* las referencias [4], [7], [8]=Matijasevič, [12]=Putnam, [16]=J. Robinson.
+
+La cita **puede seguir siendo auténtica** y estar en otra de las páginas 449–464: lo único
+establecido es que la página que se citaba es la equivocada. Pero mientras no se coteje, queda **sin
+verificar que el (42,5) sea «(1) pasado por Skolem»** — que es la premisa de toda la comparación de
+este apartado.
+
+**Qué sobrevive y qué no:**
+
+| afirmación | estado |
+|---|---|
+| el método de Skolem sólo nombra monomios de grado 2 | ✅ **cotejado** (Davis 1973, p. 263) |
+| ese método sobre (1) necesita **25** nombres como mínimo exacto ⇒ (51,5) | ✅ **medido**, no depende de ninguna cita |
+| nuestro (44,5) bate a ese método por 7 variables | ✅ se sigue de lo anterior |
+| JSWW **anuncian** (42,5) obtenido por ese método | ⛔ **sin cotejar** — la página citada no lo contiene |
+| «el 42 anunciado no es alcanzable» | ⛔ **retirada**: la premisa sobre lo que anuncian está sin verificar |
+
+> Es la enésima vez que en este proyecto una comprobación que se daba por hecha resulta no estarlo, y
+> la primera que le toca a una **cita**, no a un cálculo. El patrón se repite intacto: lo que llevaba
+> más tiempo escrito y menos veces mirado es lo que estaba mal. Se corrige igual que se corrigieron
+> las cifras — dejándolo visible.
 
 ### Conclusión, y qué queda
 
-El 20 se sostiene desde cinco ángulos independientes, y el (44,5) con él. Con la fuente primaria en la
-mano, la brecha con el 42 **se cierra en contra de la cifra anunciada**, no de nuestro instrumento:
+El 20 se sostiene desde cinco ángulos independientes, y el (44,5) con él. La brecha con el 42 sigue **abierta**, pero
+mejor acotada: no hace falta un instrumento incompleto para explicarla, y sí haría falta cotejar la
+página donde JSWW dicen de dónde sale su cifra:
 
-* el (42, 5) es **una frase suelta de la p. 450**, nunca escrita, igual que el (19,29) y el
-  (12,13697) — y ahora, además, **medida y no reproducible** por el método que la acompaña;
+* el (42, 5) es una cifra **anunciada y nunca escrita**, igual que el (19,29) — y este proyecto ni
+  siquiera tiene cotejada la página donde se anuncia;
 * la codificación *podría* seguir siendo incompleta en sus particiones —hay precedente: sobre el
   sistema con `e` eliminada devuelve cota 21 y existe un aplanado de 20 hecho a mano— pero eso ya no
   hace falta para explicar la brecha.
