@@ -603,10 +603,21 @@ def definiciones_disponibles(system, solo=None):
     distinto** -- y la que se cogia era la primera del bucle, o sea un accidente
     del orden en que estan escritas.
 
-    Medido: eliminando las siete incognitas disponibles con la eleccion por
-    defecto sale un generador de grado 61; JSWW anuncian 29 con el mismo numero
-    de variables. Esa brecha no es de catalogo ni de particiones: es de ELECCION
-    DE DEFINICION.
+    RESULTADO DE MEDIRLO, y es NEGATIVO: sobre el sistema (1), sobre el
+    desplazado y sobre el de la cota de Pell, ramificar tambien por la eleccion
+    de definicion da EXACTAMENTE los mismos puntos --(21,25), (20,37), (19,61)--
+    con recetas distintas. La eleccion arbitraria no estaba costando nada.
+
+    Se deja implementado igual, por dos razones. La primera es que el hueco era
+    real: el codigo elegia por el orden en que estan escritas las ecuaciones, y
+    eso no es una decision, es un accidente. La segunda es que ahora la
+    afirmacion "el orden y la eleccion no importan" esta MEDIDA en vez de
+    supuesta, que es la diferencia entre las dos clases de resultado que este
+    proyecto distingue.
+
+    Lo que NO explica, por tanto, es la brecha entre nuestro (19,61) y el (19,29)
+    que JSWW anuncian. Queda la otra hipotesis: que ese (19,29) no salga del
+    sistema (1) sino de la seccion 3 (ver `dioph_jsww3`).
     """
     params, unknowns = list(system.params), list(system.unknowns)
     plano = [sympy.expand(e) for e in system.eqs]
