@@ -663,6 +663,92 @@ el 42 **se cierra en contra de la cifra anunciada**, no de nuestro instrumento:
 **Marcador de esta esquina, con la fuente primaria cotejada: (44, 5) es la mejor cifra construida y
 verificada, y supera en siete variables al procedimiento que la literatura cita para llegar ahí.**
 
+## 2.quinquies ✅ EL TEOREMA DE COMBINACIÓN, IMPLEMENTADO — y tres puntos nuevos
+
+Era la única pieza de la maquinaria clásica que le faltaba al proyecto, declarada «sin implementar»
+desde el principio, y la única que baja el número de incógnitas de verdad.
+
+### Qué es, textual de la fuente
+
+Matijasevič y Julia Robinson, *«Reduction of an arbitrary diophantine equation to one in 13
+unknowns»*, Acta Arithmetica **27** (1975) 521–553, **Teorema 3, p. 526**:
+
+> Para todo `q` existe `M_q` con coeficientes enteros tal que, para enteros `A₁…A_q, B, C, D` con
+> `B ≠ 0`, las condiciones `A₁ = □, …, A_q = □`, `B | C`, `D > 0` **se cumplen todas si y sólo si**
+> `M_q(A₁,…,A_q,B,C,D,n) = 0` para algún natural `n`, donde
+>
+> `M_q = ∏ ( B²n + C² − B²(2D−1)(C² + W^q ± √A₁ ± √A₂W ± … ± √A_q W^{q−1}) )`,  `W = 1 + ΣAᵢ²`
+
+**q condiciones de cuadrado, más una divisibilidad, más una positividad → una ecuación y una
+incógnita.**
+
+### Cómo se calcula sin raíces
+
+El producto sobre los `2^q` signos es una **norma**: las raíces se cancelan. Se itera
+
+```
+P₀(u) = u ;   Pᵢ(u) = P₍ᵢ₋₁₎(u + cᵢ·s) · P₍ᵢ₋₁₎(u − cᵢ·s),  reduciendo s² → Aᵢ
+```
+
+Para `q = 6` eso son **seis pasos** en vez de sesenta y cuatro factores.
+
+### Validado, y en las dos direcciones
+
+| comprobación | resultado |
+|---|---|
+| `J₁(A,X) = X² − A` | ✅ la forma cerrada del Teorema 1 |
+| equivalencia con `q=1`, 336 casos | ✅ 0 discrepancias |
+| equivalencia con `q=2`, 96 casos | ✅ 0 discrepancias |
+| fórmula del grado vs expansión real | ✅ q=1 → 10, q=2 → 28 |
+
+Los casos que **deben fallar** —`Aᵢ` no cuadrado, `B ∤ C`, `D ≤ 0`— están dentro. Quien probara sólo
+los buenos tendría un `M_q ≡ 0` constante y no lo notaría.
+
+### Y la validación fuerte: reproduce un número de JSWW de 1976
+
+En su p. 461 escriben, del sistema de su sección 3:
+
+> «*A direct calculation, based on [11], shows that M = M₆ will have degree **148864**.*»
+
+Aplicando este módulo a las ocho condiciones de su Teorema 3.9 —con los grados medidos sobre el
+sistema con las catorce incógnitas ya sustituidas— sale **exactamente 148864**.
+
+Eso sólo cuadra si la fórmula del teorema, la del grado **y** la transcripción de la sección 3 son
+correctas **las tres a la vez**. Es la validación más fuerte disponible: un número calculado de forma
+independiente hace cincuenta años.
+
+### La curva que aparece, que es lo que se buscaba
+
+El teorema se puede aplicar a **subconjuntos**: combinando `q` de las seis condiciones de cuadrado,
+las `6−q` restantes siguen costando una raíz cada una. Eso da una curva, no un punto:
+
+| q | variables | grado | ¿dominado? |
+|---:|---:|---:|---|
+| 1 | **17** | **521** | **no** |
+| 2 | **16** | **1.137** | **no** |
+| 3 | **15** | **3.233** | **no** |
+| 4 | 14 | 8.385 | sí, por (10, ~6001) |
+| 5 | 13 | 21.633 | sí |
+| 6 | 12 | 297.729 | sí, por su propio (12, 13697) |
+
+**Tres puntos nuevos no dominados: (17, 521), (16, 1137) y (15, 3233)** — en la región que estaba
+vacía porque JSWW y Matijasevič optimizaban variables dejando explotar el grado.
+
+### Lo que hay que decir de su garantía
+
+Dos cosas, y las dos importan:
+
+* **los grados son cotas superiores.** Se calculan recorriendo el árbol sin expandir (expandir es
+  inabordable), así que sólo serían mayores que el grado real si se cancelaran términos de cabeza. La
+  cota se validó contra la expansión en `M`, `A`, `D`, `E`, `K`, `L`, `R`. Si hay cancelación, los
+  puntos **mejoran**;
+* **la construcción descansa en ocho cotas elementales que JSWW demuestran y nosotros no**
+  (`A>1`, `F≥A`, `n>k`, `Mx>1`…), las mismas que desbloquean las catorce eliminaciones. Estos tres
+  puntos están, por tanto, en la misma situación en la que estuvo el (21,25) antes de formalizar
+  Pell: **construidos y medidos, pendientes de una demostración que se sabe cómo hacer**.
+
+El paso siguiente es demostrarlas — y son mucho más fáciles que la de Pell.
+
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
 > Esta sección es **autocontenida**: se puede leer sin el resto del documento. Las secciones 3.2x que

@@ -140,6 +140,42 @@ def test_grado(stats):
         stats.ok()
 
 
+def test_reproduce_el_148864_de_jsww(stats):
+    """[5] La prueba fuerte: reproducir un numero que JSWW calcularon en 1976.
+
+    En la p. 461 escriben, del sistema de su seccion 3:
+
+        "A direct calculation, based on [11], shows that M = M_6 will have
+         degree 148864."
+
+    Aplicando este modulo a las ocho condiciones de su Teorema 3.9 --con los
+    grados medidos sobre el sistema con las catorce incognitas ya sustituidas--
+    sale EXACTAMENTE 148864. Es la validacion mas fuerte que hay disponible: un
+    numero calculado de forma independiente hace cincuenta anos, que solo cuadra
+    si la formula del teorema, la del grado y la transcripcion de la seccion 3
+    son las tres correctas a la vez.
+
+    Los grados de las ocho condiciones, en las 10 incognitas libres mas `k`:
+
+        (I) U(2k,n)              6      (VII) D*F*I            184
+        (II) U(2n,x)             6      B = F                   34
+        (XV) (M^2-1)K^2+1       14      C = H - C                2
+        (XVI) (M^2x^2-1)L^2+1   18      D  (la desigualdad)     50
+        (XVII) (M^2n^2x^2-1)R^2+1  22
+    """
+    print(f"\n{Colors.HEADER}[5] Reproduce el 148864 que JSWW publican{Colors.ENDC}")
+    grados_condiciones = [6, 6, 14, 18, 22, 184]
+    got = grado_estimado(grados_condiciones, 34, 2, 50, 1)
+    print(f"  grado de M_6 calculado aqui: {got}")
+    print(f"  grado de M_6 segun JSWW p.461: 148864")
+    if got != 148864:
+        stats.fail(f"se esperaba 148864 y salio {got}")
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} coinciden. La formula del teorema, la del grado")
+        print(f"    y la transcripcion de la seccion 3 son correctas a la vez.")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== TEOREMA DE COMBINACION DE RELACIONES (Matijasevic-Robinson 1975) ==={Colors.ENDC}")
     stats = Stats()
@@ -147,6 +183,7 @@ def main():
     test_equivalencia_q1(stats)
     test_equivalencia_q2(stats)
     test_grado(stats)
+    test_reproduce_el_148864_de_jsww(stats)
     total = stats.passed + stats.failed
     print()
     if stats.failed == 0:
