@@ -68,6 +68,7 @@ TESTS = [
     ("test_dioph_jsww.py",            "Calculo diofantico: patron de medida externo (JSWW 1976) y aplanado optimo"),
     ("test_dioph_optflat.py",         "Calculo diofantico: aplanado optimo y heuristicas de reduccion de grado"),
     ("test_dioph_jsww3.py",           "Calculo diofantico: fidelidad de la transcripcion del Teorema 3.9 de JSWW"),
+    ("test_dioph_combinar.py",        "Calculo diofantico: el teorema de combinacion de relaciones (Matijasevic-Robinson)"),
     ("test_lean_aplanado.py",         "Calculo diofantico: el aplanado GENERADO en Lean dice lo que creemos"),
     ("test_lean_cota_a.py",           "Calculo diofantico: la formalizacion en Lean dice lo que creemos que dice"),
     ("test_lean_eliminacion.py",      "Calculo diofantico: la eliminacion (26,25) -> (23,25) formalizada dice lo que creemos"),
