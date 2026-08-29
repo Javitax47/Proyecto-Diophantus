@@ -173,3 +173,60 @@ def sistema3(expandir=False):
                name="JSWW 1976, Teorema 3.9 (metodo del cociente)")
     Dp.no_negativos = ()
     return Dp
+
+
+# ---------------------------------------------------------------------------
+#  MEDIDO SOBRE ESTE SISTEMA, Y EL RESULTADO ES NEGATIVO PARA LA ELIMINACION
+# ---------------------------------------------------------------------------
+#
+# 1. CON NUESTRO CRITERIO (todos los coeficientes >= 0) solo se eliminan SEIS de
+#    las catorce: M, A, B, C, H y E. La frontera, topada a grado 29, da un unico
+#    punto: **(27, 29)**.
+#
+# 2. LAS OCHO BLOQUEADAS lo estan por un coeficiente negativo cada una, y las
+#    ocho son de la MISMA forma que la cota `a >= e+1` del sistema (1): hechos
+#    sobre el conjunto de soluciones que JSWW establecen en su demostracion.
+#
+#      D, F, I  el `-1` de `(A^2-1)`, `(G^2-1)`   <- ellos establecen A>1, G>1
+#      G        `F - A`                            <- ellos establecen F >= A
+#      K        `n - k + 1`                        <- ellos: n > (2k)^(2k) > k
+#      L, R     `Mx - 1`, `Mnx - 1`                <- ellos: M >= 32nx
+#      S        `(z+1)(k+1) - 2`                   <- trivial salvo z = k = 0
+#
+#    Casi todas son elementales, mucho mas faciles que la de Pell.
+#
+# 3. PERO EL TECHO, medido CONCEDIENDOLAS TODAS (voraz por menor grado):
+#
+#      -M -A -B -C -H -D -G : (26, 29)   <- lo mejor a grado 29
+#      -S (25,33)  -K (24,45)  -I (23,51)  -L (22,61)  -E (21,69)
+#
+#    O sea que la eliminacion sobre este sistema **no llega a ningun sitio
+#    nuevo**: el (21,25) que ya tenemos del sistema (1) DOMINA a todos estos
+#    puntos. Demostrar las ocho cotas no vale la pena, y eso queda medido ANTES
+#    de gastar el esfuerzo -- la misma disciplina que con la cota de Pell.
+#
+# 4. Y AL MEDIRLO SE ENTIENDE LA CONTABILIDAD ENTERA DE JSWW, que es lo mas
+#    valioso de todo esto:
+#
+#      33 variables  --eliminar las 14-->  19 variables      <- su (19, 29)
+#      19 variables  --teorema de combinacion-->  12         <- su Teorema 2
+#
+#    Las OCHO incognitas que anade nuestra conversion (seis raices, un cociente,
+#    una holgura) son EXACTAMENTE el coste de codificar las ocho condiciones. El
+#    teorema de combinacion de relaciones las sustituye por UNA. De ahi salen sus
+#    12 variables, y de ahi salen las 7 que separan el 19 del 12.
+#
+#    Corolario sobre el grado: su "29" solo tiene sentido si las ocho condiciones
+#    se mantienen COMO CONDICIONES durante las eliminaciones y se convierten al
+#    final. Nosotros convertimos al principio, y por eso la desigualdad (XIV)
+#    --de grado 14 ya de entrada-- hace explotar el grado al sustituir dentro.
+#    No es un error de la transcripcion: es una diferencia de modelo, y explica
+#    por que nuestro (19,61) no es su (19,29).
+#
+# CONCLUSION OPERATIVA. Sobre este sistema no queda nada que hacer con eliminacion
+# ni con aplanado. La unica pieza que mueve la aguja es el TEOREMA DE COMBINACION
+# DE RELACIONES de [11] --Matijasevic y J. Robinson, "Reduction of an arbitrary
+# Diophantine equation to one in 13 unknowns", Acta Arithmetica 27 (1975)
+# 521-553-- que vale SIETE variables y sigue sin implementar. Este proyecto midio
+# una vez su "techo" y lo descarto, pero lo midio sobre el sistema (1), donde
+# apenas hay condiciones que colapsar. Aqui hay ocho.
