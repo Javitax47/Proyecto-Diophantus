@@ -120,6 +120,12 @@ def _desigualdad_xiv():
 
 
 #: Las 21 condiciones del TEOREMA 3.9 (p. 456-457), en forma `expr = 0`.
+#:
+#: OJO CON EL PARAMETRO: aqui `k` esta tal y como se imprime, y esta lista es la
+#: que hay que usar para COTEJAR contra la pagina. Para MEDIR hay que usar
+#: `ecuaciones_k_positivo()`, que reparametriza al dominio real del teorema
+#: (`k >= 1`, ver `PARAMETRO_MINIMO`). La diferencia no es cosmetica: sobre `k`
+#: literal la incognita `S` no es eliminable y sobre el dominio correcto si.
 ECUACIONES_3 = [
     U(2 * k, n) - c1 ** 2,                       # (I)    U(2k,n) = []
     U(2 * n, x) - c2 ** 2,                       # (II)   U(2n,x) = []
@@ -150,8 +156,29 @@ ECUACIONES_3 = [
 ELIMINABLES_JSWW = ['M', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
                     'K', 'L', 'R', 'S']
 
+#: EL DOMINIO DEL PARAMETRO, y no es un detalle: el Teorema 3.9 empieza
+#: literalmente (p. 456)
+#:
+#:     "THEOREM 3.9. For any POSITIVE INTEGER k, in order that k + 1 be prime,
+#:      it is necessary and sufficient that the following system of equations
+#:      has a solution in nonnegative integers"
+#:
+#: o sea `k >= 1`, NO `k >= 0`. Y no es un descuido suyo: el teorema se apoya en
+#: su Lema 2.9 (Wilson), que tambien empieza "For any number k >= 1". Tiene que
+#: ser asi, porque en `k = 0` el criterio de Wilson MIENTE: `k+1 = 1` divide a
+#: `k!+1 = 2`, luego el criterio dice "primo" y 1 no lo es.
+#:
+#: Este proyecto transcribio el sistema con `k` sobre N, que es MAS de lo que el
+#: teorema afirma, y de ahi salio el unico hueco que quedaba (ver
+#: `RESUELTAS_POR_EL_ENUNCIADO`): el fallo estaba en la transcripcion, no en el
+#: teorema, y era exactamente el mismo punto en el que falla Wilson.
+PARAMETRO_MINIMO = 1
+
 #: Lo que ellos afirman de este sistema, para comprobarlo en vez de recordarlo.
 AFIRMADO = {
+    "parametro_minimo": 1,            # "For any positive integer k", p. 456
+    "representa": "k + 1 es primo",   # p. 456; el sistema (1) de la seccion 2
+                                      # usa k + 2, que es OTRA indexacion
     "unknowns_tras_eliminar": 10,     # n, x, w, m, z, i, j, p, l, r
     "condiciones_cuadrado": 6,        # (I), (II), (VII), (XV), (XVI), (XVII)
     "condiciones_divisibilidad": 1,   # F | H - C
@@ -161,22 +188,58 @@ AFIRMADO = {
 }
 
 
-def sistema3(expandir=False):
+def ecuaciones_k_positivo():
+    """`ECUACIONES_3` con `k -> k+1`, o sea con el parametro en SU dominio.
+
+    POR QUE ESTO ES LA TRANSCRIPCION CORRECTA Y NO UNA VARIANTE. El Teorema 3.9
+    se enuncia "for any positive integer k" (`PARAMETRO_MINIMO`), asi que el
+    parametro recorre `k >= 1`. Sustituir `k = k'+1` con `k'` sobre N es la
+    reparametrizacion EXACTA de ese dominio: biyectiva, sin perder ni anadir
+    valores. El sistema pasa a representar "k'+2 es primo", que ademas es la
+    misma indexacion que usa el sistema (1) de la seccion 2.
+
+    Y ARREGLA LO UNICO QUE ESTABA ROTO. La incognita `S` se define por
+    `S = (z+1)(k+1) - 2`, que sobre `k >= 0` puede valer -2 y por eso no se podia
+    eliminar. Con `k = k'+1` queda
+
+        S = (z+1)(k'+2) - 2 = k'z + k' + 2z
+
+    con TODOS los coeficientes >= 0: eliminable por el criterio estructural, sin
+    necesidad de ninguna cota. El hueco no se cierra demostrando nada; se cierra
+    transcribiendo bien el enunciado.
+
+    Es la misma tecnica que `dioph_jsww.sistema_desplazado` usa para `a >= 2`:
+    una cota conocida se vuelve ESTRUCTURAL reparametrizando, en vez de quedarse
+    como una nota al pie que el optimizador no puede ver.
+    """
+    kp = sympy.Symbol('k', integer=True)
+    return [e.subs(k, kp + PARAMETRO_MINIMO) for e in ECUACIONES_3]
+
+
+def sistema3(expandir=False, k_positivo=True):
     """El sistema del Teorema 3.9 como `Dioph`, en forma polinomica.
 
     OJO: no es "el sistema de JSWW" sin mas. Es su Teorema 3.9 CONVERTIDO, y la
     conversion anade ocho incognitas (seis raices, un cociente, una holgura) y
     hereda una hipotesis de positividad en (XIV). Ver los comentarios de arriba.
+
+    `k_positivo=True` (por defecto) usa `ecuaciones_k_positivo`, que es el
+    teorema en SU dominio -- "for any positive integer k", p. 456. Con
+    `k_positivo=False` se obtiene la transcripcion literal en `k`, que admite
+    `k = 0` y por tanto afirma MAS que el teorema; se conserva solo para poder
+    medir la diferencia, no para sacar cifras de ella.
     """
-    eqs = [sympy.expand(e) for e in ECUACIONES_3] if expandir else list(ECUACIONES_3)
+    fuente = ecuaciones_k_positivo() if k_positivo else ECUACIONES_3
+    eqs = [sympy.expand(e) for e in fuente] if expandir else list(fuente)
     Dp = Dioph(params=[k], unknowns=list(INCOGNITAS_3), eqs=eqs, witness=None,
-               name="JSWW 1976, Teorema 3.9 (metodo del cociente)")
+               name="JSWW 1976, Teorema 3.9 (metodo del cociente)"
+                    + ("" if k_positivo else " [k literal, admite k=0]"))
     Dp.no_negativos = ()
-    # Las seis cuya no-negatividad esta DEMOSTRADA (ver `COTAS_DEMOSTRADAS`) y
-    # que el test estructural rechaza. Sin esto solo se eliminan seis de las
-    # catorce que JSWW eliminan; con esto, doce. Las dos que faltan --`K` y
-    # `S`-- estan en `COTAS_PENDIENTES` con el hueco senalado.
+    # Las siete cuya no-negatividad esta DEMOSTRADA (ver `COTAS_DEMOSTRADAS`) y
+    # que el test estructural rechaza. Con `k_positivo` la octava, `S`, pasa el
+    # test estructural ella sola: son las catorce que JSWW eliminan en la p. 461.
     Dp.no_negativas_incognitas = DESBLOQUEADAS
+    Dp.parametro_minimo = PARAMETRO_MINIMO if k_positivo else 0
     return Dp
 
 
@@ -307,25 +370,38 @@ COTAS_DEMOSTRADAS = {
 #: Con las dos listas van TRECE de las catorce que JSWW eliminan en la p. 461.
 DESBLOQUEADAS = ('D', 'F', 'G', 'I', 'K', 'L', 'R')
 
-COTAS_PENDIENTES = {
-    'S': ("(z+1)(k+1) >= 2, y SOLO en k = 0",
-          """EL UNICO HUECO QUE QUEDA, y esta acotado a un punto. `S` pide
-          `(z+1)(k+1) >= 2`, que falla en `z = 0` y `k = 0` y en ningun otro
-          sitio: para `k >= 1` sale gratis, `(z+1)(k+1) >= 1*2 = 2`, sin usar
-          ninguna otra ecuacion. Eso esta DEMOSTRADO en `Cotas3.S_nonneg_de_k_pos`.
+#: Ya no queda ninguna cota pendiente. Se conserva el nombre --vacio-- porque
+#: el test lo comprueba: si algo volviera a entrar aqui, la lista de licencias y
+#: la de demostraciones dejarian de cuadrar y saltaria.
+COTAS_PENDIENTES = {}
 
-          En `k = 0` no hay demostracion que buscar por el camino habitual: `z`
-          aparece SOLO en (XXI), asi que ninguna otra ecuacion lo restringe. Lo
-          que `S >= 0` dice en el sistema original es exactamente que el par
-          `z = k = 0` no es solucion; al eliminar `S` esa informacion se pierde y
-          el sistema reducido podria ganar soluciones espureas en `k = 0`.
-          Recuperarla exige mirar (XIV) con `S+1 = 0`, y (XIV) ya arrastra su
-          propia hipotesis heredada (`De > 0`, la formula (15) de la p. 458).
+RESUELTAS_POR_EL_ENUNCIADO = {
+    'S': ("(z+1)(k+1) >= 2, para todo k >= 1",
+          """LA OCTAVA, Y NO SE CERRO DEMOSTRANDO SINO LEYENDO. `S` pide
+          `(z+1)(k+1) >= 2`, que falla en un unico punto: `z = 0` y `k = 0`. Y
+          `k = 0` NO ESTA EN EL TEOREMA: el 3.9 se enuncia "for any POSITIVE
+          integer k" (p. 456), y su Lema 2.9 (Wilson) tambien pide `k >= 1`.
 
-          O sea: `S` y la desigualdad (XIV) son EL MISMO hueco, no dos, y ese
-          hueco vive en un unico valor del parametro. Toda cifra que salga del
-          sistema reducido es correcta para todo `k >= 1`."""),
+          NO ES CASUALIDAD QUE SEA EL MISMO PUNTO. En `k = 0` el criterio de
+          Wilson miente --`k+1 = 1` divide a `k!+1 = 2`, luego "1 es primo"-- y
+          por eso JSWW excluyen ese valor. La incognita `S` es justamente la que
+          transporta Wilson al sistema: (XXI) dice `k+1 | S+2`, y la demostracion
+          de suficiencia (p. 457) usa `S >= 0` para concluir `1/2 < beta`. Que
+          `S >= 0` falle exactamente donde falla Wilson no es una coincidencia:
+          es el mismo hecho visto desde el sistema.
+
+          EL ERROR ERA NUESTRO. Este proyecto transcribio `k` sobre N, o sea
+          afirmando MAS que el teorema. Con `ecuaciones_k_positivo` --`k = k'+1`,
+          la reparametrizacion exacta de "k >= 1"-- la definicion queda
+          `S = k'z + k' + 2z`, todos los coeficientes >= 0, y `S` se elimina por
+          el criterio ESTRUCTURAL sin demostrar nada.
+
+          Con esto van las CATORCE de la p. 461, y el sistema reducido ya no
+          arrastra ninguna condicion sobre `S`. Queda pendiente, aparte y sin
+          relacion, la hipotesis heredada de (XIV) (`De > 0`, formula (15) de la
+          p. 458), que es de la CONVERSION de la desigualdad, no de `S`."""),
 }
+
 
 
 def cotas_verificadas(tope=4000, casos=200000, semilla=0):
@@ -389,8 +465,13 @@ def cotas_verificadas(tope=4000, casos=200000, semilla=0):
             "cotas": sorted(COTAS_DEMOSTRADAS), "desbloqueadas": DESBLOQUEADAS}
 
 
-def censo_eliminaciones():
+def censo_eliminaciones(k_positivo=True):
     """Cuenta cuantas de las catorce eliminaciones estan licenciadas, y por que.
+
+    `k_positivo=True` usa el teorema en su dominio (`k >= 1`), que es lo que dice
+    la p. 456. Con `False` se obtiene el censo de la transcripcion literal, que
+    deja `S` fuera; la diferencia entre los dos es exactamente una incognita, y
+    el test la comprueba.
 
     ESTATICO A PROPOSITO, y la razon es una medida, no una preferencia. Mirar
     cada ecuacion definitoria POR SEPARADO --sin sustituir en cascada-- da la
@@ -409,10 +490,11 @@ def censo_eliminaciones():
     from src.analysis.dioph_degree import _coeficientes_no_negativos_expr
 
     sim = {str(s): s for s in INCOGNITAS_3 + [k]}
+    fuente = ecuaciones_k_positivo() if k_positivo else ECUACIONES_3
     filas = []
     for nombre in ELIMINABLES_JSWW:
         u = sim[nombre]
-        for e in ECUACIONES_3:
+        for e in fuente:
             if u not in e.free_symbols:
                 continue
             ex = sympy.expand(e)
@@ -426,7 +508,8 @@ def censo_eliminaciones():
             libre = _coeficientes_no_negativos_expr(valor)
             estado = ("estructural" if libre else
                       "demostrada" if nombre in DESBLOQUEADAS else
-                      "pendiente" if nombre in COTAS_PENDIENTES else "sin clasificar")
+                      "pendiente" if nombre in COTAS_PENDIENTES
+                      or nombre in RESUELTAS_POR_EL_ENUNCIADO else "sin clasificar")
             filas.append((nombre, str(sympy.factor(valor)), estado))
             break
     cuenta = {est: sum(1 for _, _, e in filas if e == est)
@@ -441,24 +524,27 @@ def censo_eliminaciones():
 # ---------------------------------------------------------------------------
 #
 # ANTES:  6 de 14 eliminaciones licenciadas (M, A, B, C, E, H).
-# AHORA: 13 de 14 (mas D, F, G, I, K, L, R), demostradas en `Cotas3.lean` sin
-#        Mathlib, sin axiomas propios y sin usar la desigualdad (XIV).
-# FALTA:  S, y solo S -- y solo en `k = 0`: para `k >= 1` tambien esta
-#         demostrada (`Cotas3.S_nonneg_de_k_pos`). Ver `COTAS_PENDIENTES`.
+# AHORA: LAS 14. Siete por demostracion (D, F, G, I, K, L, R) en `Cotas3.lean`
+#        --sin Mathlib, sin axiomas propios y sin usar la desigualdad (XIV)-- y
+#        la octava, `S`, por ESCRIBIR BIEN EL ENUNCIADO: el Teorema 3.9 pide
+#        `k >= 1` (p. 456) y con `k = k'+1` su definicion pierde la resta.
+# FALTA:  nada de esta lista.
 #
 # LO QUE ESTO NO ARREGLA, y hay que decirlo antes que nada:
 #
 #   1. Los tres puntos (17,521), (16,1137) y (15,3233) del teorema de combinacion
-#      NO dejan de ser condicionales. Necesitan las CATORCE sustituciones y falta
-#      una. Ademas descansan en la hipotesis heredada de (XIV) (`De > 0`, la
-#      formula (15) de la p. 458) -- que resulta ser EL MISMO hueco que el de `S`,
-#      asi que lo que queda es UN hueco, no dos.
+#      dejan de depender de las eliminaciones, que ya estan las catorce. Siguen
+#      dependiendo de UNA cosa, y solo una: la hipotesis heredada al convertir la
+#      desigualdad (XIV) en ecuacion (`De > 0`, la formula (15) de la p. 458).
+#      Esa es de la CONVERSION que hace esta transcripcion, no de JSWW.
 #
 #   2. La frontera de Pareto no se mueve. Ya estaba medido --concediendo las ocho
 #      cotas, lo mejor era (26,29) y de ahi hacia abajo hasta (21,69)-- y todo
 #      eso lo domina el (21,25) que ya tenemos del sistema (1).
 #
-# LO QUE SI CAMBIA: siete de los ocho pasos que la literatura da por sabidos
-# ("the unknowns ... eliminate by substitution", p. 461) pasan de creidos a
-# demostrados y verificados por maquina, y el hueco que queda esta reducido a UN
-# enunciado exacto en vez de a una nota al pie.
+# LO QUE SI CAMBIA: los ocho pasos que la literatura da por sabidos ("the
+# unknowns ... eliminate by substitution", p. 461) pasan de creidos a verificados
+# por maquina. Y el ultimo enseno algo que no se sabia: el punto donde fallaba
+# --`k = 0`-- es EXACTAMENTE el punto donde falla el criterio de Wilson en el que
+# se apoya el teorema. No eran dos problemas; era el mismo, y estaba en nuestra
+# transcripcion por poner el parametro sobre N cuando el teorema dice `k >= 1`.

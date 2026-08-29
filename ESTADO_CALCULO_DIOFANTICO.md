@@ -29,10 +29,11 @@
 > * esquina de grado 5: **(44, 5)** — **por encima** del (42, 5) que JSWW *anunciaron*, o sea que
 >   **ahí no los batimos**;
 > * **`a ≥ 2`** demostrado y **formalizado en Lean 4**, verificado por el núcleo (§ formalización);
-> * **trece de las catorce eliminaciones de la sección 3 de JSWW**, que ellos despachan con «*the
->   unknowns … eliminate by substitution*» y nosotros sólo podíamos licenciar seis, quedan
->   **demostradas y formalizadas** en `Cotas3.lean` (§2.septies). La que falta, `S`, está demostrada
->   para todo `k ≥ 1`: el hueco entero cabe en `k = 0`, y coincide con la hipótesis heredada de (XIV).
+> * **las catorce eliminaciones de la sección 3 de JSWW**, que ellos despachan con «*the unknowns …
+>   eliminate by substitution*» y nosotros sólo podíamos licenciar seis, quedan **demostradas y
+>   formalizadas** en `Cotas3.lean` (§2.septies). La última, `S`, no se cerró demostrando: se cerró
+>   **corrigiendo la transcripción**, que ponía el parámetro sobre ℕ cuando el teorema dice «*for any
+>   positive integer k*».
 >
 > Ninguna de estas cifras es un mínimo demostrado: todas son **cotas superiores construidas**.
 >
@@ -786,7 +787,7 @@ Que (44,5) sea un mínimo. No lo es: la cota del optimizador sigue siendo **de s
 precedente documentado de que puede sobreestimar. Lo que está agotado son las vías que este proyecto
 sabe recorrer, no el problema.
 
-## 2.septies ✅ LAS COTAS DE LA SECCIÓN 3: SIETE DE OCHO, DEMOSTRADAS Y FORMALIZADAS
+## 2.septies ✅ LAS COTAS DE LA SECCIÓN 3: LAS OCHO, Y LAS CATORCE ELIMINACIONES
 
 El criterio de soundness del proyecto para eliminar una incógnita `u` definida por `u = expr` es que
 `expr` tenga **todos los coeficientes ≥ 0**, y por tanto sea `≥ 0` automáticamente sobre ℕ. Ese
@@ -794,8 +795,9 @@ criterio es **suficiente, no necesario**, y sobre el sistema del Teorema 3.9 se 
 catorce que JSWW eliminan «*by substitution*» (p. 461), sólo seis lo pasan. Las ocho restantes están
 bloqueadas por **una resta cada una**.
 
-Ahora hay siete más demostradas, en `formalizacion/lean/Cotas3.lean` — compila con Lean 4.33.1, sin
-Mathlib, sin `sorry` y sin axiomas propios (sólo `propext`, `Classical.choice`, `Quot.sound`).
+Ahora están las ocho, en `formalizacion/lean/Cotas3.lean` — compila con Lean 4.33.1, sin Mathlib,
+sin `sorry` y sin axiomas propios (sólo `propext`, `Classical.choice`, `Quot.sound`). Siete por
+demostración; la octava por leer bien el enunciado, y esa es la que más enseña.
 
 ### El censo, que es lo que hay que mirar
 
@@ -809,9 +811,10 @@ Mathlib, sin `sorry` y sin axiomas propios (sólo `propext`, `Classical.choice`,
 | `K` | `Mp − k + n − p + 1` | **demostrada** — `k ≤ n+1` |
 | `L` | `Mlx + k − l + 1` | **demostrada** — `Mx ≥ 1` |
 | `R` | `Mnrx + k − r + 1` | **demostrada** — `Mnx ≥ 1` |
-| `S` | `kz + k + z − 1` | ⛔ pendiente **sólo en `k = 0`** — demostrada para `k ≥ 1` |
+| `S` | `k'z + k' + 2z` | **estructural** tras `k = k'+1` — sin resta que salvar |
 
-**De 6 licenciadas se pasa a 13 de 14.** Reproducible con `dioph_jsww3.censo_eliminaciones()`.
+**De 6 licenciadas se pasa a 14 de 14.** Reproducible con `dioph_jsww3.censo_eliminaciones()`; con
+`k_positivo=False` —la transcripción vieja, que afirmaba más que el teorema— salen 13.
 
 ### Las tres ideas, y son sólo tres
 
@@ -856,19 +859,50 @@ el mínimo `n+1` es **3, 245, 87 815, 75 117 609, 118 742 236 811** para `k = 0.
 El teorema final usa **quince de las veintiuna condiciones**, y en particular **no usa (XIV)**, que
 es la única de la transcripción con hipótesis heredada. Menos hipótesis, teorema más fuerte.
 
-### La que falta, y por qué no es la misma clase de cosa
+### La octava: no se demostró, se leyó — y el error era nuestro
 
-**`S` pide `(z+1)(k+1) ≥ 2`**, y falla exactamente en `z = k = 0`. Para **todo `k ≥ 1` sale gratis**
-—`(z+1)(k+1) ≥ 1·2 = 2` sin usar ninguna otra ecuación— y eso está demostrado
-(`Cotas3.S_nonneg_de_k_pos`). En `k = 0` no hay demostración que buscar por el camino habitual: `z`
-aparece **sólo** en (XXI), así que ninguna otra ecuación lo restringe. Lo que `S ≥ 0` dice en el
-sistema original es precisamente que ese par no es solución, y al eliminar `S` esa información se
-pierde. Recuperarla obliga a mirar (XIV) con `S+1 = 0` — y (XIV) ya arrastra su propia hipótesis
-heredada (`De > 0`, la fórmula (15) de la p. 458).
+**`S = (z+1)(k+1) − 2 ≥ 0` falla en un único punto: `z = k = 0`.** Estuvo semanas en la lista de
+pendientes porque `z` aparece **sólo** en (XXI) y ninguna otra ecuación lo restringe, así que no hay
+demostración que buscar por el camino habitual.
 
-**`S` y (XIV) son el mismo hueco, no dos, y ese hueco vive en un único valor del parámetro.** Esa es la
-conclusión que se ha aprendido aquí y que no se sabía: toda cifra que salga del sistema reducido es
-correcta **para todo `k ≥ 1`**, y la duda entera cabe en `k = 0`.
+No hacía falta. El Teorema 3.9 empieza, literalmente (p. 456):
+
+> «*THEOREM 3.9. For any **positive integer** k, in order that k + 1 be prime, it is necessary and
+> sufficient that the following system of equations has a solution in nonnegative integers*»
+
+**El parámetro nunca fue `k ≥ 0`.** Y no es un descuido: el teorema se apoya en su Lema 2.9, que
+enuncia Wilson como «*for any number **k ≥ 1**, k+1 is prime iff k+1 ∣ k!+1*». Tiene que pedir `k ≥ 1`
+porque **en `k = 0` el criterio de Wilson miente**: `k+1 = 1` divide a `k!+1 = 2`, luego el criterio
+dice «primo» y 1 no lo es.
+
+Y ahí está lo que este ejercicio ha enseñado, que no se sabía:
+
+> **El punto donde fallaba `S ≥ 0` es exactamente el punto donde falla Wilson.** No es coincidencia:
+> `S` es la incógnita que *transporta* Wilson al sistema —(XXI) dice `k+1 ∣ S+2`, y la demostración
+> de suficiencia (p. 457) usa `S ≥ 0` para concluir `½ < β`—. Eran el mismo hecho visto desde dos
+> sitios, no dos problemas.
+
+Este proyecto había transcrito `k` sobre ℕ, o sea **afirmando más que el teorema**. Con la
+reparametrización exacta de su dominio, `k = k'+1` con `k'` sobre ℕ:
+
+```
+S = (z+1)(k'+2) − 2 = k'z + k' + 2z
+```
+
+**todos los coeficientes ≥ 0.** `S` se elimina por el criterio estructural, sin cota, sin cita y sin
+demostración. Es la misma técnica que ya se usaba para `a ≥ 2` (`a = A+2`): una cota conocida se
+vuelve estructural reparametrizando, en vez de quedarse como nota al pie que el optimizador no ve.
+
+`Cotas3.lean` demuestra las dos formas —`S_nonneg_de_k_pos` con la hipótesis `k ≥ 1`, y
+`S_nonneg_reparametrizado` verificando que la forma sin restas **es** (XXI) y no una expresión
+parecida— para que el paso quede atado por los dos lados.
+
+### Lo que queda, que ahora es una sola cosa
+
+Las catorce sustituciones están licenciadas. Lo único que sigue pendiente del sistema de §3 es la
+**hipótesis heredada al convertir la desigualdad (XIV) en ecuación** (`De > 0`, la fórmula (15) de la
+p. 458). Y conviene ser preciso sobre de quién es: **es de nuestra conversión, no de JSWW** — ellos
+la demuestran en su sección 3; nosotros la asumimos al pasar (XIV) a forma polinómica.
 
 ### Un hallazgo lateral que conviene tener escrito
 
@@ -883,14 +917,14 @@ que corre.
 
 Dos cosas, y las dos importan más que lo conseguido:
 
-* **los tres puntos (17,521), (16,1137) y (15,3233) siguen siendo condicionales.** Necesitan las
-  catorce sustituciones y falta una, más la hipótesis de (XIV) — que resulta ser el mismo hueco que
-  `S`. O sea que lo que queda es **un** hueco, no dos, y vive entero en `k = 0`;
+* **los tres puntos (17,521), (16,1137) y (15,3233) siguen siendo condicionales**, pero ya no por las
+  eliminaciones: ésas están las catorce. Dependen de **una sola** cosa, la hipótesis heredada de
+  (XIV);
 * **la frontera de Pareto no se mueve, y ya estaba medido.** Concediendo las ocho cotas, lo mejor era
   (26,29) y de ahí hacia abajo hasta (21,69): todo dominado por el **(21,25)** del sistema (1). Estas
-  siete cotas no se demostraron para ganar un punto; se demostraron porque siete pasos que la
-  literatura da por sabidos pasan de creídos a verificados por máquina, y el hueco restante queda
-  reducido a **un enunciado exacto** en vez de a una nota al pie.
+  ocho cotas no se cerraron para ganar un punto; se cerraron porque los ocho pasos que la literatura
+  da por sabidos pasan de creídos a verificados por máquina, y lo que queda es **una sola hipótesis,
+  y de nuestra propia conversión**, en vez de ocho notas al pie.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

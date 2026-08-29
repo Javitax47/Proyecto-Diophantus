@@ -21,20 +21,30 @@ de sus catorce ecuaciones. Existe porque esos tres hechos se estaban *citando*.
 `Eliminacion21.lean` — usando esas cotas, **25 incógnitas ⟶ 20**: generador
 **(21, 25)**, cinco variables por debajo del (26, 25) publicado.
 
-`Cotas3.lean` — **siete de las ocho cotas** que bloquean las catorce
-eliminaciones del Teorema 3.9 (el sistema de la sección 3 de JSWW, el «método
-del cociente»). El criterio estructural del proyecto —todos los coeficientes
-≥ 0— es *suficiente pero no necesario*, y allí sólo licencia 6 de 14; con estas
-cotas, **13**. Tres ideas: una cadena elemental (`M ≥ 1 → A ≥ 1 → D ≥ 1 →
+`Cotas3.lean` — **las ocho cotas** que bloquean las catorce eliminaciones del
+Teorema 3.9 (el sistema de la sección 3 de JSWW, el «método del cociente»). El
+criterio estructural del proyecto —todos los coeficientes ≥ 0— es *suficiente
+pero no necesario*, y allí sólo licencia 6 de 14; con estas cotas, **las 14**.
+
+Tres ideas para siete de ellas: una cadena elemental (`M ≥ 1 → A ≥ 1 → D ≥ 1 →
 E ≥ 2 → F ≥ A → G ≥ 1 → I ≥ 1`); el encaje de cuadrados de `Pell.n_ge_two`
 **reutilizado tal cual** para (I) y (II), porque `U(2k,n)` desarrollado *es* la
 ecuación (4) del sistema (1); y la lectura de esa misma (I) como una Pell de
 `A = 2k+3` con `y = 2(k+1)(n+1)` —`16m³(m+1) = ((2m+1)²−1)·4m²`— que da
 `n+1 ≥ 8k` con `completitud`, `Y_mod`, `Y_mono` e `Y_tres` sin escribir Pell
-otra vez. Usa 15 de las 21 condiciones y **no usa (XIV)**, la única con
-hipótesis heredada. La que falta, `S`, está demostrada para todo `k ≥ 1` y sólo
-queda abierta en `k = 0`, donde resulta ser el mismo hueco que (XIV) — escrito
-como pendiente, no disimulado.
+otra vez.
+
+La octava, `S`, **no se demostró: se leyó**. Fallaba sólo en `k = 0`, y el
+teorema se enuncia «*for any **positive** integer k*» (p. 456) — igual que el
+Lema 2.9 (Wilson) en que se apoya, que en `k = 0` diría que 1 es primo. El
+parámetro sobre ℕ era un defecto de nuestra transcripción; con `k = k'+1` la
+definición queda `S = k'z + k' + 2z`, sin restas, y sale por el criterio
+estructural. `S_nonneg_de_k_pos` y `S_nonneg_reparametrizado` atan el paso por
+los dos lados.
+
+Usa 16 de las 21 condiciones y **no usa (XIV)**, la única con hipótesis
+heredada — que es lo único que sigue pendiente de este sistema, y es de nuestra
+conversión, no de JSWW.
 
 `Eliminacion.lean` — **el resultado del proyecto**: el sistema (1) de
 Jones–Sato–Wada–Wiens, que ellos publican con 25 incógnitas más el parámetro

@@ -3,7 +3,7 @@
 ================================================================================
    DIOPHANTUS - LAS COTAS DE LA SECCION 3 DICEN LO QUE CREEMOS QUE DICEN
 ================================================================================
-`formalizacion/lean/Cotas3.lean` demuestra SIETE de las ocho cotas que bloquean
+`formalizacion/lean/Cotas3.lean` demuestra LAS OCHO cotas que bloquean
 las catorce eliminaciones del Teorema 3.9 de JSWW. Cada cota licencia eliminar
 una incognita cuya definicion el criterio estructural del proyecto --"todos los
 coeficientes >= 0"-- rechaza por una resta.
@@ -14,12 +14,13 @@ fichero comprueba es el ENUNCIADO, que es donde se cuela el error:
   [1] cada hipotesis del teorema es LITERALMENTE una ecuacion de `ECUACIONES_3`;
   [2] la conclusion cubre exactamente las incognitas de `DESBLOQUEADAS`, que son
       las que `sistema3()` declara licenciadas;
-  [3] la que falta --`S`-- sigue declarada como PENDIENTE, para que nadie la de
-      por hecha;
+  [3] no queda ninguna PENDIENTE, y `S` --la ultima-- consta como resuelta por
+      el ENUNCIADO (el teorema pide `k >= 1`), no por una demostracion nueva;
   [4] el mecanismo `demostradas` de `eliminar_lineales` hace lo que dice: sin la
       licencia no elimina, con ella si;
   [5] sin `sorry`, sin `axiom` propio, sin Mathlib;
-  [6] el censo cuadra: 6 estructurales + 7 demostradas + 1 pendiente = 14.
+  [6] el censo cuadra: con el parametro en su dominio, 7 estructurales +
+      7 demostradas + 0 pendientes = 14, y sin el, 13; la diferencia es `S`.
 
 POR QUE IMPORTA QUE LA LISTA SEA CORTA. Si `DESBLOQUEADAS` creciera sin que la
 demostracion creciera, el optimizador eliminaria incognitas sin licencia y las
@@ -37,10 +38,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.analysis.dioph_calculus import Dioph
 from src.analysis.dioph_degree import eliminar_lineales
-from src.analysis.dioph_jsww3 import (COTAS_DEMOSTRADAS, COTAS_PENDIENTES,
-                                      DESBLOQUEADAS, ECUACIONES_3,
-                                      INCOGNITAS_3, censo_eliminaciones,
-                                      cotas_verificadas, k, sistema3)
+from src.analysis.dioph_jsww3 import (AFIRMADO, COTAS_DEMOSTRADAS,
+                                      COTAS_PENDIENTES, DESBLOQUEADAS,
+                                      ECUACIONES_3, INCOGNITAS_3,
+                                      PARAMETRO_MINIMO,
+                                      RESUELTAS_POR_EL_ENUNCIADO,
+                                      censo_eliminaciones, cotas_verificadas, k,
+                                      sistema3)
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 LEAN = os.path.join(RAIZ, 'formalizacion', 'lean', 'Cotas3.lean')
@@ -63,6 +67,7 @@ PUENTE = [
     ("XVIII", 18, "K = n - k + 1 + p * (M - 1)"),
     ("XIX", 19, "L = k + 1 + l * (M * x - 1)"),
     ("XX",  20, "R = k + 1 + r * (M * n * x - 1)"),
+    ("XXI", 21, "S = (z + 1) * (k + 1) - 2"),
 ]
 
 
@@ -129,50 +134,80 @@ def test_conclusion(stats):
     conclusion = m.group(1).strip().splitlines()[-1].strip()
     print(f"  {conclusion}")
     en_lean = set(re.findall(r"0 ≤ (\w+)", conclusion))
-    print(f"  en el .lean: {sorted(en_lean)}")
-    print(f"  DESBLOQUEADAS: {sorted(DESBLOQUEADAS)}")
+    print(f"  demostradas en el .lean: {sorted(en_lean)}")
+    print(f"  licencias que pide el optimizador (DESBLOQUEADAS): "
+          f"{sorted(DESBLOQUEADAS)}")
     print(f"  sistema3().no_negativas_incognitas: "
           f"{sorted(sistema3().no_negativas_incognitas)}")
     problemas = []
-    if en_lean != set(DESBLOQUEADAS):
+    # LAS DOS LISTAS NO SON LA MISMA, Y LA DIFERENCIA ES EL RESULTADO. El .lean
+    # demuestra OCHO cotas; el optimizador solo necesita SIETE licencias, porque
+    # la octava --`S`-- pasa el criterio estructural ella sola una vez el
+    # parametro esta en su dominio (`k = k'+1`). O sea: la demostracion de `S`
+    # existe y esta auditada, pero ya no hace falta CITARLA para eliminar.
+    if en_lean != set(DESBLOQUEADAS) | {'S'}:
         problemas.append(f"la conclusion cubre {sorted(en_lean)}, "
-                         f"DESBLOQUEADAS dice {sorted(DESBLOQUEADAS)}")
+                         f"esperaba {sorted(set(DESBLOQUEADAS) | {'S'})}")
+    if 'S' in DESBLOQUEADAS:
+        problemas.append("`S` no deberia necesitar licencia: es estructural "
+                         "tras reparametrizar")
+    print(f"  {Colors.OKGREEN}la diferencia es `S`{Colors.ENDC}: demostrada, pero "
+          f"ya no hace falta citarla -- es estructural")
     if set(sistema3().no_negativas_incognitas) != set(DESBLOQUEADAS):
         problemas.append("`sistema3()` no declara exactamente `DESBLOQUEADAS`")
     for nombre in DESBLOQUEADAS:
         if nombre not in COTAS_DEMOSTRADAS:
             problemas.append(f"`{nombre}` esta licenciada pero no tiene cota escrita")
+    if 'S' not in RESUELTAS_POR_EL_ENUNCIADO:
+        problemas.append("`S` se demuestra en el .lean pero no consta en Python")
     if problemas:
         stats.fail(problemas[0])
     else:
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} lo demostrado y lo licenciado "
-              f"son la misma lista de siete")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} ocho demostradas, siete "
+              f"licencias, y la diferencia esta explicada")
         stats.ok()
 
 
 def test_pendientes(stats):
-    """[3] `S` sigue marcada como pendiente y NO licenciada."""
-    print(f"\n{Colors.HEADER}[3] La que falta sigue constando como pendiente{Colors.ENDC}")
+    """[3] No queda ninguna cota pendiente, y `S` consta resuelta por el enunciado.
+
+    LO QUE ESTE TEST PROTEGE. `S` no se cerro demostrando nada nuevo: se cerro
+    leyendo la p. 456, donde el Teorema 3.9 pide `k >= 1`. Si alguien volviera a
+    poner el parametro sobre N --que es lo que este proyecto tenia-- el sistema
+    afirmaria mas que el teorema y `S` dejaria de ser eliminable. Aqui se ata
+    `PARAMETRO_MINIMO` a lo que el sistema construye.
+    """
+    print(f"\n{Colors.HEADER}[3] El dominio del parametro, que es donde estaba el fallo{Colors.ENDC}")
     problemas = []
-    if set(COTAS_PENDIENTES) != {'S'}:
-        problemas.append(f"esperaba solo S pendiente, veo {sorted(COTAS_PENDIENTES)}")
-    for nombre in ('S',):
-        if nombre in DESBLOQUEADAS:
-            problemas.append(f"`{nombre}` esta licenciada sin demostracion")
-        if nombre in COTAS_DEMOSTRADAS:
-            problemas.append(f"`{nombre}` figura como demostrada y no lo esta")
-        enunciado = COTAS_PENDIENTES.get(nombre, ("", ""))[0]
-        print(f"  {Colors.WARN}PENDIENTE{Colors.ENDC} {nombre}: {enunciado}")
-        if "k = 0" not in enunciado:
-            problemas.append("el hueco de `S` ya no consta acotado a k = 0")
+    print(f"  Teorema 3.9 (p. 456): \"for any POSITIVE integer k\"  =>  "
+          f"PARAMETRO_MINIMO = {PARAMETRO_MINIMO}")
+    if PARAMETRO_MINIMO != 1:
+        problemas.append(f"PARAMETRO_MINIMO deberia ser 1, es {PARAMETRO_MINIMO}")
+    if AFIRMADO.get("parametro_minimo") != 1:
+        problemas.append("AFIRMADO no registra el dominio del parametro")
+    if COTAS_PENDIENTES:
+        problemas.append(f"quedan cotas pendientes: {sorted(COTAS_PENDIENTES)}")
+    if set(RESUELTAS_POR_EL_ENUNCIADO) != {'S'}:
+        problemas.append(f"esperaba solo S resuelta por el enunciado, veo "
+                         f"{sorted(RESUELTAS_POR_EL_ENUNCIADO)}")
+    D = sistema3()
+    print(f"  sistema3().parametro_minimo = {getattr(D, 'parametro_minimo', None)}   "
+          f"(sistema3(k_positivo=False) = "
+          f"{getattr(sistema3(k_positivo=False), 'parametro_minimo', None)})")
+    if getattr(D, "parametro_minimo", None) != 1:
+        problemas.append("`sistema3()` no usa el dominio del teorema por defecto")
     fuente = _fuente()
-    if "no está" not in fuente.lower() and "LO QUE NO ESTÁ" not in fuente:
-        problemas.append("el .lean no declara lo que NO demuestra")
+    if "positive" not in fuente:
+        problemas.append("el .lean no cita el dominio del enunciado")
+    if "theorem S_nonneg_de_k_pos" not in fuente:
+        problemas.append("falta `S_nonneg_de_k_pos`")
+    if "theorem S_nonneg_reparametrizado" not in fuente:
+        problemas.append("falta `S_nonneg_reparametrizado`")
     if problemas:
         stats.fail(problemas[0])
     else:
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 7 de 8: el hueco esta escrito, "
-              f"no disimulado")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} 8 de 8: la ultima se cerro "
+              f"transcribiendo bien el enunciado, no demostrando de mas")
         stats.ok()
 
 
@@ -236,31 +271,39 @@ def test_numerico(stats):
 
 
 def test_censo(stats):
-    """[6] El censo cuadra: 6 + 6 + 2 = 14, y cada fila esta clasificada."""
+    """[6] El censo cuadra, y la diferencia entre los dos dominios es `S`."""
     print(f"\n{Colors.HEADER}[6] Censo de las catorce eliminaciones de JSWW (p. 461){Colors.ENDC}")
     c = censo_eliminaciones()
     for nombre, valor, estado in c['filas']:
         color = (Colors.OKGREEN if estado != 'pendiente' else Colors.WARN)
         print(f"  {color}{estado:12}{Colors.ENDC} {nombre:3} = {valor[:44]}")
     print(f"  {c['cuenta']}  ->  {c['licenciadas']} de {c['total']} licenciadas")
+    lit = censo_eliminaciones(k_positivo=False)
+    print(f"  con `k` literal (que afirma MAS que el teorema): "
+          f"{lit['licenciadas']} de {lit['total']}")
     problemas = []
     if c['total'] != 14:
         problemas.append(f"esperaba 14 definiciones, veo {c['total']}")
-    if c['cuenta']['sin clasificar'] != 0:
-        problemas.append("hay definiciones sin clasificar")
-    if c['cuenta'] != {'estructural': 6, 'demostrada': 7,
-                       'pendiente': 1, 'sin clasificar': 0}:
+    if c['cuenta'] != {'estructural': 7, 'demostrada': 7,
+                       'pendiente': 0, 'sin clasificar': 0}:
         problemas.append(f"el censo cambio: {c['cuenta']}")
+    if lit['licenciadas'] != 13:
+        problemas.append(f"con `k` literal esperaba 13, veo {lit['licenciadas']}")
+    # y la diferencia entre los dos censos tiene que ser EXACTAMENTE `S`
+    dif = {n for n, _, e in c['filas'] if e != 'pendiente'} - \
+          {n for n, _, e in lit['filas'] if e != 'pendiente'}
+    if dif != {'S'}:
+        problemas.append(f"la diferencia entre dominios deberia ser {{'S'}}, es {dif}")
     if problemas:
         stats.fail(problemas[0])
     else:
-        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} de 6 licenciadas se pasa a 13; "
-              f"la que falta esta nombrada")
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} de 6 licenciadas se pasa a "
+              f"{c['licenciadas']}: las catorce de la p. 461")
         stats.ok()
 
 
 def main():
-    print(f"{Colors.BOLD}=== LAS COTAS DE LA SECCION 3: SIETE DE OCHO, FORMALIZADAS ==={Colors.ENDC}")
+    print(f"{Colors.BOLD}=== LAS COTAS DE LA SECCION 3: LAS OCHO, Y LAS CATORCE ELIMINACIONES ==={Colors.ENDC}")
     stats = Stats()
     test_hipotesis(stats)
     test_conclusion(stats)

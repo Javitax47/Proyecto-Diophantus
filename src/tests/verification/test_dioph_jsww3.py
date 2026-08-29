@@ -35,7 +35,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from src.analysis.dioph_jsww import ECUACIONES
 from src.analysis.dioph_jsww3 import (sistema3, U, k, n, AFIRMADO, ELIMINABLES_JSWW,
-                                      LIBRES, DEFINIDAS, AUXILIARES)
+                                      LIBRES, DEFINIDAS, AUXILIARES,
+                                      PARAMETRO_MINIMO, censo_eliminaciones)
 from src.analysis.dioph_degree import max_equation_degree
 
 
@@ -146,6 +147,48 @@ def test_anclaje_19_29(stats):
         stats.ok()
 
 
+def test_dominio_del_parametro(stats):
+    """[5] El dominio del parametro esta transcrito, y era donde estaba el fallo.
+
+    El Teorema 3.9 empieza "For any POSITIVE integer k" (p. 456), y su Lema 2.9
+    (Wilson) tambien pide `k >= 1`. Tiene que pedirlo: en `k = 0` el criterio de
+    Wilson miente, porque `k+1 = 1` divide a `k!+1 = 2` y diria que 1 es primo.
+
+    Este proyecto transcribio `k` sobre N --afirmando MAS que el teorema-- y de
+    ahi salio el unico hueco que quedaba en las eliminaciones: `S` no era
+    eliminable. Con el dominio correcto lo es, y por el criterio estructural. Este
+    test ata las dos cosas para que no se vuelva a separar.
+    """
+    print(f"\n{Colors.HEADER}[5] El dominio del parametro: \"for any positive integer k\"{Colors.ENDC}")
+    problemas = []
+    print(f"  PARAMETRO_MINIMO = {PARAMETRO_MINIMO}   "
+          f"AFIRMADO['parametro_minimo'] = {AFIRMADO.get('parametro_minimo')}")
+    print(f"  representa: {AFIRMADO.get('representa')}   "
+          f"(el sistema (1) de la seccion 2 usa k+2: otra indexacion)")
+    if PARAMETRO_MINIMO != 1 or AFIRMADO.get("parametro_minimo") != 1:
+        problemas.append("el dominio del parametro no esta registrado como k >= 1")
+    lit = censo_eliminaciones(k_positivo=False)
+    dom = censo_eliminaciones(k_positivo=True)
+    print(f"  eliminaciones licenciadas con `k` literal : {lit['licenciadas']} de 14")
+    print(f"  eliminaciones licenciadas en su dominio   : {dom['licenciadas']} de 14")
+    fila_lit = [f for f in lit['filas'] if f[0] == 'S'][0]
+    fila_dom = [f for f in dom['filas'] if f[0] == 'S'][0]
+    print(f"    S literal      : {fila_lit[1]:20} -> {fila_lit[2]}")
+    print(f"    S reparametriz.: {fila_dom[1]:20} -> {fila_dom[2]}")
+    if dom['licenciadas'] != 14:
+        problemas.append(f"en su dominio deberian ir las 14, van {dom['licenciadas']}")
+    if fila_dom[2] != 'estructural':
+        problemas.append("`S` deberia salir por el criterio estructural")
+    if lit['licenciadas'] != 13:
+        problemas.append(f"con `k` literal esperaba 13, veo {lit['licenciadas']}")
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} el hueco de `S` estaba en la "
+              f"transcripcion, no en el teorema, y esta cerrado")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== TEOREMA 3.9 DE JSWW: FIDELIDAD DE LA TRANSCRIPCION ==={Colors.ENDC}")
     stats = Stats()
@@ -153,6 +196,7 @@ def main():
     test_recuentos(stats)
     test_condiciones(stats)
     test_anclaje_19_29(stats)
+    test_dominio_del_parametro(stats)
     total = stats.passed + stats.failed
     print()
     if stats.failed == 0:

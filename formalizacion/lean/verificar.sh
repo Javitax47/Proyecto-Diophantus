@@ -95,6 +95,8 @@ open Diophantus
 #print axioms x_ge_two_de_II
 #print axioms n_succ_ge_k
 #print axioms K_nonneg
+#print axioms S_nonneg_de_k_pos
+#print axioms S_nonneg_reparametrizado
 #print axioms cotas_seccion_tres
 #check @cotas_seccion_tres
 LEAN

@@ -1,9 +1,8 @@
 /-
   DIOPHANTUS — Las cotas que desbloquean las eliminaciones de la sección 3
   ========================================================================
-  Verificación FORMAL de siete de las ocho cotas que bloquean las catorce
-  eliminaciones del Teorema 3.9 de Jones-Sato-Wada-Wiens (AMM 83:6 (1976)
-  449-464, pp. 456-457).
+  Verificación FORMAL de las ocho cotas que bloquean las catorce eliminaciones
+  del Teorema 3.9 de Jones-Sato-Wada-Wiens (AMM 83:6 (1976) 449-464, pp. 456-457).
 
   QUÉ PROBLEMA RESUELVE. El criterio de soundness del proyecto para eliminar una
   incógnita `u` definida por `u = expr` es que `expr` tenga todos los
@@ -12,16 +11,24 @@
   de las catorce incógnitas que JSWW eliminan por sustitución, sólo seis lo pasan.
   Las otras ocho están bloqueadas por una resta cada una — `A²−1`, `G²−1`, `F−A`,
   `Mx−1`, `Mnx−1`, `n−k+1`, `(z+1)(k+1)−2` — que son no negativas por razones que
-  el criterio no ve. Aquí se demuestran SIETE de esas razones.
+  el criterio no ve. Aquí se demuestran esas razones, las ocho.
 
-  LO QUE NO ESTÁ, y se dice por delante. Sólo queda `S`, que pide
-  `(z+1)(k+1) ≥ 2`, y sólo en `k = 0`: para `k ≥ 1` está demostrada aquí
-  (`S_nonneg_de_k_pos`). En `k = 0` falla cuando `z = 0`, y NO se deduce de las
-  demás ecuaciones porque `z` sólo aparece en (XXI): ninguna otra lo restringe.
-  Lo que `S ≥ 0` dice en el sistema original es exactamente que ese par no es
-  solución, y al eliminar `S` esa información se pierde. Recuperarla obliga a
-  mirar (XIV) con `S+1 = 0` — o sea que `S` y la hipótesis heredada de (XIV) son
-  EL MISMO hueco, no dos, y está confinado a un único valor del parámetro.
+  LA OCTAVA NO SE DEMOSTRÓ: SE LEYÓ. `S = (z+1)(k+1)−2 ≥ 0` falla en un único
+  punto, `z = k = 0`, y ese punto NO ESTÁ EN EL TEOREMA: el 3.9 se enuncia «*for
+  any **positive** integer k*» (p. 456), y el Lema 2.9 (Wilson) en que se apoya
+  también pide `k ≥ 1`. Tiene que ser así: en `k = 0` el criterio de Wilson
+  miente, porque `k+1 = 1` divide a `k!+1 = 2` y diría que 1 es primo.
+
+  Que `S ≥ 0` falle exactamente donde falla Wilson no es casualidad. `S` es la
+  incógnita que transporta Wilson al sistema —(XXI) dice `k+1 ∣ S+2`— y la
+  demostración de suficiencia (p. 457) usa `S ≥ 0` para concluir `½ < β`. Es el
+  mismo hecho visto desde dos sitios.
+
+  El error estaba en la transcripción, que ponía `k` sobre ℕ y por tanto afirmaba
+  más que el teorema. Con la reparametrización exacta de su dominio, `k = k'+1`,
+  la definición queda `S = k'z + k' + 2z` —todos los coeficientes ≥ 0— y `S` se
+  elimina por el criterio estructural, sin cota. `S_nonneg_de_k_pos` es esa misma
+  cota demostrada directamente, para los dos usos.
 
   DEPENDENCIAS: `Pell.lean` (de este mismo proyecto) — `one_le_sq` y `n_ge_two`
   para la parte elemental, y `completitud`, `Y_mod`, `Y_mono` e `Y_tres` para la
@@ -240,40 +247,50 @@ theorem K_nonneg {k n p M K : Int} (hp : 0 ≤ p) (hM : 1 ≤ M) (hkn : k ≤ n 
   have : 0 ≤ p * (M - 1) := Int.mul_nonneg hp (by omega)
   omega
 
-/-! ## 5. `S`: el hueco, acotado a un único valor del parámetro
+/-! ## 5. `S`: el dominio del parámetro, que es donde estaba el fallo
 
-`S = (z+1)(k+1) − 2` pide `(z+1)(k+1) ≥ 2`, y eso **falla en un solo punto**:
-`z = 0` y `k = 0`. Para `k ≥ 1` sale gratis, porque `(z+1)(k+1) ≥ 1·2 = 2` sin
-usar ninguna otra ecuación. Así que el hueco no es «`S` no está demostrada»: es
-«`S` no está demostrada **en `k = 0`**», y ahí coincide con la hipótesis heredada
-de (XIV). Vale la pena tenerlo dicho con esta precisión, porque cualquier cifra
-que se saque del sistema reducido es correcta para todo `k ≥ 1`. -/
+`S = (z+1)(k+1) − 2 ≥ 0` falla en un solo punto, `z = k = 0`, y ese punto está
+fuera del teorema: «*for any **positive** integer k*» (p. 456). Para `k ≥ 1` la
+cota sale sin usar ninguna otra ecuación. -/
 
-/-- (XXI) con `k ≥ 1`: `S = (z+1)(k+1)−2 ≥ 0`. Sin usar ninguna otra ecuación. -/
+/-- (XXI) con `k ≥ 1`: `S = (z+1)(k+1)−2 ≥ 0`. Sin usar ninguna otra ecuación,
+    y `k ≥ 1` es la hipótesis del propio Teorema 3.9. -/
 theorem S_nonneg_de_k_pos {k z S : Int} (hk : 1 ≤ k) (hz : 0 ≤ z)
     (h : S = (z + 1) * (k + 1) - 2) : 0 ≤ S := by
   have : 1 * 2 ≤ (z + 1) * (k + 1) :=
     Int.mul_le_mul (by omega) (by omega) (by omega) (by omega)
   omega
 
+/-- **La misma cota, ya sin hipótesis**, tras reparametrizar `k = k'+1`. Es la
+    forma en que la usa el optimizador: `S = k'z + k' + 2z` no tiene ninguna
+    resta, así que pasa el criterio estructural él solo y no hace falta citar
+    nada. Lo que aquí se comprueba es que la reparametrización **es** la de
+    (XXI), no una expresión parecida. -/
+theorem S_nonneg_reparametrizado {kp z S : Int} (hkp : 0 ≤ kp) (hz : 0 ≤ z)
+    (h : S = (z + 1) * ((kp + 1) + 1) - 2) : S = kp*z + kp + 2*z ∧ 0 ≤ S := by
+  have hS : S = kp*z + kp + 2*z := by grind
+  have h1 : 0 ≤ kp * z := Int.mul_nonneg hkp hz
+  exact ⟨hS, by omega⟩
+
 /-! ## 6. El teorema: las siete cotas a la vez, desde las ecuaciones -/
 
-/-- **LAS SIETE COTAS QUE DESBLOQUEAN LAS SIETE ELIMINACIONES.**
+/-- **LAS OCHO COTAS QUE DESBLOQUEAN LAS OCHO ELIMINACIONES.**
 
-    Hipótesis: que las incógnitas vivan en ℕ, y quince de las veintiuna
-    condiciones del Teorema 3.9 — (I), (II), (III), (IV), (V), (VI), (VIII), (IX),
-    (X), (XI), (XII), (XIII), (XVIII), (XIX), (XX). No se usa (VII), ni (XV)-(XVII),
-    ni (XXI); en particular **no se usa la desigualdad (XIV)**, que es la única
+    Hipótesis: `1 ≤ k` —que es la del propio Teorema 3.9, «*for any positive
+    integer k*»— , que las demás incógnitas vivan en ℕ, y dieciséis de las
+    veintiuna condiciones: (I), (II), (III), (IV), (V), (VI), (VIII), (IX), (X),
+    (XI), (XII), (XIII), (XVIII), (XIX), (XX), (XXI). No se usa (VII), ni
+    (XV)-(XVII); en particular **no se usa la desigualdad (XIV)**, que es la única
     condición de la transcripción que arrastra una hipótesis heredada.
 
-    Conclusión: `D`, `F`, `G`, `I`, `K`, `L` y `R` son ≥ 0 en toda solución, luego
-    las siete se pueden eliminar por sustitución sin perder soluciones. Con las
-    seis que ya pasaban el criterio estructural (`M`, `A`, `B`, `C`, `E`, `H`) son
-    **trece de las catorce** que JSWW eliminan en la p. 461. La que falta es `S`. -/
+    Conclusión: `D`, `F`, `G`, `I`, `K`, `L`, `R` y `S` son ≥ 0 en toda solución,
+    luego las ocho se pueden eliminar por sustitución sin perder soluciones. Con
+    las seis que ya pasaban el criterio estructural (`M`, `A`, `B`, `C`, `E`, `H`)
+    son **las catorce** que JSWW eliminan en la p. 461. -/
 theorem cotas_seccion_tres
-    {k n x w m i j l p r c1 c2 M A B C D E F G H I K L R : Int}
-    (hk : 0 ≤ k) (hn : 0 ≤ n) (hx : 0 ≤ x) (hw : 0 ≤ w) (hm : 0 ≤ m)
-    (hi : 0 ≤ i) (hj : 0 ≤ j) (hl : 0 ≤ l) (hp : 0 ≤ p) (hr : 0 ≤ r)
+    {k n x w m z i j l p r c1 c2 M A B C D E F G H I K L R S : Int}
+    (hk : 1 ≤ k) (hn : 0 ≤ n) (hx : 0 ≤ x) (hw : 0 ≤ w) (hm : 0 ≤ m)
+    (hz : 0 ≤ z) (hi : 0 ≤ i) (hj : 0 ≤ j) (hl : 0 ≤ l) (hp : 0 ≤ p) (hr : 0 ≤ r)
     (hc1 : 0 ≤ c1) (hc2 : 0 ≤ c2)
     (eI  : (2*k + 2)*(2*k + 2)*(2*k + 2)*(2*k + 4)*((n+1)*(n+1)) + 1 = c1*c1)
     (eII : (2*n + 2)*(2*n + 2)*(2*n + 2)*(2*n + 4)*((x+1)*(x+1)) + 1 = c2*c2)
@@ -289,9 +306,10 @@ theorem cotas_seccion_tres
     (eXIII : I = (G * G - 1) * (H * H) + 1)
     (eXVIII : K = n - k + 1 + p * (M - 1))
     (eXIX : L = k + 1 + l * (M * x - 1))
-    (eXX : R = k + 1 + r * (M * n * x - 1)) :
-    0 ≤ D ∧ 0 ≤ F ∧ 0 ≤ G ∧ 0 ≤ I ∧ 0 ≤ K ∧ 0 ≤ L ∧ 0 ≤ R := by
-  have hn2 : 2 ≤ n := n_ge_two_de_I hk hn hc1 eI
+    (eXX : R = k + 1 + r * (M * n * x - 1))
+    (eXXI : S = (z + 1) * (k + 1) - 2) :
+    0 ≤ D ∧ 0 ≤ F ∧ 0 ≤ G ∧ 0 ≤ I ∧ 0 ≤ K ∧ 0 ≤ L ∧ 0 ≤ R ∧ 0 ≤ S := by
+  have hn2 : 2 ≤ n := n_ge_two_de_I (by omega) hn hc1 eI
   have hx2 : 2 ≤ x := x_ge_two_de_II hn hx hc2 eII
   have hM : 1 ≤ M := M_ge_one hn hx hw eIII
   have hA : 1 ≤ A := A_ge_one hM hx eIV
@@ -304,9 +322,10 @@ theorem cotas_seccion_tres
     have : 0 ≤ 2 * (j + 1) * C := Int.mul_nonneg (by omega) (by omega)
     omega
   have hI : 1 ≤ I := I_ge_one hG hH eXIII
-  have hK : 0 ≤ K := K_nonneg hp hM (n_succ_ge_k hk hn hc1 eI) eXVIII
-  have hL : 0 ≤ L := L_nonneg hk hl hM (by omega) eXIX
-  have hR : 0 ≤ R := R_nonneg hk hr hM (by omega) (by omega) eXX
-  exact ⟨by omega, by omega, by omega, by omega, hK, hL, hR⟩
+  have hK : 0 ≤ K := K_nonneg hp hM (n_succ_ge_k (by omega) hn hc1 eI) eXVIII
+  have hL : 0 ≤ L := L_nonneg (by omega) hl hM (by omega) eXIX
+  have hR : 0 ≤ R := R_nonneg (by omega) hr hM (by omega) (by omega) eXX
+  have hS : 0 ≤ S := S_nonneg_de_k_pos hk hz eXXI
+  exact ⟨by omega, by omega, by omega, by omega, hK, hL, hR, hS⟩
 
 end Diophantus
