@@ -480,6 +480,83 @@ Que el sistema (1) represente los primos. Eso es el teorema de JSWW (1976) y no 
 Todo lo demás —las cotas, las eliminaciones, la equisatisfacibilidad— está verificado por el núcleo de
 Lean 4, sin Mathlib, con axiomas `propext`, `Classical.choice` y `Quot.sound`.
 
+## 2.quater El intento de bajar de (44,5) a (42,5): cuatro ataques, ninguno mueve el 20
+
+`44 = 26 + 20 − 2`: los 26 de JSWW, más 20 nombres para aplanar a grado 2, menos 2 eliminaciones.
+Ellos anuncian 42, o sea **16 nombres**. La brecha está entera en el aplanado. Esto es lo que se
+probó, con lo que salió.
+
+### 1. Más eliminaciones: el tope de 2 es ESTRUCTURAL, no un fallo de búsqueda
+
+El diagnóstico de qué bloquea a cada incógnita en el sistema aplanado:
+
+| incógnita | estado |
+|---|---|
+| `e`, `q`, `y`, `z` | tienen una ecuación que las determina con miembro derecho **≥ 0** |
+| `l`, `n`, `v`, `p`, `h`, `j`, `m`, `x` | bloqueadas por **coeficientes negativos** |
+| `a`,`b`,`c`,`d`,`f`,`g`,`i`,`o`,`r`,`s`,`t`,`u`,`w` | no aparecen linealmente con coeficiente 1 |
+
+De las cuatro disponibles, `z` sube el grado a 3 al sustituirla (aparece multiplicada por `w`), y
+**`q` y `e` son mutuamente excluyentes**: las determina la *misma* ecuación (3), que se consume al
+usarla. Medidos los seis órdenes de `{q,y,e}`, todos dan exactamente 2 eliminaciones. El tope no es
+que el DFS busque mal: es que sólo hay dos ecuaciones donantes.
+
+### 2. Nombrar las definiciones de grado 1: la palanca no existía, y forzarla era un no-op
+
+La regla «si `u = R` y se nombra `R`, eliminar `u` cuesta grado cero» sugiere forzar el nombre de
+`2n+p+q+z` (definición de `e`) y de `l+n+v` (la de `y`). Medido: forzarlas **no cambia el óptimo**,
+que sigue en 20… porque **no llegan al sistema**. El catálogo filtra `grado(c) ≥ 2`, así que una
+definición de grado 1 no es candidata, y `forzar` sobre algo que no está en el catálogo **no hace
+nada, en silencio**.
+
+> Es el **segundo no-op silencioso** encontrado en la misma sesión, después del de
+> `productos_subsuma`. Los dos tienen la misma forma: una palanca que parece activada, no lo está, y
+> la medición que la evalúa devuelve «no cambia nada» — que es indistinguible del resultado real.
+
+Y aunque se construya el nombre a mano, la cuenta no mejora: cuesta +1 nombre y desbloquea +1
+eliminación. Con `m = 2n+p+q+z` nombrado salen **tres** eliminaciones (`e`, `q`, `y`) y 21 nombres:
+`25 + 21 − 3 + 1 = 44`. Exactamente lo mismo.
+
+### 3. Ampliar el catálogo: de 465 a 3.469 candidatos, y el óptimo no se mueve
+
+| `tope_suma` | candidatos | óptimo | cota |
+|---:|---:|---:|---:|
+| 6 | 465 | 20 | 20 |
+| 8 | 946 | 20 | 20 |
+| 10 | 3.469 | 20 | 20 |
+
+También sin el filtro de no-negatividad, y sobre la forma agrupada de las ecuaciones: 20 en los
+cuatro casos. **El catálogo ha dejado de ser el cuello de botella**, que es justo lo contrario de lo
+que pasó las tres veces anteriores.
+
+### 4. Prueba de caída sobre el materializador: los 20 nombres son indispensables
+
+Quitando cada nombre y pidiendo al **materializador** —no a la codificación— que aplane el resto, los
+20 fallan. Y el fallo es siempre localizado y legible:
+
+```
+sin `e**2`        -> no se pudo reducir a grado 2: e**3*(e + 2)
+sin `u**2`        -> no se pudo reducir a grado 2: a + u**2*(-a + u**2)
+sin `(k+1)**3*(k+2)` -> no se pudo reducir: 16*(k+1)**3*(k+2)*(n+1)**2 - f**2 + 1
+```
+
+Es la comprobación más fuerte de las cuatro porque **no usa la codificación**: el materializador es la
+verdad de campo, el mismo que produce los sistemas que se publican.
+
+### Conclusión, y qué queda
+
+El 20 se sostiene desde cuatro ángulos independientes, y el (44,5) con él. La brecha con el 42
+anunciado sigue abierta, con dos lecturas y sin forma de distinguirlas desde aquí:
+
+* **la codificación sigue siendo incompleta** en sus *particiones* (no en su catálogo, ya descartado).
+  Hay precedente documentado: sobre el sistema con `e` eliminada devuelve cota 21 y existe un aplanado
+  de 20 construido a mano, así que **se sabe que puede sobreestimar**;
+* **el 42 de JSWW no es alcanzable** por Skolem sobre (1). Es una frase suelta de la p. 450, nunca
+  escrita, igual que el (19,29) y el (12,13697).
+
+Distinguirlas exige reconstruir la sustitución de Skolem de la p. 263 de su referencia [3] y contar
+sus variables sobre (1). Eso es cotejo de fuente primaria, no una medición nuestra.
+
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
 > Esta sección es **autocontenida**: se puede leer sin el resto del documento. Las secciones 3.2x que
