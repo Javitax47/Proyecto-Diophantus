@@ -749,6 +749,38 @@ Dos cosas, y las dos importan:
 
 El paso siguiente es demostrarlas — y son mucho más fáciles que la de Pell.
 
+## 2.sexies ⛔ LA ESQUINA DE GRADO 5, CERRADA: seis vías medidas y agotadas
+
+Queda escrito para no volver a intentarlo. La cifra es **(44, 5)**, construida, verificada y
+formalizada en Lean (`Aplanado.lean`). El desglose es `44 = 26 + 20 − 2`: los 26 de JSWW, más 20
+nombres para aplanar a grado 2, menos 2 eliminaciones.
+
+| vía | resultado |
+|---|---|
+| **más eliminaciones** | tope de 2 **estructural**: `q` y `e` los determina la *misma* ecuación (3), y `z` sube el grado. Los seis órdenes medidos |
+| **nombrar definiciones de grado 1** | el catálogo filtra `grado ≥ 2`, así que forzarlas era un **no-op silencioso**; construidas a mano dan +1 nombre y +1 eliminación: cero |
+| **ampliar el catálogo** | 465 → 946 → **3.469** candidatos; el óptimo sigue en 20 con cota 20, también sin filtro de no-negatividad y sobre la forma agrupada |
+| **prueba de caída** | quitando cada uno de los 20 nombres, los 20 fallan **en el materializador**, no en la codificación |
+| **reglas de partición** | la codificación era más estricta que el materializador (tope de 6 factores frente a ninguno); alineada, el óptimo no se mueve |
+| **el sistema de §3** | con filtro de no-negatividad: **unsat**. Sin filtro (techo): **23 nombres ⇒ (56, 5)**, doce peor |
+
+### Y el resultado que sí es nuevo, aunque sea negativo
+
+El **(42, 5)** que JSWW anuncian se lo atribuyen a «*the Skolem substitution method (cf. [3], p.
+263)*». Cotejado Davis 1973 p. 263, ese método permite **exactamente** `z = yᵢyₖ`, `z = yᵢ²`,
+`z = xyᵢ`, `z = x²` — o sea **monomios de grado 2**, nada de subexpresiones compuestas. El mínimo
+**exacto** de ese método sobre su propio sistema (1) es **25 nombres ⇒ (51, 5)**.
+
+**Nuestro (44, 5) bate en siete variables al procedimiento que la literatura cita para llegar al 42**,
+y el 42 no sale de ese método. Es lo más sólido que hay en esta esquina, y es una afirmación sobre la
+literatura, no sobre nosotros.
+
+### Lo que esto NO significa
+
+Que (44,5) sea un mínimo. No lo es: la cota del optimizador sigue siendo **de su codificación**, y hay
+precedente documentado de que puede sobreestimar. Lo que está agotado son las vías que este proyecto
+sabe recorrer, no el problema.
+
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
 > Esta sección es **autocontenida**: se puede leer sin el resto del documento. Las secciones 3.2x que
