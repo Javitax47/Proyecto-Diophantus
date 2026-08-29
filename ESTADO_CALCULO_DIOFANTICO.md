@@ -543,14 +543,34 @@ sin `(k+1)**3*(k+2)` -> no se pudo reducir: 16*(k+1)**3*(k+2)*(n+1)**2 - f**2 + 
 Es la comprobación más fuerte de las cuatro porque **no usa la codificación**: el materializador es la
 verdad de campo, el mismo que produce los sistemas que se publican.
 
+### 5. Alinear las reglas: la codificación era MÁS ESTRICTA que el materializador
+
+El quinto ataque va a las *particiones*, no al catálogo. Comparados los dos juegos de reglas regla a
+regla, aparece una asimetría:
+
+| regla | materializador | codificación |
+|---|---|---|
+| partir un producto en dos grupos | **sin tope** de factores | `len(fs) <= 6` |
+
+Y el sistema tiene un producto de **siete** factores desplegados — `16·r²·y⁴·(a²−1)`, la ecuación (7).
+Para ese nodo la codificación **no tenía la regla en absoluto**.
+
+Eso importa aunque no mueva la cifra: **una cota inferior emitida por un juego de reglas más estricto
+que el constructor no es una cota del problema**, y este proyecto ya ha visto dos veces lo que hace
+una pareja desalineada. Se sube el tope a 8 (`TOPE_FACTORES`), que cubre el nodo de siete.
+
+Medido: con tope 6, 7, 8 y 10 el óptimo sigue siendo **20 con cota 20**. El tope no era lo que ataba
+la cifra — pero ahora la cota significa lo que dice.
+
 ### Conclusión, y qué queda
 
 El 20 se sostiene desde cuatro ángulos independientes, y el (44,5) con él. La brecha con el 42
 anunciado sigue abierta, con dos lecturas y sin forma de distinguirlas desde aquí:
 
-* **la codificación sigue siendo incompleta** en sus *particiones* (no en su catálogo, ya descartado).
-  Hay precedente documentado: sobre el sistema con `e` eliminada devuelve cota 21 y existe un aplanado
-  de 20 construido a mano, así que **se sabe que puede sobreestimar**;
+* **la codificación sigue siendo incompleta** en sus *particiones*. El catálogo está descartado
+  (ataque 3) y la asimetría del tope de factores, corregida (ataque 5), pero sigue habiendo precedente
+  documentado de sobreestimación: sobre el sistema con `e` eliminada devuelve cota 21 y existe un
+  aplanado de 20 construido a mano;
 * **el 42 de JSWW no es alcanzable** por Skolem sobre (1). Es una frase suelta de la p. 450, nunca
   escrita, igual que el (19,29) y el (12,13697).
 

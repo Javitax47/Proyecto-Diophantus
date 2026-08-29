@@ -156,6 +156,15 @@ def aplanado_minimo(system, target=2, timeout_s=300):
 #   APLANADO MINIMO SOBRE SUBEXPRESIONES COMPUESTAS (no solo monomios)
 # ---------------------------------------------------------------------------
 
+#: Tope de factores para la regla de particion de productos EN LA CODIFICACION.
+#: El MATERIALIZADOR no tiene tope, asi que cualquier valor finito hace a la
+#: codificacion mas estricta que el materializador -- y una cota inferior emitida
+#: por un juego de reglas mas estricto NO es una cota del problema. El sistema de
+#: JSWW tiene un producto de SIETE factores desplegados (`16*r^2*y^4*(a^2-1)`, la
+#: ec.(7)), asi que con tope 6 ese nodo se quedaba sin la regla entera.
+TOPE_FACTORES = 8
+
+
 def _nodos(e, acc, sumas_parciales=False, tope_suma=6, productos_subsuma=False):
     """Todos los nodos del arbol de `e`, y los productos parciales de cada Mul.
 
@@ -675,7 +684,7 @@ def aplanado_minimo_compuesto(system, target=2, timeout_s=600,
             # particiones son 2^len(fs). Subirlo a 8 multiplico por ~4 el tamano
             # del encoding y llevo un test de 10 s a varios minutos, sin mejorar
             # ninguna cifra. La correccion estaba en desplegar; el tope se queda.
-            elif fs and d >= 2 and len(fs) <= 6:
+            elif fs and d >= 2 and len(fs) <= TOPE_FACTORES:
                 for r in range(1, len(fs)):
                     for comb in itertools.combinations(range(len(fs)), r):
                         g1 = sympy.Mul(*[fs[i] for i in comb])
