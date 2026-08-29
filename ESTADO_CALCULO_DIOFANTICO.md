@@ -360,7 +360,9 @@ sustitución hacia atrás recupera las 9 ecuaciones originales vivas, **0 faltan
 
 ### La frontera completa, que es la UNION de dos sistemas
 
-Medida por duplicado, con la reescritura desactivada, y las dos repeticiones coinciden.
+Con la reescritura desactivada. **Todos los puntos de esta tabla se midieron por duplicado y las
+dos repeticiones coinciden.** (Los puntos aplanados del sistema con Pell se midieron una sola vez;
+no hace falta más porque salen todos dominados y ninguno llega a la tabla.)
 
 | variables | grado | receta | sistema |
 |---:|---:|---|---|
