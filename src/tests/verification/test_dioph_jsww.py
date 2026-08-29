@@ -667,7 +667,11 @@ def test_frontera_de_pareto(stats):
     frontera = barrido_pareto(S, grados=(2, 3, 4, 5, 6), k_optimos=1,
                               demostrados=NO_NEGATIVOS_DEMOSTRADOS)
     #: pares PUBLICADOS o anunciados, para comprobar dominancia.
-    literatura = [(26, 25), (42, 5), (19, 29), (12, 13697), (10, 6001)]
+    # COTEJADA contra el PDF original. El (24,37) y el (21,21) son de
+    # Matijasevic [10] 1971 --el segundo, de su ADDENDUM-- y faltaban aqui. El
+    # (21,21) importa: DOMINA a nuestro mejor punto de grado 25.
+    literatura = [(26, 25), (42, 5), (24, 37), (21, 21), (19, 29),
+                  (12, 13697), (10, 6001)]
     fallos = []
     prev_v, prev_g = None, None
     for v, g, receta, ver in frontera:

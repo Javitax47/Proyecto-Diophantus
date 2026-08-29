@@ -11,7 +11,7 @@ medirnos SIN depender de que nuestra cadena de primos sea correcta. Su sistema
 esta escrito explicitamente, se transcribe entero, y su grado se REPRODUCE
 (25 como generador en 26 variables) -- lo que valida la transcripcion.
 
-LA CITA DE LA QUE CUELGA EL (42,5), Y SU PROVENIENCIA ESTA MAL:
+LA CITA QUE IMPORTA, textual y COTEJADA CONTRA EL PDF ORIGINAL (p. 449):
 
     "Our construction here yields a polynomial in 19 variables and degree 29.
      It also yields a polynomial in 42 variables and degree 5. [...] All that is
@@ -20,23 +20,17 @@ LA CITA DE LA QUE CUELGA EL (42,5), Y SU PROVENIENCIA ESTA MAL:
      variables (to 42 when applied to (1)). We do not know whether there is a
      prime representing polynomial of degree < 5."
 
-    /!\ ESTE MODULO DECIA "textual (p. 450)" Y ESO ES FALSO. Cotejada la p. 450
-    del original (Amer. Math. Monthly 83:6, June-July 1976), NO contiene esta
-    cita. Lo que SI contiene, y queda confirmado de fuente primaria:
+    ESTE MODULO DECIA "p. 450" y estaba desplazado en uno: la cita esta en la
+    449. Se comprobo cotejando la p. 450 --que trata de otra cosa: la ec.(4) de
+    Putnam `(k+2){1-M}`, el Teorema 3 con n <= 11 y el Teorema 4-- y despues el
+    PDF completo. La cita es AUTENTICA y literal.
 
-      * la ecuacion (4), la construccion de Putnam:  (k+2){1 - M(k,x_1,...,x_n)}
-        -- o sea `FACTOR = k+2` de este modulo es correcto;
-      * el Teorema 3: los primos son el rango exacto de `2 + k*0^M(k,x_1,..,x_n)`
-        con **n <= 11** (representacion EXPONENCIAL, 12 variables con el k);
-      * el Teorema 4, sobre p_n;
-      * las referencias [4], [7], [8]=Matijasevic, [12]=Putnam, [16]=J. Robinson.
-
-    La cita puede seguir siendo autentica y estar en OTRA pagina de las 449-464:
-    lo unico establecido es que la pagina que se citaba es la equivocada, asi que
-    la cita queda SIN COTEJAR. Y con ella queda sin cotejar que el (42,5) sea
-    "(1) pasado por Skolem", que es la premisa de la comparacion de todo este
-    modulo. Lo medido sobre el metodo de Skolem (ver abajo) no depende de esto;
-    la atribucion a JSWW, si.
+    Y la referencia [3] queda confirmada desde la bibliografia (p. 464):
+    **Martin Davis, "Hilbert's tenth problem is unsolvable", this MONTHLY, 80
+    (1973) 233-269**. En su p. 263 el metodo de Skolem esta escrito entero y
+    permite EXACTAMENTE  z = y_i*y_k,  z = y_i^2,  z = x*y_i,  z = x^2: o sea
+    MONOMIOS DE GRADO 2. Medido con `aplanado_minimo`, que formaliza justo eso,
+    el minimo sobre (1) es 25 nombres --no 16-- luego su procedimiento da (51,5).
 
 Tres consecuencias, y las tres son incomodas de la forma util:
 
@@ -170,15 +164,31 @@ PUBLICADO = {
     # se lee como GENERADOR. La atribucion primaria (Matiyasevich 1973) carece de
     # literatura por admision del propio JSWW: "reportedly known to Matiyasevich
     # in 1973, although no literature is available".
-    "otros": [(19, 29), (12, 13697)],
+    # COTEJADAS EN EL PDF ORIGINAL, p. 449 y p. 462:
+    #   * Matijasevic [10] 1971: 24 variables y grado 37; y en el ADDENDUM de ese
+    #     mismo articulo, 21 variables y grado 21. Este modulo no tenia el (21,21),
+    #     y es la cifra que DOMINA a nuestro (21,25): mismas variables, menos grado.
+    #   * "The method of proof of Theorem 1 yields a polynomial in 16 variables.
+    #     To reduce the number of variables below 16 requires an entirely
+    #     different construction." -- (16, grado no indicado).
+    #   * el (12, 13697) esta en JSWW MISMO (p. 462: "Hence the degree of the 12
+    #     variable polynomial P is 13697"), no solo en Pak-Kaliszyk, que es quien
+    #     lo repite. Y ahi mismo: "Recently Yuri Matijasevic has announced that he
+    #     has been able to reduce the number of variables still further, from 12
+    #     to 10."
+    #   * "A simple argument shows that at least 2 variables are necessary."
+    "otros": [(24, 37), (21, 21), (19, 29), (12, 13697)],
+    "solo_variables": [(16, None)],
     "grado_menor_que_5": "abierto (declarado por los autores)",
     "referencia": "Jones-Sato-Wada-Wiens, Amer. Math. Monthly 83:6 (1976) 449-464",
     # COTEJADO de fuente primaria (p. 450): la ec.(4) es (k+2){1-M(...)} --luego
     # `FACTOR = k+2` es correcto-- y el Teorema 3 da los primos como rango exacto
     # de `2 + k*0^M` con n <= 11. SIN COTEJAR: el (42,5) y el (19,29), cuya cita
     # se atribuia a la p. 450 y no esta ahi (ver el aviso de la cabecera).
-    "cotejado_p450": ["FACTOR = k+2 (ec. 4)", "Teorema 3: n <= 11"],
-    "sin_cotejar": [(42, 5), (19, 29)],
+    # Cotejado contra el PDF completo del original: la cita de la p.449, la
+    # bibliografia (p.464, [3] = Davis 1973), el (12,13697) de la p.462, y en la
+    # p.450 la ec.(4) `(k+2){1-M}` y el Teorema 3 con n <= 11.
+    "cotejado": "PDF integro, Amer. Math. Monthly 83:6 (1976) 449-464",
 }
 
 # ---------------------------------------------------------------------------

@@ -15,11 +15,14 @@
 > **reproducible** — dos barridos sucesivos dan lo mismo):**
 >
 > * **(23, 25)** — tres variables menos que el (26, 25) que JSWW **sí imprimieron**, al mismo grado.
->   **Es el único punto que mejora una cifra de la literatura**, no usa aplanado —son tres
->   sustituciones lineales— y está **formalizado en Lean 4** (§2.ter);
-> * **(21, 25)** — **cinco** por debajo del (26,25) publicado, y también **formalizado en Lean 4**
+>   No usa aplanado —son tres sustituciones lineales— y está **formalizado en Lean 4** (§2.ter);
+> * **(21, 25)** — **cinco** por debajo del (26,25) impreso, y también **formalizado en Lean 4**
 >   (§2.ter). Los tres hechos de Pell que sostenían la cota `a ≥ e+1` **ya no se citan: se
 >   demuestran** en `Pell.lean`, sin Mathlib;
+> * ⚠️ **pero los dos quedan dominados por un (21, 21)** del *addendum* de Matijasevič (1971), que
+>   este proyecto no tenía en su tabla y apareció al cotejar el PDF original (§2.quater). Como el
+>   (42,5) y el (19,29), es una cifra **anunciada y nunca escrita**: frente a lo **exhibido**
+>   —el (26,25)— nuestros puntos siguen ganando; frente a lo **anunciado**, no;
 > * **(38, 7)**, **(32, 9)**, **(30, 11)**, **(27, 13)** — caen en una zona **vacía** en la
 >   literatura, pero **ninguno domina** al (26, 25): el (27,13) baja doce grados a costa de una
 >   variable de más;
@@ -590,51 +593,69 @@ grado > 2 se construya a su vez de dos partes disponibles, que es la sustitució
 Medido sobre las dos formas del sistema, la original y la agrupada del Teorema 2.12: **25 en ambas,
 con cota 25**.
 
-**Un (42, 5) por ese método exigiría 16 nombres, y el mínimo exacto es 25.** Nuestro (44, 5) bate a
-ese procedimiento por **siete** variables. Lo que ya no puede afirmarse —hasta cotejar la página
-correcta— es que JSWW lo atribuyan a ese método; ver el aviso de abajo.
+**El (42, 5) exigiría 16 nombres por ese método, y el mínimo exacto es 25. No es alcanzable así.** Y
+nuestro (44, 5) bate a ese procedimiento por **siete** variables.
 
-#### ⛔ Y aquí este documento tenía una cita falsa
+#### El cotejo completo, y lo que cambió
 
-`dioph_jsww.py` presentaba, desde el principio y como **«textual (p. 450)»**, la frase de JSWW que
-atribuye el (42,5) a la sustitución de Skolem sobre (1). **Cotejada la p. 450 del original, no está
-ahí.** Lo que sí hay en esa página, y queda confirmado:
+Se consiguió el **PDF íntegro** del artículo (AMM 83:6, 449–464). Resultado del cotejo:
 
-* la ecuación (4), la construcción de Putnam: `(k+2){1 − M(k,x₁,…,xₙ)}` — o sea que el `FACTOR = k+2`
-  del módulo **es correcto**;
-* el **Teorema 3**: los primos son el rango exacto de `2 + k·0^{M(k,x₁,…,xₙ)}` con **n ≤ 11**
-  (representación *exponencial*, 12 variables contando `k`);
-* el Teorema 4, sobre `pₙ`;
-* las referencias [4], [7], [8]=Matijasevič, [12]=Putnam, [16]=J. Robinson.
+**La cita es auténtica y literal — pero está en la p. 449, no en la 450.** El módulo llevaba desde
+el principio un número de página desplazado en uno. Se detectó porque la p. 450 trata de otra cosa
+(la ec. (4) de Putnam `(k+2){1−M}`, el Teorema 3 con `n ≤ 11`, el Teorema 4), y se resolvió leyendo
+el artículo entero.
 
-La cita **puede seguir siendo auténtica** y estar en otra de las páginas 449–464: lo único
-establecido es que la página que se citaba es la equivocada. Pero mientras no se coteje, queda **sin
-verificar que el (42,5) sea «(1) pasado por Skolem»** — que es la premisa de toda la comparación de
-este apartado.
+**Y la referencia [3] queda confirmada desde la bibliografía (p. 464):** *Martin Davis, «Hilbert's
+tenth problem is unsolvable», this MONTHLY, **80** (1973) 233–269*. La inferencia por el número de
+página era correcta.
 
-**Qué sobrevive y qué no:**
+Con eso, la conclusión del apartado **se sostiene**: el (42,5) exigiría 16 nombres por un método cuyo
+mínimo exacto sobre (1) es 25.
 
-| afirmación | estado |
+#### ⛔ Pero el cotejo trajo dos cifras que este proyecto no tenía, y una nos gana
+
+La misma página 449 dice, sobre el trabajo previo de Matijasevič [10] (1971):
+
+> «*In 1971, Yuri Matijasevič outlined the construction of a prime representing polynomial in 24
+> variables and degree 37, using the Fibonacci numbers. In the addendum to his paper, an improvement
+> to **21 variables and degree 21** was made. (These polynomials were not written out explicitly.)*»
+
+**El (21, 21) no estaba en la tabla de literatura de este proyecto, y domina a nuestros dos mejores
+puntos de grado 25:**
+
+| nuestro punto | dominado por |
 |---|---|
-| el método de Skolem sólo nombra monomios de grado 2 | ✅ **cotejado** (Davis 1973, p. 263) |
-| ese método sobre (1) necesita **25** nombres como mínimo exacto ⇒ (51,5) | ✅ **medido**, no depende de ninguna cita |
-| nuestro (44,5) bate a ese método por 7 variables | ✅ se sigue de lo anterior |
-| JSWW **anuncian** (42,5) obtenido por ese método | ⛔ **sin cotejar** — la página citada no lo contiene |
-| «el 42 anunciado no es alcanzable» | ⛔ **retirada**: la premisa sobre lo que anuncian está sin verificar |
+| (23, 25) — el formalizado en Lean | **(21, 21)**, anunciado 1971 |
+| (21, 25) — el de la cota de Pell | **(21, 21)**, mismas variables y **cuatro grados menos** |
 
-> Es la enésima vez que en este proyecto una comprobación que se daba por hecha resulta no estarlo, y
-> la primera que le toca a una **cita**, no a un cálculo. El patrón se repite intacto: lo que llevaba
-> más tiempo escrito y menos veces mirado es lo que estaba mal. Se corrige igual que se corrigieron
-> las cifras — dejándolo visible.
+Y una segunda cifra, también nueva aquí: «*The method of proof of Theorem 1 yields a polynomial in
+**16 variables**. To reduce the number of variables below 16 requires an entirely different
+construction.*» (sin grado indicado).
+
+**Qué queda del marcador, dicho sin adornos.** La distinción que este documento ya usaba para el
+(42,5) es la que salva algo, y hay que aplicarla igual: JSWW dicen explícitamente que los polinomios
+de Matijasevič **no fueron escritos**. Así que
+
+* frente a lo **exhibido** —el (26,25), único polinomio escrito de la literatura a ese grado— nuestro
+  **(23,25) sigue teniendo tres variables menos, y está formalizado en Lean**; el (21,25), cinco;
+* frente a lo **anunciado**, ambos quedan **dominados** por un (21,21) de 1971.
+
+No es la primera vez que este proyecto tiene que reordenar su marcador; sí es la primera que la causa
+es una cifra de la literatura que **nunca se había mirado**. El módulo llevaba la tabla de cifras
+publicadas «para no tener que recordarlas de memoria», y estaba incompleta justo donde dolía.
+
+Y de propina, dos correcciones menores del mismo cotejo: el **(12, 13697) está en JSWW mismo** (p.
+462: «*Hence the degree of the 12 variable polynomial P is 13697*»), no sólo en Pąk–Kaliszyk, que es
+quien lo repite; y ahí mismo se lee «*Recently Yuri Matijasevič has announced that he has been able
+to reduce the number of variables still further, from 12 to 10.*»
 
 ### Conclusión, y qué queda
 
-El 20 se sostiene desde cinco ángulos independientes, y el (44,5) con él. La brecha con el 42 sigue **abierta**, pero
-mejor acotada: no hace falta un instrumento incompleto para explicarla, y sí haría falta cotejar la
-página donde JSWW dicen de dónde sale su cifra:
+El 20 se sostiene desde cinco ángulos independientes, y el (44,5) con él. Con el artículo cotejado entero, la brecha con
+el 42 **se cierra en contra de la cifra anunciada**, no de nuestro instrumento:
 
-* el (42, 5) es una cifra **anunciada y nunca escrita**, igual que el (19,29) — y este proyecto ni
-  siquiera tiene cotejada la página donde se anuncia;
+* el (42, 5) es una cifra **anunciada y nunca escrita**, y el método al que sus autores la atribuyen
+  —cotejado en la fuente— **no la produce**: su mínimo exacto sobre (1) es 25 nombres, no 16;
 * la codificación *podría* seguir siendo incompleta en sus particiones —hay precedente: sobre el
   sistema con `e` eliminada devuelve cota 21 y existe un aplanado de 20 hecho a mano— pero eso ya no
   hace falta para explicar la brecha.
