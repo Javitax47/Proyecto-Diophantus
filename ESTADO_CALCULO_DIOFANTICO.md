@@ -3,7 +3,7 @@
 > **Propósito:** que cualquiera (incluido tu yo futuro) pueda retomar este trabajo sin releer
 > la conversación. Contiene qué existe, qué está verificado, con qué números, qué se aprendió
 > y cuál es el siguiente paso.
-> Última actualización: agosto 2026.
+> Última actualización: septiembre 2026. **El proyecto está CERRADO — ver §0.**
 
 > **⛔ AVISO: las cifras de grado 5 de este documento fueron RETIRADAS.** Ver **§2.bis**. El
 > noveno defecto —la ruta de reescritura certificaba conjuntos de nombres que **no se pueden
@@ -41,6 +41,107 @@
 >
 > Las secciones que siguen conservan su redacción original salvo aviso; **las cifras de grado 5
 > anteriores al (44,5) están retiradas** aunque el texto histórico las mencione.
+
+---
+
+## 0. ⛔ CIERRE DEL PROYECTO — las dos esquinas están cerradas
+
+> Septiembre 2026. Este documento pasa de **guía de reanudación** a **acta de resultados**. Las dos
+> esquinas que el proyecto se propuso atacar están cerradas, cada una por una razón distinta, y las
+> dos razones importan más que las cifras.
+
+### El objetivo, y qué pasó con él
+
+Los primos tienen representación diofántica desde 1976, y el «récord» **no es un número**: es una
+frontera de Pareto `(variables, grado)`, porque aplanar baja el grado añadiendo variables y eliminar
+quita variables subiendo el grado. El proyecto atacó los dos extremos.
+
+| esquina | objetivo | resultado |
+|---|---|---|
+| **grado mínimo** | bajar de 42 variables a grado 5 | **(44, 5)** — no se batió. Cerrada por agotamiento: §2.sexies |
+| **variables mínimas** | bajar de 10 variables | **12** es nuestro suelo, y está dominado. Cerrada por irrelevancia: §2.octies |
+
+**No se batió ningún récord.** Conviene decirlo primero y sin rodeos, porque todo lo demás se lee
+distinto según se sepa esto o no.
+
+### Lo que sí queda, que no es poco
+
+Lo que el proyecto hace bien no es batir récords: es **construir, verificar y corregir** lo que la
+literatura anuncia sin exhibir. De los cuatro pares de primos por debajo de 26 variables o de grado
+25 que se citan desde 1976 —(42,5), (19,29), (12,13697), (10,·)— **sólo uno estaba construido**.
+
+**Cifras construidas y verificadas** (ninguna es un mínimo demostrado; todas son cotas superiores):
+
+| punto | qué es | garantía |
+|---|---|---|
+| **(23, 25)** | 3 variables menos que el único (26,25) **exhibido** | **formalizado en Lean 4**, sin Mathlib |
+| **(21, 25)** | 5 menos | **formalizado**, incluida la cota de Pell `a ≥ e+1` que antes se citaba |
+| **(44, 5)** | la esquina de grado mínimo | **formalizado**; bate en 7 variables al método que la literatura cita para llegar al (42,5) |
+| (38,7) (32,9) (30,11) (27,13) | zona vacía en la literatura | verificados, no dominados |
+| (17,521) (16,1137) (15,3233) | los únicos puntos conocidos con grado < ~6.000 y < 19 variables | construidos; grados son **cotas superiores** |
+
+**Resultados sobre la literatura**, que son los más sólidos porque no dependen de nuestro optimizador:
+
+1. **El (42,5) no sale del método que se cita para él.** JSWW lo atribuyen al método de Skolem de
+   Davis 1973 p. 263. Cotejado el original, ese método admite exactamente monomios de grado 2, y su
+   mínimo **exacto** sobre el propio sistema (1) es 25 nombres ⟹ **(51, 5)**. Nuestro (44,5) le gana
+   por siete variables. (§2.quater, §2.sexies)
+2. **El «(10, ~1,6·10⁴⁵)» que circula funde dos objetos.** El 1,638·10⁴⁵ es el par **universal**
+   `(9,·)ℕ` de Jones 1982; el polinomio de primos de Matiyasevich tiene grado **> 6.000**. (§3, §2.octies)
+3. **El (58,4) no es de primos ni es un generador**, y ningún par universal puede bajar de grado 2.
+4. **Las catorce eliminaciones que JSWW despachan con «*the unknowns … eliminate by substitution*»**
+   están ahora demostradas y **formalizadas**; la transcripción de su Teorema 3.9 **no arrastra
+   ninguna hipótesis heredada**. (§2.septies)
+5. **El dominio del parámetro es `k ≥ 1`, no `k ≥ 0`** — y el punto donde fallaba nuestra
+   transcripción es exactamente el punto donde falla el criterio de Wilson en que se apoya el
+   teorema. Eran el mismo hecho. (§2.septies)
+
+**Nueve defectos propios encontrados y reparados**, cuatro de ellos capaces de producir cifras falsas
+que compilaban y pasaban tests. El registro entero, con las cifras retiradas, está en §3.bis. Ese
+registro es parte del resultado, no un apéndice.
+
+### Por qué cada esquina está cerrada
+
+**Grado 5 — agotamiento.** Siete vías medidas: más eliminaciones (tope estructural de 2), definiciones
+de grado 1 (no-op), catálogo hasta 3.469 candidatos (óptimo inmóvil en 20), prueba de caída, reglas de
+partición, el sistema de §3 (unsat o (56,5)), y la reparametrización fuerte de Pell (49, peor). El
+desglose `44 = 26 + 20 − 2` no tiene palanca libre. **No significa que 44 sea mínimo**: la cota sigue
+siendo del *encoding*, y hay precedente de que se queda corta.
+
+**Variables — irrelevancia.** El suelo de 12 está medido y explicado (ocho de las diez incógnitas
+supervivientes son testigos de divisibilidades y desigualdades; el teorema de combinación absorbe una
+de cada). Y el (10, ~6.001) de Matiyasevich, **exhibido y formalizado en Mizar**, domina en los dos
+ejes a todo lo que el método alcanza. Bajar de 10 exige ν ≤ 8, medio siglo abierto.
+
+### Lo que queda abierto, para quien retome
+
+Poco, y acotado:
+
+- **el (44,5) no es un mínimo demostrado.** Probarlo exigiría demostrar que ningún aplanado útil usa
+  un nombre que no sea subexpresión del árbol — y eso es falso en general, así que no hay ruta clara;
+- **los grados de (15,3233), (16,1137) y (17,521) son cotas superiores** por recorrido de árbol.
+  Implementar los refinamientos de Matijasevič (p. 462: `Wᵢ = V₁⋯Vᵢ`, y `B`, `C` sin elevar al
+  cuadrado) los bajaría; hay dos dianas de validación independientes, **13.376** y **6.848**;
+- **verificar que el grado del (10, ·) es realmente ~6.001** y no mayor que 13.697. Está en la MML y
+  no se ha hecho;
+- el **puente entre las dos islas del repo** (§6.3), que nunca se construyó.
+
+Ninguna de esas cuatro bate un récord. La primera y la tercera son verificación; la segunda mejora
+puntos que ya tenemos; la cuarta es ingeniería.
+
+### La conclusión honesta
+
+El proyecto **no batió ningún récord de la literatura**, y su método —transcribir un sistema
+publicado, eliminar, aplanar y medir la frontera— no puede batirlos: en grado ya está en el mínimo
+alcanzable (5), y en variables el récord se obtiene con maquinaria que este método no reproduce.
+
+Lo que sí demostró es que **la literatura de esta área está mucho menos peinada de lo que parece**:
+cifras anunciadas y nunca escritas, un método citado que no da la cifra que se le atribuye, dos
+confusiones de unidades que circulan, y catorce pasos «*by substitution*» que nadie había
+justificado. Todo eso se corrigió aquí, con demostración formal donde se pudo.
+
+Es un resultado más pequeño que el que se buscaba, y más sólido que el que se habría obtenido
+aceptando cualquiera de las cifras que hubo que retirar por el camino.
 
 ---
 
@@ -965,6 +1066,78 @@ Dos cosas, y las dos importan más que lo conseguido:
   ocho cotas no se cerraron para ganar un punto; se cerraron porque los ocho pasos que la literatura
   da por sabidos pasan de creídos a verificados por máquina, y lo que queda es **una sola hipótesis,
   y de nuestra propia conversión**, en vez de ocho notas al pie.
+
+## 2.octies ⛔ LA ESQUINA DE VARIABLES, CERRADA — y no por agotamiento
+
+La esquina de grado 5 se cerró **agotando vías** (§2.sexies): siete intentos medidos, ninguno mejora
+el (44,5). Ésta se cierra por otra razón, y conviene distinguirlas: **el récord ya es mejor que
+cualquier cosa que este método pueda producir.**
+
+### El suelo de 12, medido
+
+Del sistema de la §3, tras las catorce eliminaciones sobreviven diez incógnitas, y el barrido tiene
+una fórmula rígida:
+
+```
+variables = 10 libres + 1 (incógnita del teorema de combinación) + (6−q) raíces + 1 parámetro
+```
+
+que da 17, 16, 15, 14, 13, 12 para `q = 1…6`. **Mínimo: 12.** Y no es falta de búsqueda: de las diez
+supervivientes **sólo `n` y `m` están determinadas linealmente**, y cada una se canjea con `B` y `C`,
+que ya están eliminadas — saldo cero. Reproducible.
+
+### Por qué diez, y qué haría falta para bajar
+
+Al mirar **qué papel juega cada una** aparece la estructura del suelo:
+
+| papel | incógnitas | cuántas |
+|---|---|---|
+| esenciales | `n`, `x` | 2 |
+| testigos de divisibilidad/congruencia | `w`, `z`, `p`, `l`, `r` | 5 |
+| holgura de una desigualdad (`B ≤ C`) | `m` | 1 |
+| multiplicadores libres | `i`, `j` | 2 |
+
+El teorema de combinación absorbe **exactamente una divisibilidad y una desigualdad**, y las dos
+plazas están ocupadas (`F ∣ H−C` y (XIV)). Luego **cada divisibilidad extra cuesta exactamente una
+variable**. Eso dice con precisión qué tiene que hacer un teorema más fuerte para bajar de 12 — y es,
+presumiblemente, lo que hace el de nueve incógnitas.
+
+### Y por qué eso ya no importa: el (12, 13.697) está dominado
+
+| | variables | grado | estado |
+|---|---|---|---|
+| Matiyasevich 1977/81 | **10** | **~6.001** | exhibido **y formalizado en Mizar** (`POLYNOM9:85`, Pąk 2022) |
+| JSWW §3 | 12 | 13.697 | nunca escrito |
+
+El de 10 gana **en los dos ejes**. El (12, 13.697) no es un vértice de la frontera: es un punto
+interior. Construirlo —que era el plan— no añadiría nada al Pareto. Y lo mismo vale para nuestros
+(12, 297.729), (13, 21.633) y (14, 8.385).
+
+Salvedad, porque la cifra importa: «> 6.000» es una **cota inferior** tal como la dan los
+formalizadores. Si el grado real superara 13.697, el (12) dejaría de estar dominado. Es comprobable
+en la MML y **no se ha comprobado**.
+
+### La confusión que hay que no volver a cometer
+
+En esta sesión se repitió, dentro de este mismo proyecto, el error que la §3 ya corregía: tomar el
+**1,638·10⁴⁵** como grado del polinomio de primos de 10 variables. **No lo es.** Es el grado del par
+**universal** `(9,·)ℕ` de Jones 1982 — otro objeto, y no construido. El polinomio de primos de
+Matiyasevich tiene grado **> 6.000**.
+
+Sobre esa confusión se había montado un plan entero («igualar el 10 con mucho menos grado, hay
+cuarenta órdenes de magnitud de holgura»). **No hay tal holgura.** Queda escrito aquí porque el error
+sobrevivió a estar ya corregido cincuenta páginas más arriba.
+
+### Balance de la esquina
+
+- bajar de 10 exige **ν ≤ 8** — medio siglo abierto, y es el problema central del área;
+- el récord de 10 está **exhibido y formalizado por otros**;
+- nuestro suelo es 12, y 12 está dominado.
+
+**En número de variables este proyecto no aporta nada, y la esquina queda cerrada.** Lo único nuestro
+que sobrevive de esta línea son **(15, 3.233)**, **(16, 1.137)** y **(17, 521)** — y sobreviven por el
+**grado**, no por las variables: son los únicos puntos conocidos con grado por debajo de ~6.000 y
+menos de 19 variables.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 
@@ -2925,7 +3098,13 @@ años sin moverse. Nuestra cadena propia está en 49 incógnitas. El objetivo re
 sino bajar sustancialmente de ahí, y la palanca identificada sigue siendo el **Teorema de
 Combinación de Relaciones** (§6.1), aún sin implementar.
 
-## 6. Frontera abierta (dónde retomar)
+## 6. Frontera abierta (dónde retomar) — ⛔ SUPERADA por §0
+
+> **Esta sección quedó obsoleta.** Las dos esquinas que describe están cerradas (§2.sexies y
+> §2.octies) y el balance de lo que realmente queda abierto está en **§0**. Se conserva íntegra
+> porque su contenido técnico —el desglose de las 68, el coste de `L_psi`, las palancas medidas— es
+> el registro de por qué se cerraron, y porque §6.3 (el puente entre las dos islas del repo) sigue
+> siendo trabajo pendiente de verdad.
 
 ### 6.1 Hacia pocas incógnitas (esquina de 9)
 - **Punto de partida real: 49 incógnitas** en la representación propia (la anclada por `L_psi`;
