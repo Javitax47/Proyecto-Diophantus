@@ -1,0 +1,53 @@
+%% ---------------------------------------------------------------------------
+%%  Two Exhibited and Formally Verified Points on the Pareto Frontier of
+%%  Diophantine Representations of the Primes
+%%
+%%  Compilar:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+%% ---------------------------------------------------------------------------
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{example}[theorem]{Example}
+
+\DeclareMathOperator{\deg}{deg}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\sq}{\square}
+
+\begin{document}
+
+\input{sec-abstract}
+\input{sec-intro}
+\input{sec-prelim}
+\input{sec-deg5}
+\input{sec-var21}
+\input{sec-lean}
+\input{sec-sec3}
+\input{sec-correc}
+\input{sec-limits}
+\input{sec-related}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
