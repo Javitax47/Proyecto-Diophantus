@@ -78,7 +78,7 @@ literatura anuncia sin exhibir. De los cuatro pares de primos por debajo de 26 v
 | **(21, 25)** | 5 menos | **formalizado**, incluida la cota de Pell `a ≥ e+1` que antes se citaba |
 | **(44, 5)** | la esquina de grado mínimo | **formalizado**; bate en 7 variables al método que la literatura cita para llegar al (42,5) |
 | (38,7) (32,9) (30,11) (27,13) | zona vacía en la literatura | verificados, no dominados |
-| (17,521) (16,1137) (15,3233) | los únicos puntos conocidos con grado < ~6.000 y < 19 variables | construidos; grados son **cotas superiores** |
+| **(16,369) (15,801) (14,1777) (13,3905)** | los únicos puntos conocidos con < 17 variables y grado < ~6.000 | construidos con los refinamientos de la p. 462, validados contra **cuatro** cifras publicadas (§2.nonies); grados son **cotas superiores** |
 
 **Resultados sobre la literatura**, que son los más sólidos porque no dependen de nuestro optimizador:
 
@@ -89,10 +89,12 @@ literatura anuncia sin exhibir. De los cuatro pares de primos por debajo de 26 v
 2. **El «(10, ~1,6·10⁴⁵)» que circula funde dos objetos.** El 1,638·10⁴⁵ es el par **universal**
    `(9,·)ℕ` de Jones 1982; el polinomio de primos de Matiyasevich tiene grado **> 6.000**. (§3, §2.octies)
 3. **El (58,4) no es de primos ni es un generador**, y ningún par universal puede bajar de grado 2.
-4. **Las catorce eliminaciones que JSWW despachan con «*the unknowns … eliminate by substitution*»**
+4. **Cuatro cifras publicadas del teorema de combinación reproducidas** —148.864, 13.376, 6.848 y
+   13.697— con una sola lectura de un párrafo telegráfico. (§2.nonies)
+5. **Las catorce eliminaciones que JSWW despachan con «*the unknowns … eliminate by substitution*»**
    están ahora demostradas y **formalizadas**; la transcripción de su Teorema 3.9 **no arrastra
    ninguna hipótesis heredada**. (§2.septies)
-5. **El dominio del parámetro es `k ≥ 1`, no `k ≥ 0`** — y el punto donde fallaba nuestra
+6. **El dominio del parámetro es `k ≥ 1`, no `k ≥ 0`** — y el punto donde fallaba nuestra
    transcripción es exactamente el punto donde falla el criterio de Wilson en que se apoya el
    teorema. Eran el mismo hecho. (§2.septies)
 
@@ -119,9 +121,10 @@ Poco, y acotado:
 
 - **el (44,5) no es un mínimo demostrado.** Probarlo exigiría demostrar que ningún aplanado útil usa
   un nombre que no sea subexpresión del árbol — y eso es falso en general, así que no hay ruta clara;
-- **los grados de (15,3233), (16,1137) y (17,521) son cotas superiores** por recorrido de árbol.
-  Implementar los refinamientos de Matijasevič (p. 462: `Wᵢ = V₁⋯Vᵢ`, y `B`, `C` sin elevar al
-  cuadrado) los bajaría; hay dos dianas de validación independientes, **13.376** y **6.848**;
+- ~~implementar los refinamientos de Matijasevič~~ **hecho** (§2.nonies): la curva pasa a
+  (16,369), (15,801), (14,1777), (13,3905), y el extremo reproduce el (12,13.697) publicado. Los
+  grados siguen siendo **cotas superiores** por recorrido de árbol — expandir es inabordable, y si
+  hay cancelación los puntos mejoran;
 - **verificar que el grado del (10, ·) es realmente ~6.001** y no mayor que 13.697. Está en la MML y
   no se ha hecho;
 - el **puente entre las dos islas del repo** (§6.3), que nunca se construyó.
@@ -842,6 +845,10 @@ las `6−q` restantes siguen costando una raíz cada una. Eso da una curva, no u
 **Tres puntos nuevos no dominados: (17, 521), (16, 1137) y (15, 3233)** — en la región que estaba
 vacía porque JSWW y Matijasevič optimizaban variables dejando explotar el grado.
 
+> ⬆️ **Esta curva quedó superada.** Es la del teorema **plano** de [11]. Con los dos refinamientos de
+> la p. 462 y la condición (24), todos los puntos mejoran y el extremo pasa a reproducir el
+> (12, 13.697) publicado. Ver **§2.nonies**.
+
 ### Lo que hay que decir de su garantía
 
 Dos cosas, y las dos importan:
@@ -1138,6 +1145,83 @@ sobrevivió a estar ya corregido cincuenta páginas más arriba.
 que sobrevive de esta línea son **(15, 3.233)**, **(16, 1.137)** y **(17, 521)** — y sobreviven por el
 **grado**, no por las variables: son los únicos puntos conocidos con grado por debajo de ~6.000 y
 menos de 19 variables.
+
+## 2.nonies ✅ LA CURVA REFINADA — cuatro cifras publicadas reproducidas con una sola regla
+
+La curva de §2.quinquies usaba el teorema de combinación **plano** de [11], que es el que da
+`M₆ = 148.864`. Pero JSWW descartan ese número en la página siguiente:
+
+> «*However, Yuri Matijasevič has recently worked out a more efficient version of the relation
+> combining theorem. If we suppose that `1 + |Aᵢ| ≤ Vᵢ`, then in `M_q` we may replace `Wᵢ` by
+> `Wᵢ = V₁V₂…V_i`. Thus when a square condition arises from a Pell equation, `(a²−1)β²+1 = □`, we may
+> choose any `V ≥ |aβ|+1`. Also, if the quantities `B` and `C` of [11] are non-negative, as they are
+> here, they need not be squared in `M_q`. **These refinements yield a polynomial `M₆` of degree
+> 13376.**»*  (p. 462)
+
+O sea que **nuestra curva estaba sistemáticamente ~11× alta en grado**: reproducíamos el número que
+ellos mismos descartan.
+
+### Los dos refinamientos, y la única lectura que hay que justificar
+
+1. **`W^i` → `Wᵢ = V₁⋯Vᵢ`.** El grado pasa de `i·2·máx deg Aⱼ` a `Σⱼ deg Vⱼ`, que es mucho menor en
+   cuanto los grados son dispares — y aquí van de 6 a 184.
+2. **`B` y `C` no se elevan al cuadrado.**
+
+Lo único no literal es **qué grado tiene `Vᵢ`**. El texto dice `Vᵢ ≥ 1 + |Aᵢ|` (grado `deg Aᵢ`) y
+luego, para las que vienen de una Pell, `V ≥ |aβ|+1`, que es del orden de `√Aᵢ`. Aquí se toma
+**`deg Vᵢ = ⌈deg Aᵢ / 2⌉` para todas**, que es lo natural: la condición *es* que `Aᵢ` sea un cuadrado,
+así que `√Aᵢ` es un entero y sirve de cota.
+
+### Por qué se puede confiar en esa lectura: cuatro dianas
+
+| cifra | fuente | reproducida |
+|---|---|---|
+| `M₆` plano = **148.864** | p. 461 | ✅ (ya estaba) |
+| `M₆` refinado = **13.376** | p. 462 | ✅ |
+| `M₅` con (24) = **6.848** | p. 462 | ✅ |
+| generador `P` = **13.697** | p. 462 | ✅ `= 1 + 2·6848` |
+
+**Cuatro coincidencias exactas con una sola regla.** Si la lectura del párrafo fuera otra, no
+cuadrarían las cuatro. Y el grado de (24) —**22**— está calculado con sympy, no despejado de ninguna
+de ellas.
+
+### La condición (24), que además vale una variable
+
+> «*Matijasevič also noticed that our first two square conditions, (I) and (II), may be combined into
+> one square condition* `(24) U(2k,n)[((2U(2k,n)−1)²−1)(n+1)²(x+1)²·4 + 1] = □`»
+
+Su corchete es exactamente la Pell `(a²−1)b²+1` con `a = 2U(2k,n)−1` y `b = 2(n+1)(x+1)` —
+comprobado. Gana **dos cosas distintas**: baja el grado, y baja de seis condiciones a cinco, y como
+cada condición no combinada cuesta una raíz, eso es **una variable menos** en todo `q < 5`.
+
+### La curva
+
+| variables | grado (refinado + (24)) | antes (plano) |
+|---:|---:|---:|
+| **16** | **369** | 1.137 |
+| **15** | **801** | 3.233 |
+| **14** | **1.777** | 8.385 |
+| **13** | **3.905** | 21.633 |
+| 12 | **13.697** | 297.729 |
+
+**Todos los puntos mejoran**, y el extremo **reproduce su cifra publicada**. El (17, 521) desaparece
+de la frontera: lo domina el (16, 369), que tiene una variable menos *y* menos grado.
+
+Reproducible con `dioph_jsww3.curva_pareto()`; `curva_pareto(refinado=False, con_24=False)` devuelve
+la vieja.
+
+### Qué son y qué no son estos cuatro puntos
+
+**No son un récord de variables.** El (10, ~6.001) de Matiyasevich —exhibido y formalizado en Mizar—
+domina al (12, 13.697) y a todo lo que hay por debajo de 13 variables. La esquina de variables sigue
+cerrada (§2.octies).
+
+Valen **por el grado**: `(16, 369)`, `(15, 801)`, `(14, 1.777)` y `(13, 3.905)` son los únicos puntos
+conocidos con **menos de 17 variables y grado por debajo de ~6.000**. Esa franja seguía vacía porque
+JSWW y Matijasevič optimizaban variables dejando explotar el grado, y nadie midió el medio.
+
+**La reserva de siempre:** los grados son **cotas superiores** calculadas recorriendo el árbol sin
+expandir. Si hay cancelación de términos de cabeza, los puntos **mejoran**.
 
 ## 3. INFORME INTEGRADO — qué se ha conseguido, cómo, y con qué garantía
 

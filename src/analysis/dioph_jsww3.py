@@ -610,3 +610,106 @@ def censo_eliminaciones(k_positivo=True):
 # --`k = 0`-- es EXACTAMENTE el punto donde falla el criterio de Wilson en el que
 # se apoya el teorema. No eran dos problemas; era el mismo, y estaba en nuestra
 # transcripcion por poner el parametro sobre N cuando el teorema dice `k >= 1`.
+
+
+# ===========================================================================
+#  LA CURVA DE PARETO DEL TEOREMA DE COMBINACION, REFINADA
+# ===========================================================================
+
+#: Grados de las ocho condiciones que quedan tras las CATORCE eliminaciones,
+#: medidos sobre las 10 incognitas libres mas `k`. Son la entrada de todo lo que
+#: sigue, asi que conviene tenerlos con su procedencia:
+#:
+#:     (I)    U(2k,n)                   6      (VII)  D*F*I           184
+#:     (II)   U(2n,x)                   6      B = F                   34
+#:     (XV)   (M^2-1)K^2+1             14      C = H - C                2
+#:     (XVI)  (M^2x^2-1)L^2+1          18      D  (la desigualdad)     50
+#:     (XVII) (M^2n^2x^2-1)R^2+1       22
+GRADOS_CONDICIONES = [6, 6, 14, 18, 22, 184]
+GRADO_B, GRADO_C, GRADO_D = 34, 2, 50
+
+
+def condicion_24():
+    """(24) de la p. 462: `(I)` y `(II)` fundidas en UNA condicion de cuadrado.
+
+        "Matijasevic also noticed that our first two square conditions, (I) and
+         (II), may be combined into one square condition
+             (24)  U(2k,n)[((2U(2k,n)-1)^2 - 1)(n+1)^2(x+1)^2*4 + 1] = []
+         Observe that the first factor of (24) is prime to the second."
+
+    QUE GANA, y son dos cosas distintas:
+
+      * una VARIABLE: seis condiciones pasan a cinco, y cada condicion no
+        combinada cuesta una raiz. Con `q < 5` eso es una incognita menos;
+      * y baja el grado, porque el corchete es una Pell `(a^2-1)b^2+1` con
+        `a = 2U(2k,n)-1` y `b = 2(n+1)(x+1)`, de modo que su raiz es barata.
+
+    Grado 22, calculado aqui y no despejado de ninguna cifra publicada.
+    """
+    Uk = U(2 * k, n)
+    return Uk * (((2 * Uk - 1) ** 2 - 1) * 4 * (n + 1) ** 2 * (x + 1) ** 2 + 1)
+
+
+def grado_condicion_24():
+    """El grado de `(24)`, medido. Sale 22."""
+    return sympy.Poly(sympy.expand(condicion_24()), k, n, x).total_degree()
+
+
+def curva_pareto(refinado=True, con_24=True):
+    """La frontera `(variables, grado del generador)` del teorema de combinacion.
+
+    El teorema funde `q` condiciones de cuadrado --mas la divisibilidad y la
+    desigualdad-- en UNA ecuacion al coste de UNA incognita. Las `condiciones-q`
+    que no se combinan siguen costando una raiz cada una. De ahi la cuenta:
+
+        variables = 10 libres + 1 (la del teorema) + (condiciones - q) + 1 (k)
+
+    y el grado del sistema es el mayor entre `M_q` y las condiciones que quedan
+    sin combinar. El generador es `Q = W(1 - suma P_i^2)`, luego `1 + 2*grado`.
+
+    `refinado` usa los dos refinamientos de la p. 462 (ver
+    `dioph_combinar.grado_estimado_refinado`); `con_24` funde (I) y (II).
+    """
+    from src.analysis.dioph_combinar import (grado_estimado,
+                                             grado_estimado_refinado)
+
+    if con_24:
+        # (24) sustituye a las dos de grado 6 por una de grado 22
+        conds = sorted([grado_condicion_24()] + GRADOS_CONDICIONES[2:])
+    else:
+        conds = sorted(GRADOS_CONDICIONES)
+    formula = grado_estimado_refinado if refinado else grado_estimado
+
+    filas = []
+    for q in range(1, len(conds) + 1):
+        combinadas, resto = conds[:q], conds[q:]
+        gr_M = formula(combinadas, GRADO_B, GRADO_C, GRADO_D, 1)
+        grado_sistema = max([gr_M] + resto)
+        variables = 10 + 1 + (len(conds) - q) + 1
+        filas.append({"q": q, "variables": variables,
+                      "grado_M": gr_M, "resto": max(resto) if resto else 0,
+                      "grado_generador": 1 + 2 * grado_sistema})
+    return filas
+
+
+# ---------------------------------------------------------------------------
+#  LA CURVA, MEDIDA -- y lo que cambia respecto de la version plana
+# ---------------------------------------------------------------------------
+#
+#   con (24) + refinamientos          version plana anterior
+#   ------------------------          ----------------------
+#     (16,    369)                      (17,    521)
+#     (15,    801)                      (16,  1.137)
+#     (14,  1.777)                      (15,  3.233)
+#     (13,  3.905)                      (14,  8.385)
+#     (12, 13.697)  <- el suyo          (13, 21.633)
+#                                       (12, 297.729)
+#
+# TODOS los puntos mejoran, y el extremo REPRODUCE su cifra publicada. El (17,521)
+# desaparece: lo domina el (16,369), que tiene una variable menos Y menos grado.
+#
+# LO QUE ESTO NO ES. No es un record de variables: el (10, ~6001) de Matiyasevich
+# --exhibido y formalizado en Mizar-- domina al (12,13697) y a todo lo que hay por
+# debajo de 13 variables aqui. Estos cuatro puntos --(16,369), (15,801), (14,1777)
+# y (13,3905)-- valen por el GRADO: son los unicos conocidos con menos de 17
+# variables y grado por debajo de ~6000.

@@ -26,7 +26,11 @@ import sympy
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
 
-from src.analysis.dioph_combinar import J, M, grado_combinado, grado_estimado
+from src.analysis.dioph_combinar import (J, M, grado_combinado, grado_estimado,
+                                        grado_estimado_refinado)
+from src.analysis.dioph_jsww3 import (GRADO_B, GRADO_C, GRADO_D,
+                                      GRADOS_CONDICIONES, U, curva_pareto,
+                                      grado_condicion_24, k, n, x)
 
 
 class Colors:
@@ -176,6 +180,93 @@ def test_reproduce_el_148864_de_jsww(stats):
         stats.ok()
 
 
+def test_refinamientos_de_matijasevic(stats):
+    """[6] Los DOS refinamientos de la p. 462, contra TRES cifras publicadas.
+
+    JSWW calculan `M_6` con el teorema plano y les sale 148.864 (p. 461, test [5]).
+    En la pagina siguiente aplican dos refinamientos de Matijasevic y les sale
+    13.376; combinando ademas (I) y (II) en una sola condicion --su (24)-- sale
+    `M_5 = 6848`, y de ahi su generador de 12 variables y grado 13.697.
+
+    Este test comprueba los tres. Y son TRES dianas independientes de una sola
+    regla: si la lectura del parrafo fuera otra, no coincidirian las tres.
+    """
+    print(f"\n{Colors.HEADER}[6] Los refinamientos de la p. 462: tres cifras mas{Colors.ENDC}")
+    problemas = []
+    seis = GRADOS_CONDICIONES
+    B, C, D = GRADO_B, GRADO_C, GRADO_D
+
+    m6 = grado_estimado_refinado(seis, B, C, D, 1)
+    print(f"  M_6 refinado : {m6:8d}   JSWW p.462: 13376")
+    if m6 != 13376:
+        problemas.append(f"M_6 refinado deberia ser 13376, es {m6}")
+
+    g24 = grado_condicion_24()
+    print(f"  grado de (24): {g24:8d}   (calculado, no despejado)")
+    if g24 != 22:
+        problemas.append(f"(24) deberia tener grado 22, tiene {g24}")
+
+    cinco = sorted([g24] + seis[2:])
+    m5 = grado_estimado_refinado(cinco, B, C, D, 1)
+    print(f"  M_5 con (24) : {m5:8d}   JSWW p.462: 6848")
+    if m5 != 6848:
+        problemas.append(f"M_5 deberia ser 6848, es {m5}")
+
+    gen = 1 + 2 * m5
+    print(f"  generador P  : {gen:8d}   JSWW p.462: 13697")
+    if gen != 13697:
+        problemas.append(f"el generador deberia ser 13697, es {gen}")
+
+    # y (24) tiene que ser lo que la pagina imprime: una Pell dentro
+    Uk = U(2 * k, n)
+    a, b = 2 * Uk - 1, 2 * (n + 1) * (x + 1)
+    dentro = ((2 * Uk - 1) ** 2 - 1) * 4 * (n + 1) ** 2 * (x + 1) ** 2 + 1
+    if sympy.expand(dentro - ((a ** 2 - 1) * b ** 2 + 1)) != 0:
+        problemas.append("el corchete de (24) no es la Pell de a=2U-1, b=2(n+1)(x+1)")
+    else:
+        print(f"  {Colors.OKGREEN}OK{Colors.ENDC} el corchete de (24) es la Pell de "
+              f"`a = 2U(2k,n)-1`, `b = 2(n+1)(x+1)`")
+
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} tres cifras publicadas con UNA sola "
+              f"regla: la lectura del parrafo es la correcta")
+        stats.ok()
+
+
+def test_curva(stats):
+    """[7] La curva refinada, y que su extremo ES el punto publicado de JSWW."""
+    print(f"\n{Colors.HEADER}[7] La curva de Pareto, refinada{Colors.ENDC}")
+    nueva = curva_pareto()
+    vieja = curva_pareto(refinado=False, con_24=False)
+    v = {f["variables"]: f["grado_generador"] for f in vieja}
+    print(f"  {'q':>2} {'vars':>5} {'grado':>8}   {'antes':>9}")
+    for f in nueva:
+        antes = v.get(f["variables"])
+        print(f"  {f['q']:>2} {f['variables']:>5} {f['grado_generador']:>8}   "
+              f"{antes if antes else '—':>9}")
+    problemas = []
+    esperada = [(16, 369), (15, 801), (14, 1777), (13, 3905), (12, 13697)]
+    got = [(f["variables"], f["grado_generador"]) for f in nueva]
+    if got != esperada:
+        problemas.append(f"la curva cambio: {got}")
+    # el extremo tiene que ser SU punto
+    if got[-1] != (12, 13697):
+        problemas.append("el extremo de la curva ya no reproduce el (12,13697) de JSWW")
+    # y todos los puntos tienen que mejorar respecto de la version plana
+    for var, gr in got:
+        if var in v and gr >= v[var]:
+            problemas.append(f"con {var} variables el refinamiento no mejora: "
+                             f"{gr} frente a {v[var]}")
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} todos los puntos mejoran y el extremo "
+              f"reproduce el (12, 13697) publicado")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== TEOREMA DE COMBINACION DE RELACIONES (Matijasevic-Robinson 1975) ==={Colors.ENDC}")
     stats = Stats()
@@ -184,6 +275,8 @@ def main():
     test_equivalencia_q2(stats)
     test_grado(stats)
     test_reproduce_el_148864_de_jsww(stats)
+    test_refinamientos_de_matijasevic(stats)
+    test_curva(stats)
     total = stats.passed + stats.failed
     print()
     if stats.failed == 0:

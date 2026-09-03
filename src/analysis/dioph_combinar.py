@@ -126,3 +126,52 @@ def grado_estimado(gr_As, gr_B, gr_C, gr_D, gr_n=1):
                     2 * gr_C,                   # C^2
                     2 * gr_B + gr_D + max(2 * gr_C, q * gr_W))
     return 2 ** q * gr_factor
+
+
+def grado_estimado_refinado(gr_As, gr_B, gr_C, gr_D, gr_n=1):
+    """Grado de `M_q` con los DOS refinamientos de Matijasevic (JSWW p. 462).
+
+    JSWW calculan primero `M_6` con el teorema plano de [11] y les sale 148.864
+    (p. 461). En la pagina siguiente escriben:
+
+        "However, Yuri Matijasevic has recently worked out a more efficient
+         version of the relation combining theorem. If we suppose that
+         1 + |A_i| <= V_i, then in M_q we may replace W_i by W_i = V_1 V_2 ... V_i,
+         (i = 1, 2, ..., q). Thus when a square condition arises from a Pell
+         equation, (a^2-1)b^2 + 1 = [], we may choose any V >= |ab| + 1. Also, if
+         the quantities B and C of [11] are non-negative, as they are here, they
+         need not be squared in M_q. These refinements yield a polynomial M_6 of
+         degree 13376."
+
+    DOS CAMBIOS, y aqui estan los dos:
+
+      1. `W^i` --con `W = 1 + suma A_j^2`, de grado `2 max deg A_j`-- se sustituye
+         por `W_i = V_1...V_i`. El grado pasa de `i * 2 max deg A_j` a
+         `suma_j deg V_j`, que es mucho menor en cuanto los grados son dispares.
+
+         QUE GRADO TIENE `V_i`, que es la unica lectura no literal. El texto dice
+         `V_i >= 1 + |A_i|` (grado `deg A_i`) y luego, para las condiciones que
+         vienen de una Pell, `V >= |ab| + 1`, que es del orden de `raiz(A_i)`.
+         Aqui se toma **`deg V_i = ceil(deg A_i / 2)` para todas**, que es lo
+         natural: la condicion ES que `A_i` sea un cuadrado, asi que `raiz(A_i)`
+         es un entero y sirve de cota.
+
+      2. `B` y `C` no se elevan al cuadrado.
+
+    POR QUE SE PUEDE CONFIAR EN ESA LECTURA. Reproduce EXACTAMENTE cuatro numeros
+    publicados, tres de ellos con esta funcion y uno con la plana:
+
+        M_6 plano      148864   (p. 461)   <- `grado_estimado`
+        M_6 refinado    13376   (p. 462)
+        M_5 con (24)     6848   (p. 462)
+        generador P     13697   (p. 462)   = 1 + 2*6848
+
+    Cuatro coincidencias exactas con una sola regla no son casualidad. Si la
+    lectura fuera otra, fallarian.
+    """
+    q = len(gr_As)
+    gr_W = sum((d + 1) // 2 for d in gr_As)      # W_q = V_1...V_q
+    gr_factor = max(gr_B + gr_n,                  # B n   (ya no B^2 n)
+                    gr_C,                         # C     (ya no C^2)
+                    gr_B + gr_D + max(gr_C, gr_W))
+    return 2 ** q * gr_factor
