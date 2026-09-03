@@ -20,7 +20,9 @@ fichero comprueba es el ENUNCIADO, que es donde se cuela el error:
       licencia no elimina, con ella si;
   [5] sin `sorry`, sin `axiom` propio, sin Mathlib;
   [6] el censo cuadra: con el parametro en su dominio, 7 estructurales +
-      7 demostradas + 0 pendientes = 14, y sin el, 13; la diferencia es `S`.
+      7 demostradas + 0 pendientes = 14, y sin el, 13; la diferencia es `S`;
+  [7] la conversion de la desigualdad (XIV) no arrastra ninguna hipotesis, y la
+      razon por la que no la arrastra es la MISMA que cierra `S`.
 
 POR QUE IMPORTA QUE LA LISTA SEA CORTA. Si `DESBLOQUEADAS` creciera sin que la
 demostracion creciera, el optimizador eliminaria incognitas sin licencia y las
@@ -45,6 +47,7 @@ from src.analysis.dioph_jsww3 import (AFIRMADO, COTAS_DEMOSTRADAS,
                                       RESUELTAS_POR_EL_ENUNCIADO,
                                       censo_eliminaciones, cotas_verificadas, k,
                                       sistema3)
+from src.analysis.dioph_jsww3 import _xiv_numerador_denominador
 
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 LEAN = os.path.join(RAIZ, 'formalizacion', 'lean', 'Cotas3.lean')
@@ -302,6 +305,78 @@ def test_censo(stats):
         stats.ok()
 
 
+def test_xiv(stats):
+    """[7] La conversion de (XIV) es fiel, y sin hipotesis heredada.
+
+    Este modulo declaro durante meses que (XIV) heredaba `De > 0` --la formula
+    (15) de la p. 458 de JSWW-- sin demostrar, y que por eso el sistema servia
+    para medir pero no para publicar. Era falso: la codificacion con holgura lo
+    fuerza. Aqui se comprueban las tres piezas:
+
+      * que `Nu/De` ES el `beta` impreso (la cancelacion de `L`);
+      * que `4u^2 < d^2` con `Nu >= 1` y `S+1 >= 1` obliga a `d > 0`;
+      * y la CONTRAPRUEBA: con `S+1 = 0` --el caso `z = k = 0` que el dominio del
+        teorema excluye-- las soluciones de denominador negativo reaparecen.
+
+    La tercera es la que importa: dice que el hueco de `S` y el de (XIV) eran el
+    mismo hecho, no dos problemas.
+    """
+    print(f"\n{Colors.HEADER}[7] La desigualdad (XIV): fiel y sin hipotesis heredada{Colors.ENDC}")
+    problemas = []
+    Nu, De = _xiv_numerador_denominador()
+    print(f"  Nu = {Nu}")
+    print(f"  De = {De}")
+    r = cotas_verificadas()
+    print(f"  Nu/De == beta impreso (p. 457), y De>0 forzado: "
+          f"{'OK' if r['ok'] else r['fallos'][:1]}")
+    if not r['ok']:
+        problemas.append(r['fallos'][0])
+
+    # la ecuacion que emite el modulo tiene que ser LA de la conversion
+    from src.analysis.dioph_jsww3 import S as S_, s1 as s1_
+    esperada = sympy.expand(4 * (Nu - (S_ + 1) * De) ** 2 + 1 + s1_ - De ** 2)
+    if sympy.expand(ECUACIONES_3[14] - esperada) != 0:
+        problemas.append("(XIV) emitida no es 4(Nu-(S+1)De)^2 + 1 + s1 - De^2")
+    print(f"  ECUACIONES_3[14] es 4(Nu-(S+1)De)^2 + 1 + s1 - De^2: "
+          f"{sympy.expand(ECUACIONES_3[14] - esperada) == 0}")
+
+    # y el .lean tiene que traer los teoremas que lo sostienen
+    fuente = _fuente()
+    for nombre, papel in [("holgura_iff", "la holgura es exactamente `<`"),
+                          ("De_pos", "el denominador es positivo, no se supone"),
+                          ("Nu_ge_one", "Nu = RKC^2 >= 1"),
+                          ("xiv_fiel", "S+1 es el entero mas proximo a Nu/De"),
+                          ("xiv_desde_las_cotas", "con lo que da el sistema")]:
+        if not re.search(r"theorem %s\b" % nombre, fuente):
+            problemas.append(f"falta el teorema `{nombre}`")
+        else:
+            print(f"  {Colors.OKGREEN}OK{Colors.ENDC} `{nombre}` — {papel}")
+    if "heredada" not in fuente:
+        problemas.append("el .lean ya no explica que hipotesis NO hace falta")
+
+    # TODOS los teoremas del .lean tienen que estar en la auditoria de axiomas.
+    # POR QUE ESTA COMPROBACION EXISTE: al renombrar `K_nonneg` -> `K_ge_one` la
+    # auditoria se quedo pidiendo el nombre viejo. `verificar.sh` fallaba con
+    # codigo 1, pero como la salida se leia por una tuberia (`| tail`), el codigo
+    # que se veia era el de `tail`: 0. Un teorema pudo haber quedado sin auditar
+    # sin que nada lo dijera. Esto ata las dos listas.
+    sh = open(os.path.join(RAIZ, 'formalizacion', 'lean', 'verificar.sh'),
+              encoding='utf-8').read()
+    teoremas = re.findall(r"^theorem ([A-Za-z_0-9]+)", fuente, re.M)
+    auditados = set(re.findall(r"#print axioms (\w+)", sh))
+    sin_auditar = [t for t in teoremas if t not in auditados]
+    print(f"  {len(teoremas)} teoremas en el .lean, "
+          f"{len([t for t in teoremas if t in auditados])} en la auditoria de axiomas")
+    if sin_auditar:
+        problemas.append(f"teoremas sin auditar en verificar.sh: {sin_auditar}")
+    if problemas:
+        stats.fail(problemas[0])
+    else:
+        print(f"  {Colors.OKGREEN}✓{Colors.ENDC} la transcripcion del Teorema 3.9 "
+              f"no arrastra ninguna hipotesis heredada")
+        stats.ok()
+
+
 def main():
     print(f"{Colors.BOLD}=== LAS COTAS DE LA SECCION 3: LAS OCHO, Y LAS CATORCE ELIMINACIONES ==={Colors.ENDC}")
     stats = Stats()
@@ -311,6 +386,7 @@ def main():
     test_mecanismo(stats)
     test_numerico(stats)
     test_censo(stats)
+    test_xiv(stats)
 
     total = stats.passed + stats.failed
     print()

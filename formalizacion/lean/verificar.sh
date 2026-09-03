@@ -89,16 +89,34 @@ cat > "$AQUI/.auditoria5.lean" <<'LEAN'
 import Cotas3
 open Diophantus
 #print axioms one_le_mul
+#print axioms self_le_sq
+#print axioms sq_le_sq
+#print axioms M_ge_one
+#print axioms A_ge_one
+#print axioms C_ge_one
 #print axioms D_ge_one
+#print axioms E_ge_two
 #print axioms F_ge_A
+#print axioms G_ge_one
+#print axioms I_ge_one
+#print axioms U_desarrollada
 #print axioms n_ge_two_de_I
 #print axioms x_ge_two_de_II
+#print axioms L_nonneg
+#print axioms R_nonneg
 #print axioms n_succ_ge_k
-#print axioms K_nonneg
+#print axioms K_ge_one
 #print axioms S_nonneg_de_k_pos
 #print axioms S_nonneg_reparametrizado
+#print axioms holgura_iff
+#print axioms De_pos
+#print axioms Nu_ge_one
+#print axioms R_ge_one
+#print axioms xiv_fiel
+#print axioms xiv_desde_las_cotas
 #print axioms cotas_seccion_tres
 #check @cotas_seccion_tres
+#check @xiv_desde_las_cotas
 LEAN
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria0.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria.lean"

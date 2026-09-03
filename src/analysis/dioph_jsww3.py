@@ -48,7 +48,8 @@ cuesta incognitas, y cada conversion se documenta aqui:
   * `X = []` (cuadrado)  ->  `X = c^2` con `c` incognita nueva.  SEIS de estas.
   * `F | H - C`          ->  `H - C = F*d1`, con `d1` incognita nueva. Es SOUND
     sobre N porque `H - C = B + (2j+1)C > 0`: de (XII), `H = B + 2(j+1)C`.
-  * la desigualdad (XIV) -> ver `_desigualdad_xiv` abajo.
+  * la desigualdad (XIV) -> ver `_desigualdad_xiv` abajo. NO arrastra ninguna
+    hipotesis: la codificacion con holgura fuerza ella sola `De > 0`.
 
 Total: 10 libres + 14 definidas + 6 raices + 1 cociente + 1 holgura = 32
 incognitas, mas el parametro k. Tras eliminar las 14: 18 + k = **19 variables**,
@@ -108,15 +109,44 @@ def _desigualdad_xiv():
     con `Nu = R*K*C^2` y `De = (C - (w+1)*x*K*L)*(C - R)^2`. Se vuelve ecuacion
     con una holgura `s1 >= 0`:  `4(...)^2 + 1 + s1 = De^2`.
 
-    LO QUE ESTA CONVERSION SUPONE, y hay que decirlo: que `De > 0`. No es
-    gratis, es un paso de SU demostracion --la formula (15) de la p. 458
-    establece `4 < sigma - (w+1)x`-- asi que aqui se hereda como hipotesis de la
-    transcripcion, no se demuestra. Mientras no se demuestre, este sistema vale
-    para MEDIR la frontera pero no para publicar una cifra.
+    LA CONVERSION NO SUPONE NADA, y durante meses este comentario dijo que si.
+    Decia que heredaba `De > 0` --la formula (15) de la p. 458-- como hipotesis
+    sin demostrar. Es falso: la propia codificacion lo fuerza.
+
+    La ecuacion con holgura equivale exactamente a `4(Nu - (S+1)De)^2 < De^2`, y
+    de ahi:
+
+      * `De = 0` da `4Nu^2 + 1 + s1 = 0`, imposible sobre N;
+      * `De < 0` da `Nu - (S+1)De >= 1 + |De|` --porque `Nu >= 1` y `S+1 >= 1`--
+        luego `4(Nu-(S+1)De)^2 >= 4(1+|De|)^2 > De^2`, que contradice la
+        desigualdad.
+
+    Asi que `De > 0` se DEDUCE. Las dos hipotesis que usa son `Nu = RKC^2 >= 1`
+    (de `C >= 1`, `K >= 1`, `R >= 1`) y `S+1 >= 1` (de `S >= 0`), y las cuatro
+    estan demostradas en `Cotas3.lean`. La equivalencia entera --incluido que
+    `S+1` es el entero MAS PROXIMO a `Nu/De`, que es lo que dice la desigualdad
+    original sin fracciones-- es `Cotas3.xiv_desde_las_cotas`.
+
+    Y LA SIMETRIA QUE LO EXPLICA: `S+1 >= 1` es exactamente lo que se perdia en
+    `k = 0`. Con `S+1 = 0` las soluciones de denominador negativo reaparecen
+    (`cotas_verificadas` lo comprueba por fuerza bruta). El hueco de `S` y el de
+    (XIV) no eran dos: eran el mismo, y se cierran con el mismo hecho.
+    """
+    Nu, De = _xiv_numerador_denominador()
+    return 4 * (Nu - (S + 1) * De) ** 2 + 1 + s1 - De ** 2
+
+
+def _xiv_numerador_denominador():
+    """`(Nu, De)` de (XIV), aparte para que el test pueda cotejarlos.
+
+    `beta = Nu/De` es el cociente entero de la p. 457. La `L` se cancela al
+    quitar denominadores, y esa cancelacion es lo unico que hay que creerse para
+    creerse la conversion entera; el test la comprueba contra la forma con
+    fracciones.
     """
     Nu = R * K * C ** 2
     De = (C - (w + 1) * x * K * L) * (C - R) ** 2
-    return 4 * (Nu - (S + 1) * De) ** 2 + 1 + s1 - De ** 2
+    return Nu, De
 
 
 #: Las 21 condiciones del TEOREMA 3.9 (p. 456-457), en forma `expr = 0`.
@@ -221,7 +251,9 @@ def sistema3(expandir=False, k_positivo=True):
 
     OJO: no es "el sistema de JSWW" sin mas. Es su Teorema 3.9 CONVERTIDO, y la
     conversion anade ocho incognitas (seis raices, un cociente, una holgura) y
-    hereda una hipotesis de positividad en (XIV). Ver los comentarios de arriba.
+    ANADE ocho incognitas (seis raices, un cociente, una holgura). Lo que NO
+    hace es arrastrar hipotesis: la conversion de (XIV) fuerza ella sola el signo
+    del denominador (ver `_desigualdad_xiv`). Ver los comentarios de arriba.
 
     `k_positivo=True` (por defecto) usa `ecuaciones_k_positivo`, que es el
     teorema en SU dominio -- "for any positive integer k", p. 456. Con
@@ -396,16 +428,16 @@ RESUELTAS_POR_EL_ENUNCIADO = {
           `S = k'z + k' + 2z`, todos los coeficientes >= 0, y `S` se elimina por
           el criterio ESTRUCTURAL sin demostrar nada.
 
-          Con esto van las CATORCE de la p. 461, y el sistema reducido ya no
-          arrastra ninguna condicion sobre `S`. Queda pendiente, aparte y sin
-          relacion, la hipotesis heredada de (XIV) (`De > 0`, formula (15) de la
-          p. 458), que es de la CONVERSION de la desigualdad, no de `S`."""),
+          Con esto van las CATORCE de la p. 461. Y de propina cae lo otro: la
+          conversion de (XIV) decia heredar `De > 0` sin demostrarlo, y resulta
+          que la codificacion lo fuerza -- usando `S+1 >= 1`, o sea EXACTAMENTE
+          lo que se perdia en `k = 0`. Los dos huecos eran el mismo hecho."""),
 }
 
 
 
 def cotas_verificadas(tope=4000, casos=200000, semilla=0):
-    """Comprueba numericamente las seis cotas demostradas. Devuelve un informe.
+    """Comprueba numericamente las cotas y la fidelidad de (XIV). Da un informe.
 
     No sustituye a la demostracion --esta en `Cotas3.lean`-- pero atrapa erratas
     de transcripcion, que es de lo que este proyecto ha muerto varias veces.
@@ -461,8 +493,37 @@ def cotas_verificadas(tope=4000, casos=200000, semilla=0):
                                (H_ >= 1, 'H>=1'), (I_ >= 1, 'I>=1')):
             if not cond:
                 fallos.append(f"{etiqueta} falla en {(kk,nn,xx,ww,mm,ii,jj)}")
+    # ---- LA CONVERSION DE (XIV): que dice lo impreso, y que no supone nada ----
+    #
+    # 1. que `Nu/De` ES el `beta` de la p. 457 con fracciones. Lo que hay que
+    #    creerse es la cancelacion de `L`; aqui se comprueba en vez de creerse.
+    Nu, De = _xiv_numerador_denominador()
+    sigma = C / (K * L)
+    beta = R / ((sigma - (w + 1) * x) * (1 - R / C) ** 2 * L)
+    if sympy.simplify(beta - Nu / De) != 0:
+        fallos.append("Nu/De no es el beta impreso en la p. 457")
+
+    # 2. que la codificacion FUERZA `De > 0`, o sea que la hipotesis heredada
+    #    que este modulo declaraba durante meses no hacia falta.
+    for N_ in range(1, 30):                  # Nu >= 1
+        for T_ in range(1, 30):              # S+1 >= 1
+            for d_ in range(-40, 1):         # De <= 0
+                u_ = N_ - T_ * d_
+                if 4 * u_ * u_ < d_ * d_:
+                    fallos.append(f"(XIV) admite De<=0 con Nu={N_}, S+1={T_}, De={d_}")
+
+    # 3. LA CONTRAPRUEBA, que es lo que ata (XIV) con `S`: si se permitiera
+    #    `S+1 = 0` --el caso `z = k = 0` que el dominio del teorema excluye--
+    #    las soluciones de denominador negativo REAPARECEN. Los dos huecos eran
+    #    el mismo.
+    reaparecen = any(4 * N_ * N_ < d_ * d_
+                     for N_ in range(1, 10) for d_ in range(-40, 0))
+    if not reaparecen:
+        fallos.append("la contraprueba de (XIV) con S+1=0 ya no distingue nada")
+
     return {"ok": not fallos, "fallos": fallos,
-            "cotas": sorted(COTAS_DEMOSTRADAS), "desbloqueadas": DESBLOQUEADAS}
+            "cotas": sorted(COTAS_DEMOSTRADAS), "desbloqueadas": DESBLOQUEADAS,
+            "xiv_sin_hipotesis": True}
 
 
 def censo_eliminaciones(k_positivo=True):
@@ -533,10 +594,11 @@ def censo_eliminaciones(k_positivo=True):
 # LO QUE ESTO NO ARREGLA, y hay que decirlo antes que nada:
 #
 #   1. Los tres puntos (17,521), (16,1137) y (15,3233) del teorema de combinacion
-#      dejan de depender de las eliminaciones, que ya estan las catorce. Siguen
-#      dependiendo de UNA cosa, y solo una: la hipotesis heredada al convertir la
-#      desigualdad (XIV) en ecuacion (`De > 0`, la formula (15) de la p. 458).
-#      Esa es de la CONVERSION que hace esta transcripcion, no de JSWW.
+#      DEJAN DE SER CONDICIONALES. Dependian de las catorce eliminaciones --que
+#      ya estan-- y de la hipotesis heredada de (XIV) --que resulto no ser una
+#      hipotesis, ver `_desigualdad_xiv`--. La unica reserva que queda sobre
+#      ellos es que sus GRADOS son cotas superiores, calculadas recorriendo el
+#      arbol; si hay cancelacion los puntos mejoran, no empeoran.
 #
 #   2. La frontera de Pareto no se mueve. Ya estaba medido --concediendo las ocho
 #      cotas, lo mejor era (26,29) y de ahi hacia abajo hasta (21,69)-- y todo

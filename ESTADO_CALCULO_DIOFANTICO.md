@@ -33,7 +33,9 @@
 >   eliminate by substitution*» y nosotros sólo podíamos licenciar seis, quedan **demostradas y
 >   formalizadas** en `Cotas3.lean` (§2.septies). La última, `S`, no se cerró demostrando: se cerró
 >   **corrigiendo la transcripción**, que ponía el parámetro sobre ℕ cuando el teorema dice «*for any
->   positive integer k*».
+>   positive integer k*». Y con ella cayó la única hipótesis que la transcripción declaraba heredar
+>   —`De > 0` en (XIV)—, que resultó **deducible de la propia codificación**: por eso **(17,521),
+>   (16,1137) y (15,3233) dejan de ser condicionales**.
 >
 > Ninguna de estas cifras es un mínimo demostrado: todas son **cotas superiores construidas**.
 >
@@ -747,13 +749,13 @@ Dos cosas, y las dos importan:
   inabordable), así que sólo serían mayores que el grado real si se cancelaran términos de cabeza. La
   cota se validó contra la expansión en `M`, `A`, `D`, `E`, `K`, `L`, `R`. Si hay cancelación, los
   puntos **mejoran**;
-* **la construcción descansa en ocho cotas elementales que JSWW demuestran y nosotros no**
-  (`A>1`, `F≥A`, `n>k`, `Mx>1`…), las mismas que desbloquean las catorce eliminaciones. Estos tres
-  puntos están, por tanto, en la misma situación en la que estuvo el (21,25) antes de formalizar
-  Pell: **construidos y medidos, pendientes de una demostración que se sabe cómo hacer**.
+* **la construcción descansaba en ocho cotas elementales que JSWW demuestran y nosotros no**
+  (`A>1`, `F≥A`, `n>k`, `Mx>1`…), las mismas que desbloquean las catorce eliminaciones.
 
-De esas ocho cotas hay ahora **siete demostradas y formalizadas** (§2.septies). Los tres puntos
-siguen siendo condicionales: falta una, y hacen falta las catorce sustituciones.
+**Esa segunda reserva ya no está.** Las ocho cotas están demostradas y formalizadas, y con ellas las
+catorce eliminaciones (§2.septies); y la hipótesis heredada de (XIV) resultó ser deducible de la
+propia codificación. Los tres puntos quedan **incondicionales salvo por la primera reserva** — que
+sus grados son cotas superiores, lo cual sólo los puede mejorar.
 
 ## 2.sexies ⛔ LA ESQUINA DE GRADO 5, CERRADA: seis vías medidas y agotadas
 
@@ -897,12 +899,48 @@ vuelve estructural reparametrizando, en vez de quedarse como nota al pie que el 
 `S_nonneg_reparametrizado` verificando que la forma sin restas **es** (XXI) y no una expresión
 parecida— para que el paso quede atado por los dos lados.
 
-### Lo que queda, que ahora es una sola cosa
+### Y la hipótesis heredada de (XIV) tampoco hacía falta
 
-Las catorce sustituciones están licenciadas. Lo único que sigue pendiente del sistema de §3 es la
-**hipótesis heredada al convertir la desigualdad (XIV) en ecuación** (`De > 0`, la fórmula (15) de la
-p. 458). Y conviene ser preciso sobre de quién es: **es de nuestra conversión, no de JSWW** — ellos
-la demuestran en su sección 3; nosotros la asumimos al pasar (XIV) a forma polinómica.
+Este proyecto declaró durante meses, en `_desigualdad_xiv`, que la conversión de la desigualdad (XIV)
+**heredaba** `De > 0` —la fórmula (15) de la p. 458 de JSWW— sin demostrar, y que por eso el sistema
+«*vale para MEDIR la frontera pero no para publicar una cifra*».
+
+Era falso. **La propia codificación lo fuerza.** La forma con holgura
+
+```
+4(Nu − (S+1)·De)² + 1 + s₁ = De²,   s₁ ≥ 0
+```
+
+equivale exactamente a `4(Nu − (S+1)De)² < De²`, y de ahí:
+
+* `De = 0` da `4Nu² + 1 + s₁ = 0`, imposible sobre ℕ;
+* `De < 0` da `Nu − (S+1)De ≥ 1 + |De|` —porque `Nu ≥ 1` y `S+1 ≥ 1`— luego
+  `4(Nu−(S+1)De)² ≥ 4(1+|De|)² > De²`, que contradice la desigualdad.
+
+Las dos hipótesis que usa son `Nu = RKC² ≥ 1` (de `C ≥ 1`, `K ≥ 1`, `R ≥ 1`) y `S+1 ≥ 1` (de
+`S ≥ 0`), **y las cuatro acaban de quedar demostradas**. `Cotas3.xiv_desde_las_cotas` lo cierra, y da
+además la lectura completa: `S+1` es el **entero más próximo** a `Nu/De`, que es literalmente lo que
+dice `|β − (S+1)| < ½` escrito sin fracciones.
+
+Y la simetría que lo explica, que es lo mejor de todo esto:
+
+> **`S+1 ≥ 1` es exactamente lo que se perdía en `k = 0`.** Con `S+1 = 0` las soluciones de
+> denominador negativo **reaparecen** —comprobado por fuerza bruta en `cotas_verificadas`—. El hueco
+> de `S` y el de (XIV) no eran dos problemas: eran el mismo hecho, y se cierran con el mismo arreglo.
+
+### Lo que queda
+
+**De la transcripción del Teorema 3.9, nada.** Las seis condiciones de cuadrado se convierten con una
+raíz cada una; la divisibilidad con un cociente (sound porque `H − C = B + (2j+1)C > 0` y `F ≥ 1`); la
+desigualdad con la holgura de arriba. Las catorce eliminaciones están licenciadas. No hay hipótesis
+heredada.
+
+Lo que sigue en pie es lo de siempre, y conviene no confundirlo con esto:
+
+* **el Teorema 3.9 se cita, no se redemuestra.** Que su sistema represente `{k : k+1 primo}` es de
+  JSWW. Lo verificado aquí es que *nuestra* transcripción dice lo que la página dice;
+* **los grados de la curva del teorema de combinación son cotas superiores**, calculadas recorriendo
+  el árbol. Si hay cancelación, los puntos mejoran.
 
 ### Un hallazgo lateral que conviene tener escrito
 
@@ -917,9 +955,11 @@ que corre.
 
 Dos cosas, y las dos importan más que lo conseguido:
 
-* **los tres puntos (17,521), (16,1137) y (15,3233) siguen siendo condicionales**, pero ya no por las
-  eliminaciones: ésas están las catorce. Dependen de **una sola** cosa, la hipótesis heredada de
-  (XIV);
+* **los tres puntos (17,521), (16,1137) y (15,3233) dejan de ser condicionales.** Era lo que se
+  buscaba: dependían de las catorce eliminaciones —que ahora están— y de la hipótesis de (XIV) —que
+  resultó no ser una hipótesis—. Lo que queda de reserva sobre ellos es únicamente que **sus grados
+  son cotas superiores** (calculadas por recorrido del árbol, no por expansión), y eso los puede
+  mejorar, no empeorar;
 * **la frontera de Pareto no se mueve, y ya estaba medido.** Concediendo las ocho cotas, lo mejor era
   (26,29) y de ahí hacia abajo hasta (21,69): todo dominado por el **(21,25)** del sistema (1). Estas
   ocho cotas no se cerraron para ganar un punto; se cerraron porque los ocho pasos que la literatura

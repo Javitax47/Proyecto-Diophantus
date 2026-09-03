@@ -55,6 +55,10 @@ theorem self_le_sq {a : Int} (ha : 1 ≤ a) : a ≤ a * a := by
   have h2 : 1 * a = a := Int.one_mul a
   omega
 
+/-- `0 ≤ a ≤ b` da `a² ≤ b²`. Es la dirección contraria a `Pell.le_of_sq_le`. -/
+theorem sq_le_sq {a b : Int} (ha : 0 ≤ a) (h : a ≤ b) : a * a ≤ b * b :=
+  Int.mul_le_mul h h ha (by omega)
+
 /-! ## 1. La cadena elemental: `M`, `A`, `C`, `D`, `E`, `F`, `G`, `I`
 
 Cada eslabón se apoya sólo en el anterior y en que las incógnitas vivan en ℕ.
@@ -187,14 +191,14 @@ cual: la congruencia manda `2(k+1) ∣ y` al índice, `j ≥ 2(k+1) ≥ 4 > 3`, 
 crecimiento desde `Y 3 = 4A²−1` da `2(k+1)(n+1) ≥ 16k²+48k+35`, de donde
 `n+1 ≥ 8k`, y en particular `n+1 ≥ k`. -/
 
-/-- **(I) fuerza `k ≤ n+1`.** Es lo que desbloquea `K`, y de hecho da mucho más:
-    `n+1 ≥ 8(k+1)`. La cota fina de JSWW es `n > (2k)^(2k)`; aquí basta la burda.
+/-- **(I) fuerza `8k ≤ n+1`.** Es lo que desbloquea `K`, y da mucho más que
+    `k ≤ n`: la cota fina de JSWW es `n > (2k)^(2k)`, y aquí basta esta burda.
 
     Para `k = 0` es trivial y se despacha aparte, porque `j ≥ 2(k+1)` sólo llega
     a `3` cuando `k ≥ 1`. -/
 theorem n_succ_ge_k {k n c : Int} (hk : 0 ≤ k) (hn : 0 ≤ n) (hc : 0 ≤ c)
     (h : (2*k + 2)*(2*k + 2)*(2*k + 2)*(2*k + 4)*((n+1)*(n+1)) + 1 = c*c) :
-    k ≤ n + 1 := by
+    8*k ≤ n + 1 := by
   by_cases hk0 : k ≤ 0
   · omega
   · have hk1 : 1 ≤ k := by omega
@@ -237,13 +241,14 @@ theorem n_succ_ge_k {k n c : Int} (hk : 0 ≤ k) (hn : 0 ≤ n) (hc : 0 ≤ c)
     rw [Y_tres, ← hj] at hmono
     have hkk : 0 ≤ k * k := Int.mul_nonneg hk hk
     have hexp : 4*(2*k + 3)*(2*k + 3) - 1 = 16*(k*k) + 48*k + 35 := by grind
-    have hexp2 : (2*(k+1)) * k = 2*(k*k) + 2*k := by grind
-    have hstep : (2*(k+1)) * k ≤ (2*(k+1)) * (n+1) := by omega
+    have hexp2 : (2*(k+1)) * (8*k) = 16*(k*k) + 16*k := by grind
+    have hstep : (2*(k+1)) * (8*k) ≤ (2*(k+1)) * (n+1) := by omega
     exact Int.le_of_mul_le_mul_left hstep (by omega)
 
-/-- (XVIII): `K = n−k+1+p(M−1)`. **Desbloquea `K`**: basta `k ≤ n+1` y `M ≥ 1`. -/
-theorem K_nonneg {k n p M K : Int} (hp : 0 ≤ p) (hM : 1 ≤ M) (hkn : k ≤ n + 1)
-    (h : K = n - k + 1 + p * (M - 1)) : 0 ≤ K := by
+/-- (XVIII): `K = n−k+1+p(M−1)`. **Desbloquea `K`**, y da `K ≥ 1`, que es lo que
+    después hace falta para que el numerador de (XIV) sea positivo. -/
+theorem K_ge_one {k n p M K : Int} (hp : 0 ≤ p) (hM : 1 ≤ M) (hkn : k ≤ n)
+    (h : K = n - k + 1 + p * (M - 1)) : 1 ≤ K := by
   have : 0 ≤ p * (M - 1) := Int.mul_nonneg hp (by omega)
   omega
 
@@ -272,7 +277,117 @@ theorem S_nonneg_reparametrizado {kp z S : Int} (hkp : 0 ≤ kp) (hz : 0 ≤ z)
   have h1 : 0 ≤ kp * z := Int.mul_nonneg hkp hz
   exact ⟨hS, by omega⟩
 
-/-! ## 6. El teorema: las siete cotas a la vez, desde las ecuaciones -/
+/-! ## 6. La desigualdad (XIV): la conversión no necesita ninguna hipótesis
+
+(XIV) es la única condición del Teorema 3.9 que no es una igualdad, y esta
+transcripción la convierte multiplicando por el cuadrado del denominador y
+añadiendo una holgura `s₁ ≥ 0`:
+
+```
+{ R/[(C/(KL) − (w+1)x)(1 − R/C)²L] − (S+1) }² < ¼      ⟶
+4(Nu − (S+1)·De)² + 1 + s₁ = De²,   Nu = RKC²,  De = (C − (w+1)xKL)(C−R)²
+```
+
+Durante mucho tiempo esto se documentó como **heredando una hipótesis**: que
+`De > 0`, que en JSWW es su fórmula (15) de la p. 458. No hace falta. La propia
+codificación la fuerza, y hacen falta exactamente dos cosas que ya están
+demostradas arriba: `Nu ≥ 1` (de `C ≥ 1`, `K ≥ 1`, `R ≥ 1`) y `S+1 ≥ 1`.
+
+Y hay una simetría que conviene ver: **`S+1 ≥ 1` es justo lo que se perdía en
+`k = 0`.** Con `S+1 = 0` las soluciones de denominador negativo reaparecen —
+comprobado por fuerza bruta en `dioph_jsww3.cotas_verificadas`. O sea que el
+hueco de `S` y el de (XIV) no sólo eran el mismo: se cierran con el mismo hecho. -/
+
+/-- La holgura hace exactamente lo que se espera de ella, ni más ni menos. -/
+theorem holgura_iff (u d : Int) :
+    (∃ s : Int, 0 ≤ s ∧ 4*(u*u) + 1 + s = d*d) ↔ 4*(u*u) < d*d := by
+  constructor
+  · rintro ⟨s, hs, h⟩; omega
+  · intro h; exact ⟨d*d - 4*(u*u) - 1, by omega, by omega⟩
+
+/-- **El denominador es positivo, y no hay que suponerlo.**
+
+    Si `De ≤ 0` entonces `Nu − (S+1)De ≥ 1 + |De|`, luego `4(Nu−(S+1)De)²` supera
+    a `De²` con holgura `3De² + 8|De| + 4`. La desigualdad de (XIV) lo excluye.
+    Las dos hipótesis son `Nu ≥ 1` y `S+1 ≥ 1`. -/
+theorem De_pos {N T d : Int} (hN : 1 ≤ N) (hT : 1 ≤ T)
+    (h : 4*((N - T*d)*(N - T*d)) < d*d) : 0 < d := by
+  by_cases hd : 0 < d
+  · exact hd
+  · exfalso
+    have he : 0 ≤ -d := by omega
+    have h1 : 1 * (-d) ≤ T * (-d) := Int.mul_le_mul_of_nonneg_right hT he
+    have hbr : T * (-d) = -(T*d) := by grind
+    have hlow : 1 + (-d) ≤ N - T*d := by omega
+    have hsq : (1 + (-d)) * (1 + (-d)) ≤ (N - T*d) * (N - T*d) :=
+      sq_le_sq (by omega) hlow
+    have hexp : (1 + (-d)) * (1 + (-d)) = 1 + 2*(-d) + (-d)*(-d) := by grind
+    have hdd : d * d = (-d) * (-d) := by grind
+    have hnn : 0 ≤ (-d) * (-d) := Int.mul_nonneg he he
+    omega
+
+/-- `Nu = R·K·C² ≥ 1`, que es la otra hipótesis de `De_pos`. -/
+theorem Nu_ge_one {R K C Nu : Int} (hR : 1 ≤ R) (hK : 1 ≤ K) (hC : 1 ≤ C)
+    (h : Nu = R * K * (C * C)) : 1 ≤ Nu := by
+  have hCC : 1 ≤ C * C := one_le_sq hC
+  have h1 : 1 ≤ R * K := one_le_mul hR hK
+  have := one_le_mul h1 hCC
+  omega
+
+/-- (XX): `R = k+1+r(Mnx−1)` con `k ≥ 0` y `Mnx ≥ 1` da `R ≥ 1`. -/
+theorem R_ge_one {k r M n x R : Int} (hk : 0 ≤ k) (hr : 0 ≤ r)
+    (hM : 1 ≤ M) (hn : 1 ≤ n) (hx : 1 ≤ x)
+    (h : R = k + 1 + r * (M * n * x - 1)) : 1 ≤ R := by
+  have hMn : 1 ≤ M * n := one_le_mul hM hn
+  have hMnx : 1 ≤ M * n * x := one_le_mul hMn hx
+  have : 0 ≤ r * (M * n * x - 1) := Int.mul_nonneg hr (by omega)
+  omega
+
+/-- **(XIV) TRANSCRITA DICE (XIV), SIN NINGUNA HIPÓTESIS HEREDADA.**
+
+    De la forma polinómica con holgura se sigue que el denominador es positivo y
+    que `S+1` es **el entero más próximo** a `Nu/De` — que es literalmente lo que
+    dice `|β − (S+1)| < ½`, escrito sin fracciones: `|2(Nu − (S+1)De)| < De`. -/
+theorem xiv_fiel {Nu De T s1 : Int}
+    (hNu : 1 ≤ Nu) (hT : 1 ≤ T) (hs1 : 0 ≤ s1)
+    (h : 4*((Nu - T*De)*(Nu - T*De)) + 1 + s1 = De*De) :
+    0 < De ∧ 2*(Nu - T*De) < De ∧ -De < 2*(Nu - T*De) := by
+  have hu : 4*((Nu - T*De)*(Nu - T*De)) < De*De := by omega
+  have hDe : 0 < De := De_pos hNu hT hu
+  have h4 : (2*(Nu - T*De))*(2*(Nu - T*De)) = 4*((Nu - T*De)*(Nu - T*De)) := by grind
+  refine ⟨hDe, ?_, ?_⟩
+  · by_cases hc : 2*(Nu - T*De) < De
+    · exact hc
+    · exfalso
+      have hge : De ≤ 2*(Nu - T*De) := by omega
+      have := sq_le_sq (by omega : (0:Int) ≤ De) hge
+      omega
+  · by_cases hc : -De < 2*(Nu - T*De)
+    · exact hc
+    · exfalso
+      have hge : De ≤ -(2*(Nu - T*De)) := by omega
+      have h1 := sq_le_sq (by omega : (0:Int) ≤ De) hge
+      have h2 : (-(2*(Nu - T*De)))*(-(2*(Nu - T*De)))
+                  = (2*(Nu - T*De))*(2*(Nu - T*De)) := by grind
+      omega
+
+/-- **(XIV) es fiel con lo que el propio sistema proporciona.** Las cuatro
+    hipótesis no son supuestos nuevos: cada una es un teorema de más arriba —
+    `C_ge_one` (VI), `K_ge_one` (XVIII, vía `n_succ_ge_k`), `R_ge_one` (XX) y
+    `S_nonneg_de_k_pos` (XXI con `k ≥ 1`, el dominio del Teorema 3.9).
+
+    Con eso, la transcripción del Teorema 3.9 no arrastra NINGUNA hipótesis
+    heredada: las seis condiciones de cuadrado se convierten con una raíz cada
+    una, la divisibilidad con un cociente (sound porque `H − C = B + (2j+1)C > 0`
+    y `F ≥ 1`), y la desigualdad con esta holgura. -/
+theorem xiv_desde_las_cotas {C K R S Nu De s1 : Int}
+    (hC : 1 ≤ C) (hK : 1 ≤ K) (hR : 1 ≤ R) (hS : 0 ≤ S) (hs1 : 0 ≤ s1)
+    (eNu : Nu = R * K * (C * C))
+    (eXIV : 4*((Nu - (S+1)*De)*(Nu - (S+1)*De)) + 1 + s1 = De*De) :
+    0 < De ∧ 2*(Nu - (S+1)*De) < De ∧ -De < 2*(Nu - (S+1)*De) :=
+  xiv_fiel (Nu_ge_one hR hK hC eNu) (by omega) hs1 eXIV
+
+/-! ## 7. El teorema: las ocho cotas a la vez, desde las ecuaciones -/
 
 /-- **LAS OCHO COTAS QUE DESBLOQUEAN LAS OCHO ELIMINACIONES.**
 
@@ -322,10 +437,11 @@ theorem cotas_seccion_tres
     have : 0 ≤ 2 * (j + 1) * C := Int.mul_nonneg (by omega) (by omega)
     omega
   have hI : 1 ≤ I := I_ge_one hG hH eXIII
-  have hK : 0 ≤ K := K_nonneg hp hM (n_succ_ge_k (by omega) hn hc1 eI) eXVIII
+  have hkn : 8*k ≤ n + 1 := n_succ_ge_k (by omega) hn hc1 eI
+  have hK : 1 ≤ K := K_ge_one hp hM (by omega) eXVIII
   have hL : 0 ≤ L := L_nonneg (by omega) hl hM (by omega) eXIX
   have hR : 0 ≤ R := R_nonneg (by omega) hr hM (by omega) (by omega) eXX
   have hS : 0 ≤ S := S_nonneg_de_k_pos hk hz eXXI
-  exact ⟨by omega, by omega, by omega, by omega, hK, hL, hR, hS⟩
+  exact ⟨by omega, by omega, by omega, by omega, by omega, hL, hR, hS⟩
 
 end Diophantus

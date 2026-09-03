@@ -42,9 +42,13 @@ definición queda `S = k'z + k' + 2z`, sin restas, y sale por el criterio
 estructural. `S_nonneg_de_k_pos` y `S_nonneg_reparametrizado` atan el paso por
 los dos lados.
 
-Usa 16 de las 21 condiciones y **no usa (XIV)**, la única con hipótesis
-heredada — que es lo único que sigue pendiente de este sistema, y es de nuestra
-conversión, no de JSWW.
+Usa 16 de las 21 condiciones. Y una sección aparte se ocupa de la que no usa,
+(XIV): la transcripción declaraba **heredar** `De > 0` (la fórmula (15) de la
+p. 458) sin demostrarlo, y no hacía falta — la codificación con holgura lo
+fuerza, con `Nu = RKC² ≥ 1` y `S+1 ≥ 1`, que son teoremas de aquí mismo
+(`De_pos`, `xiv_fiel`, `xiv_desde_las_cotas`). La simetría: `S+1 ≥ 1` es justo
+lo que se perdía en `k = 0`, así que el hueco de `S` y el de (XIV) eran el mismo
+hecho. **La transcripción del Teorema 3.9 no arrastra ninguna hipótesis.**
 
 `Eliminacion.lean` — **el resultado del proyecto**: el sistema (1) de
 Jones–Sato–Wada–Wiens, que ellos publican con 25 incógnitas más el parámetro
