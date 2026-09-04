@@ -1,0 +1,136 @@
+\section{A degree-5 generator in 44 variables}
+\label{sec:deg5}
+
+\subsection{Starting point}
+
+We start from the system of \cite{jsww1976}, which we reproduce in the form our
+tooling uses. It has $14$ equations in the parameter $k$ and $25$ unknowns
+$a,b,\dots,z$; the primes are the values $k+2$ for which it is solvable, and by
+Proposition~\ref{prop:gen} it yields a generator with
+$\nu=26$ and $\delta=1+2\cdot 12=25$.
+
+\subsection{The construction}
+
+The generator is obtained in two steps.
+
+\paragraph{Flattening to degree $2$.}
+Twenty subexpressions are named, one new unknown each. The choice of names is
+the output of an optimizer: a catalogue of candidate subexpressions is built
+from the syntactic tree of the system, a selection is encoded as a
+satisfiability problem, and an SMT solver is asked for a selection of minimum
+size such that every equation reduces to degree at most~$2$. We stress at once,
+and repeat in Section~\ref{sec:limits}, that the resulting optimality statement
+is \emph{relative to that encoding}: it says that no smaller selection exists
+\emph{within the catalogue}, not that no smaller flattening exists.
+
+\paragraph{Two eliminations.}
+On the flattened system, two unknowns are determined linearly with nonnegative
+right-hand sides,
+\[
+  q = h+j+wz, \qquad y = l+n+v ,
+\]
+so Remark~\ref{rem:crit} applies and both may be eliminated with no auxiliary
+argument. No third elimination is available: $q$ and $e$ are determined by the
+\emph{same} equation, so they compete for it, and eliminating $z$ raises the
+degree above~$2$. We measured all six orders.
+
+\paragraph{The count.}
+\[
+  44 \;=\; \underbrace{26}_{\text{\cite{jsww1976}}}
+        \;+\; \underbrace{20}_{\text{names}}
+        \;-\; \underbrace{2}_{\text{eliminations}} .
+\]
+
+\begin{theorem}
+\label{thm:deg5}
+The system displayed in \S\ref{ssec:flat-system}, in $44$ variables
+and with every equation of degree at most $2$, is equisatisfiable over $\N$ with
+the system of \textup{\cite{jsww1976}}. Consequently
+\[
+  Q_{44} \;=\; (k+2)\Bigl(1-\textstyle\sum_i P_i^2\Bigr)
+\]
+is a generator of the primes with $\nu=44$ and $\delta=5$.
+\end{theorem}
+
+Both directions of the equisatisfiability are machine-checked; see
+Section~\ref{sec:lean}.
+
+\subsection{The system}
+\label{ssec:flat-system}
+
+Write $\mu_1,\dots,\mu_{20}$ for the named subexpressions. The twelve principal
+equations are
+\input{sys-aplanado}
+
+\noindent
+Every equation has degree at most~$2$, so $\delta=1+2\cdot 2=5$. The variables
+are the parameter $k$, the $23$ surviving unknowns
+$a,b,c,d,e,f,g,h,i,j,l,m,n,o,p,r,s,t,u,v,w,x,z$, and the $20$ names, for $44$ in
+total. The \LaTeX{} of the display above is generated mechanically from the
+same file the Lean kernel checks, so it cannot drift from the verified object.
+
+\subsection{The twentieth name}
+
+Nineteen of the twenty witnesses exhibited by the completeness direction are
+sums and products of nonnegative quantities and therefore lie in $\N$ for
+syntactic reasons. One does not:
+\[
+  \mu_{20} \;=\; a+u^2(u^2-a) .
+\]
+This matters, and in a way that is easy to miss. If $\mu_{20}$ could be
+negative, the flattened system would have \emph{no} solution for the prime in
+question, so the generator would fail to emit it. That is a failure of
+completeness, not of soundness, and it is silent: the pair $(44,5)$ would still
+be produced.
+
+\begin{proposition}
+\label{prop:mu20}
+Let $a,r,y,u\in\Z$ with $a\ge 2$, $r,y\ge 0$ satisfy equation~\textup{(7)} of
+the system, namely $16r^2y^4(a^2-1)+1=u^2$. Then $a+u^2(u^2-a)\ge 1$.
+\end{proposition}
+
+\begin{proof}
+Put $t=u^2$. The identity
+\[
+  a+t(t-a)-1 \;=\; (t-1)(t-a+1)
+\]
+reduces the claim to $(t-1)(t-a+1)\ge 0$. By hypothesis
+$t-1=16s(a^2-1)$ with $s=r^2y^4\ge 0$. If $s=0$ then $t=1$ and the first factor
+vanishes. If $s\ge 1$ then, since $a\ge 2$ gives $a^2-1\ge 3$,
+\[
+  t-1 \;=\; 16s(a^2-1)\;\ge\; 16(a^2-1)\;\ge\; a-1 ,
+\]
+the last step because $16a^2-a-15\ge 0$ for $a\ge 1$; hence $t\ge a$ and both
+factors are nonnegative.
+\end{proof}
+
+The hypothesis $a\ge 2$ is not an assumption: it is proved from five of the
+fourteen equations, independently of what the system represents
+(Section~\ref{sec:lean}). Proposition~\ref{prop:mu20} is formalized in Lean;
+before it was proved, this bound had only been checked by exhaustive search over
+the $2569$ triples $(a,r,y)$ with $a<45$, $r,y<30$ satisfying~(7), which is not
+a proof.
+
+\subsection{What we could not improve}
+
+The pair $(44,5)$ is the best we obtained, and we report the attempts that
+failed because they delimit where an improvement would have to come from.
+
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Attempt} & \textbf{Outcome} \\
+\midrule
+More eliminations & Structurally capped at $2$ (see above); all six orders measured \\
+Naming degree-$1$ subexpressions & Yields $+1$ name and $+1$ elimination: no change \\
+Enlarging the catalogue & $465\to946\to3469$ candidates; optimum stays at $20$ \\
+Drop-one test & Removing any of the $20$ names breaks materialization \\
+Aligning the partition rules & Encoding was stricter than the materializer; optimum unmoved \\
+The quotient-method system & Unsatisfiable under the structural filter; $(56,5)$ without it \\
+The stronger Pell reparametrization & Gives $49$ variables, worse \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+None of this shows that $44$ is optimal. It shows that seven distinct attacks,
+each of which we expected to help, did not.

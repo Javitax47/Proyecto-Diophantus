@@ -1,0 +1,73 @@
+\section{Corrections to the literature}
+\label{sec:correc}
+
+The three statements in this section are about published work rather than about
+our constructions, and we have tried to state them so that a reader can check
+each against the primary source without our code.
+
+\subsection{The announced \texorpdfstring{$(42,5)$}{(42,5)} does not follow from the method cited for it}
+
+On p.~450 of \cite{jsww1976} one reads:
+
+\begin{quote}
+``All that is necessary to reduce the degree to 5 is the Skolem substitution
+method (cf.\ [3], p.~263). However, this procedure increases the number of
+variables (to 42 when applied to (1)).''
+\end{quote}
+
+Their reference [3] is \cite{davis1973}, and on p.~263 the method is given in
+full. It permits exactly the substitutions
+\[
+  z_j=y_iy_k,\qquad z_j=y_i^2,\qquad z_j=xy_i,\qquad z_j=x^2 ,
+\]
+applied successively, so that the admissible names are precisely the
+\emph{degree-2 monomials} in the variables, including those already introduced.
+Composite subexpressions are not admissible: of the twenty names in our
+construction, four---among them $(k+1)^3(k+2)$, $cu+x$ and $a+u^2(u^2-a)$---are
+not monomials and would not be available.
+
+This makes the minimum computable exactly rather than heuristically. The
+candidate names are the divisors of the monomials occurring in the system (a
+name dividing none of them is useless), and one enumerates all partitions of
+exponents subject to a name of degree greater than $2$ being built from two
+already-available parts, which is what ``successive substitutions'' means. On
+the system~(1) of \cite{jsww1976} the exact minimum is $25$ names, so the method
+applied to that system yields
+\[
+  26+25 \;=\; 51 \text{ variables at degree } 5 ,
+\]
+that is, $(51,5)$, not $(42,5)$. Reaching $42$ by that route would require $16$
+names, and no selection of $16$ monomials flattens the system.
+
+We are careful about what this does and does not show. It does not show that no
+$(42,5)$ generator exists; it shows that it does not follow from the procedure
+cited for it. Our $(44,5)$, which uses composite names, beats that procedure by
+seven variables. This is a statement about an attribution, and it is the only
+one of our results that we would describe as surprising.
+
+\subsection{Two conflations of units}
+
+\paragraph{The figure $1.638\cdot10^{45}$ is not the degree of a prime-representing polynomial.}
+It is the degree of the \emph{universal} pair $(9,\cdot)_\N$ of \cite{jones1982}:
+a bound valid for every Diophantine set, not a polynomial for the primes. The
+prime-representing polynomial in $10$ variables that Matiyasevich actually
+constructed \cite{matiyasevich1981} has degree greater than $6000$, a figure
+confirmed by its formalizers \cite{pak2022ten}. The two are routinely quoted as
+one, with the $10^{45}$ introduced by a ``hence'' from the nine-unknowns
+theorem; that is a different polynomial, and not a constructed one.
+
+\paragraph{The pair $(58,4)$ is neither about the primes nor about a generator.}
+It is a universal pair, and a pair for a \emph{representation}. Instantiated for
+the primes it would give $59$ variables, and as a generator its degree would be
+$1+2\cdot4=9$; it is dominated on both axes. We note in passing that no
+universal pair can have degree $\le2$, since quadratic Diophantine equations are
+decidable.
+
+\subsection{A consistency check that catches such conflations}
+
+By Proposition~\ref{prop:gen}, the degree of a generator is odd. A quoted figure
+that is even is a representation degree, not a generator degree; a figure that
+is odd and equals $1+2d$ for a plausible $d$ is a generator degree. Applied to
+$13697=1+2\cdot6848$ this confirms the reading of the $(12,13697)$
+of \cite{jsww1976}, and applied to $(58,4)$ it immediately flags the unit
+mismatch. We recommend it as a routine check when citing these figures.

@@ -1,0 +1,63 @@
+\section{Related work}
+\label{sec:related}
+
+The construction we transform is that of Jones, Sato, Wada and Wiens
+\cite{jsww1976}, itself built on the solution of Hilbert's tenth problem
+\cite{matiyasevich1970} and, for their Section~3, on the reduction of
+Matijasevi\v{c} and Robinson \cite{mr1975}. The frontier at the low-variable end
+is due to Matiyasevich \cite{matiyasevich1981}, whose generator in $10$
+variables remains the fewest known and is, unlike most figures in this range,
+genuinely exhibited.
+
+Universal Diophantine pairs $(\nu,\delta)$---bounds valid for every Diophantine
+set---are tabulated by Jones \cite{jones1982}, who also supplied the complete
+proof of the nine-unknowns theorem that Matiyasevich had announced. These pairs
+are frequently quoted as though they were statements about the primes; they are
+not, and \S\ref{sec:correc} discusses the confusion this causes. Over $\Z$ the
+corresponding record is due to Sun \cite{sun2021}. Bayer and David
+\cite{bayerdavid2025} formalize complexity bounds for Diophantine equations and
+note that some universal pairs in circulation lack published proofs.
+
+Closest to the present paper is the work of P\k{a}k and Kaliszyk, who formalized
+in Mizar both the $(26,25)$ system of \cite{jsww1976} \cite{pak2022jsww} and
+Matiyasevich's polynomial in ten unknowns \cite{pak2022ten}. Their work
+formalizes the two \emph{endpoints} of the known frontier; ours exhibits and
+verifies points \emph{between} them, and in addition audits the announcements
+that connect them. The two efforts are complementary, and their figure for the
+degree of the $12$-variable polynomial ($13697$) is one of the four numbers our
+implementation of \cite{mr1975} reproduces.
+
+\section{Conclusion}
+\label{sec:concl}
+
+We have exhibited two generators of the set of primes, at $(44,5)$ and
+$(21,25)$, together with machine-checked proofs that each is equisatisfiable
+with the system published in \cite{jsww1976}. The first appears to be the first
+prime generator of degree $5$ written down; the second improves by five
+variables on the only previously exhibited generator at that degree. We have
+also supplied the fourteen substitution steps that \cite{jsww1976} states
+without proof for their quotient-method system, and corrected three items in the
+secondary literature.
+
+We have not improved on any record. In the number of variables the
+$(10,>6000)$ of \cite{matiyasevich1981} dominates everything our method reaches,
+and going below it would require the nine-unknowns machinery, which our
+approach---transcribe a published system, eliminate, flatten, and measure---does
+not reproduce. In the degree, $5$ is the floor by
+Proposition~\ref{prop:gen}, so the only question there is the variable count,
+and we do not know whether $44$ can be lowered.
+
+What the exercise does suggest is that this part of the literature is less
+thoroughly worked than its age implies. Figures announced and never written;
+a method cited for a figure it does not yield; two conflations of units in wide
+circulation; and fourteen substitution steps whose soundness over $\N$ had not
+been checked. None of that required new mathematics to find---only the decision
+to treat every announced pair as something to be exhibited rather than quoted.
+
+\subsection*{Availability}
+
+The systems, the optimizer, the Lean development and the tests that check each
+formal statement against the published equations are available at
+\url{https://github.com/Javitax47/Proyecto-Diophantus}. The \LaTeX{} of the
+system in \S\ref{ssec:flat-system} is generated from the same file the Lean
+kernel checks.

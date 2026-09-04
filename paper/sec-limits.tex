@@ -1,0 +1,78 @@
+\section{Limitations and threats to validity}
+\label{sec:limits}
+
+\subsection{No figure here is a proved minimum}
+
+Every pair we report is a constructed upper bound. In particular, the
+statement that $20$ names suffice to flatten the system of \cite{jsww1976} to
+degree~$2$, and that no smaller set does, is an optimality statement
+\emph{about our encoding}: the solver reports that no smaller selection exists
+within the candidate catalogue we supplied, under the reduction rules we
+encoded. It does not follow that no smaller flattening exists, because a
+flattening may in principle use a name that is not a subexpression of the
+syntactic tree, and our catalogue is built from that tree.
+
+This is not a theoretical caveat. In an earlier line of work the reported
+optimum fell repeatedly as the catalogue was enlarged---$46\to17\to15$
+names---never because the search itself improved; and two of those certificates
+were subsequently found not to be materializable at all (see below), so the
+history cuts both ways. For the present construction we enlarged the catalogue
+from $465$ to $946$ to $3469$ candidates and the optimum did not move from
+$20$, but that is evidence, not proof.
+
+\subsection{Figures we withdrew}
+
+The development that produced the results above also produced nine defects that
+we found and repaired, four of which were capable of yielding figures that
+compiled, passed tests, and were wrong. We list the consequential ones because
+a reader deserves to calibrate on them.
+
+\begin{itemize}[nosep]
+  \item A rewriting route in the optimizer certified sets of names that could
+        not be \emph{materialized} into an actual system. This invalidated four
+        published-in-progress figures at degree~$5$: $(41,5)$, $(38,5)$,
+        $(36,5)$ and $(33,5)$. The frontier was re-measured in full without
+        rewriting and with a new structural check; the $(44,5)$ of this paper is
+        from that re-measurement.
+  \item Two runs of the same sweep in one process returned $(25,13)$ and
+        $(27,13)$: a wall-clock solver timeout combined with the rewriting route
+        made results non-reproducible. Reproducibility across repeated runs is
+        now itself checked.
+  \item A list of proved nonnegativity facts was matched to expressions by
+        string comparison; after a reparametrization the strings no longer
+        matched and the facts were silently lost, making a whole corner appear
+        unsatisfiable. Facts are now attached to systems structurally.
+  \item Three statement defects in the Lean generator, described in
+        \S\ref{sec:lean}, two of which produced files that compiled.
+\end{itemize}
+
+The safeguards these prompted---generated rather than transcribed formal
+statements, statement tests that check the text of each proof file against the
+published equations, an axiom audit in the build, and reproducibility
+checks---are what we would ask a reader to weigh, rather than the absence of
+defects.
+
+\subsection{Upper bounds on degrees in \texorpdfstring{\S\ref{sec:sec3}}{Section 6}}
+
+The degrees of the relation-combining curve are computed by traversing the
+expression tree without expanding, because expansion is infeasible: substituting
+the definitions of \S\ref{sec:sec3} in cascade doubles the degree at each step
+and our computer algebra system does not terminate. They are therefore upper
+bounds, exact only if no leading terms cancel. Four independent published
+figures are reproduced exactly by the same computation, which is our evidence
+that no cancellation occurs at those points; cancellation elsewhere would
+\emph{lower} the reported degrees.
+
+\subsection{What is cited and not reproved}
+
+We do not reprove that the system of \cite{jsww1976} represents the primes. That
+theorem is theirs and we cite it. What we verify is that our transformations of
+their system preserve satisfiability, and that our transcription of their system
+is faithful, equation by equation. A reader who doubts their theorem should
+doubt our figures equally.
+
+Finally, the constructions of \S\ref{sec:sec3} rest on our transcription of
+their Theorem~3.9 into polynomial form, which introduces eight unknowns (six
+square roots, one quotient, one slack). We showed in \S\ref{sec:sec3} that this
+conversion carries no additional hypothesis, but it is a conversion, and its
+faithfulness is checked by the same statement tests rather than proved.

@@ -1,0 +1,104 @@
+\section{A 21-variable generator of degree 25}
+\label{sec:var21}
+
+At the other end of the frontier the game is the number of variables, and the
+tool is elimination. We report two points, and we present the weaker one first
+because its guarantee is stronger.
+
+\subsection{Three eliminations with no side conditions: \texorpdfstring{$(23,25)$}{(23,25)}}
+
+Three of the twenty-five unknowns of \cite{jsww1976} are determined linearly by
+an equation whose right-hand side has all coefficients nonnegative:
+\begin{align}
+  z &= (gk+2g+k+1)(h+j)+h, \\
+  q &= wz+h+j, \\
+  y &= n+l+v .
+\end{align}
+By Remark~\ref{rem:crit} each may be substituted away with no argument beyond
+the shape of the expression, and by Proposition~\ref{prop:elim} the resulting
+system in $22$ unknowns is equisatisfiable with the original. The largest degree
+is unchanged at $12$, so
+
+\begin{theorem}
+\label{thm:23}
+There is a generator of the primes with $\nu=23$ and $\delta=25$.
+\end{theorem}
+
+This is three variables below the $(26,25)$ of \cite{jsww1976}, at the same
+degree, and it uses no number theory whatsoever: it is three substitutions. That
+it had not been written down is, we think, evidence that this part of the
+frontier is less well explored than its age suggests.
+
+\subsection{Two more, at the cost of a Pell bound: \texorpdfstring{$(21,25)$}{(21,25)}}
+
+Two further unknowns, $m$ and $x$, are linearly determined, but with mixed
+signs: their right-hand sides encode inequalities and
+Remark~\ref{rem:crit} does not apply. Both become eliminable once one knows
+\begin{equation}
+  \label{eq:pell-bound}
+  a \;\ge\; e+1 ,
+\end{equation}
+where $e=2n+p+q+z$. Rather than assume \eqref{eq:pell-bound}, we make it
+structural by the substitutions $n=N+2$ and $a=e+1+A$ with $N,A\ge0$, which is a
+bijective reparametrization of the region \eqref{eq:pell-bound} carves out. In
+the reparametrized system all five right-hand sides have nonnegative
+coefficients.
+
+\begin{theorem}
+\label{thm:21}
+Assume \eqref{eq:pell-bound}. Then there is a generator of the primes with
+$\nu=21$ and $\delta=25$.
+\end{theorem}
+
+\subsection{The bound \texorpdfstring{\eqref{eq:pell-bound}}{a >= e+1}, proved rather than cited}
+
+Equation~(5) of the system reads $e^3(e+2)(a+1)^2+1=o^2$, and the factorization
+\[
+  e^3(e+2)\;=\;e^2\bigl((e+1)^2-1\bigr)
+\]
+turns it into the Pell equation $o^2-(A^2-1)Z^2=1$ with $A=e+1$ and $Z=e(a+1)$.
+Three standard facts about that equation then give \eqref{eq:pell-bound}:
+
+\begin{enumerate}[label=(P\arabic*),nosep]
+  \item \emph{completeness}: every solution with $o,Z\ge0$ is $(X_j,Y_j)$ for
+        some $j$, where $X_0=1$, $Y_0=0$ and
+        $(X_{j+1},Y_{j+1})=(AX_j+(A^2-1)Y_j,\;X_j+AY_j)$;
+  \item \emph{congruence}: $Y_j\equiv j \pmod{A-1}$;
+  \item \emph{growth}: $Y$ is strictly increasing.
+\end{enumerate}
+
+From (P1), $Z=e(a+1)=Y_j$ for some $j$; from (P2), $e\mid Z$ forces $e\mid j$,
+and $j\ge1$ gives $j\ge e$; from (P3) and $e\ge4$ we get
+$Y_j\ge Y_3=4A^2-1$, whence $e(a+1)\ge e(e+2)$ and, cancelling $e>0$,
+inequality~\eqref{eq:pell-bound}. The condition $e\ge4$ follows from $n\ge2$,
+which is itself forced by equation~(4) by a squeeze between consecutive squares.
+
+These three facts are available in the standard libraries of several proof
+assistants; we prove all three from scratch (Section~\ref{sec:lean}) so that the
+figure does not rest on a citation.
+
+\subsection{Comparison with the literature, stated carefully}
+
+\begin{center}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Pair} & \textbf{Source} & \textbf{Status} & \textbf{Relation to ours} \\
+\midrule
+$(26,25)$ & \cite{jsww1976}, system (1) & exhibited & we improve by $3$, resp.\ $5$ \\
+$(24,37)$ & Matiyasevich, via \cite{pak2022jsww} & announced & incomparable \\
+$(21,21)$ & Matiyasevich (addendum) & announced & \textbf{dominates our $(21,25)$} \\
+$(19,29)$ & \cite{jsww1976}, p.~450 & announced & incomparable \\
+$(12,13697)$ & \cite{jsww1976}, Thm.~2 & announced & fewer variables, far higher degree \\
+$(10,>6000)$ & \cite{matiyasevich1981} & exhibited & fewer variables and lower degree \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+We are explicit about what this table says. Against the only \emph{exhibited}
+generator at degree~$25$, our points improve the variable count by three and by
+five. Against \emph{announced} figures they do not: the $(21,21)$ attributed to
+Matiyasevich dominates our $(21,25)$, and the $(10,>6000)$
+of~\cite{matiyasevich1981}---which is exhibited, and has been formalized in
+Mizar \cite{pak2022ten}---dominates every point we obtain below $13$ variables.
+Our contribution here is not a record in the number of variables; it is that
+two points at the exhibited end of that axis now exist as checkable objects.

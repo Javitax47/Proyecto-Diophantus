@@ -1,0 +1,119 @@
+\section{The quotient-method system}
+\label{sec:sec3}
+
+Section~3 of \cite{jsww1976} contains a second, quite different construction,
+following Matijasevi\v{c} and Robinson \cite{mr1975}: their Theorem~3.9 gives
+$21$ conditions in which fourteen unknowns are then removed. The removal is
+disposed of in one sentence (p.~461): ``The unknowns $M,A,B,C,D,E,F,G,H,I,K,L,R,S$
+eliminate from (I)--(XXI) by substitution.''
+
+Over $\N$ that sentence has content, by Proposition~\ref{prop:elim}. Applying
+the structural criterion of Remark~\ref{rem:crit} licenses only six of the
+fourteen; the remaining eight are each blocked by one subtraction. We prove all
+eight, and formalize them.
+
+\subsection{The eight bounds}
+
+Six follow from an elementary chain. Since all variables are in $\N$,
+$M=16nx(w+2)+1\ge1$, hence $A=M(x+1)\ge1$ and $A^2-1\ge0$---which is exactly the
+subtraction blocking $D$ and $F$. Then $C=m+n+1\ge1$, $D\ge1$,
+$E=2(i+1)DC^2\ge2$, and with $E\ge2$,
+\[
+  F=(A^2-1)E^2+1 \;\ge\; 4A^2-3 \;\ge\; A ,
+\]
+because $4A^2-A-3=(A-1)(4A+3)\ge0$; this is the subtraction blocking $G$, and
+$G=A+F(F-A)\ge A\ge1$ unblocks $I$. Two more follow from the observation that
+$U(X,0)=t^4+2t^3+1$ with $t=X+2$ lies strictly between the consecutive squares
+$(t^2+t-1)^2$ and $(t^2+t)^2$ and is therefore not a square, so conditions~(I)
+and~(II) force $n\ge1$ and $x\ge1$.
+
+The seventh, for $K$, requires $k\le n$. Condition~(I) reads
+$16(k+1)^3(k+2)(n+1)^2+1=c^2$, which at first sight is not of the Pell form
+$x^2-(A^2-1)y^2=1$ our development handles. It is, by the identity
+\[
+  16m^3(m+1) \;=\; \bigl((2m+1)^2-1\bigr)\cdot 4m^2 , \qquad m=k+1,
+\]
+so that $A=2k+3$ and $y=2(k+1)(n+1)$; the congruence then sends the divisibility
+$2(k+1)\mid y$ to the index, giving $j\ge2(k+1)\ge4$, and growth from
+$Y_3=4A^2-1$ yields $8k\le n+1$.
+
+\subsection{The eighth bound was a transcription error of ours}
+
+The last, for $S=(z+1)(k+1)-2$, requires $(z+1)(k+1)\ge2$, which fails at
+exactly one point, $z=k=0$. It resisted proof because $z$ occurs \emph{only} in
+that equation, so no other condition constrains it.
+
+The resolution is that the point is not in the theorem. Theorem~3.9
+of~\cite{jsww1976} begins ``For any \emph{positive} integer $k$'', and the
+Wilson criterion it rests on (their Lemma~2.9) likewise requires $k\ge1$---as it
+must, since at $k=0$ the criterion misfires: $k+1=1$ divides $k!+1=2$, so it
+would report that $1$ is prime. We had transcribed the parameter as ranging over
+$\N$, thereby asserting more than the theorem does. Under the exact
+reparametrization of its domain, $k=k'+1$ with $k'\in\N$, the definition becomes
+$S=k'z+k'+2z$, all of whose coefficients are nonnegative, and $S$ is eliminable
+with no bound at all.
+
+We record this because of what it turned out to mean: \emph{the point at which
+our bound failed is exactly the point at which Wilson's criterion fails}. That
+is not a coincidence. $S$ is the unknown that carries Wilson into the system---
+condition~(XXI) says $k+1\mid S+2$, and the sufficiency proof uses $S\ge0$ to
+conclude $\tfrac12<\beta$. The two were the same fact seen from two places.
+
+\subsection{The inequality (XIV) carries no inherited hypothesis}
+
+Condition~(XIV) is the only inequality, and converting it to polynomial form
+requires clearing a denominator, which we had documented as inheriting the
+hypothesis $De>0$ (formula~(15) of \cite{jsww1976}, p.~458). It does not: the
+encoding forces it. Writing $\mathit{Nu}=RKC^2$ and $\mathit{De}$ for the
+denominator, the slack form
+$4(\mathit{Nu}-(S{+}1)\mathit{De})^2+1+s_1=\mathit{De}^2$ with $s_1\ge0$ is
+equivalent to $4(\mathit{Nu}-(S{+}1)\mathit{De})^2<\mathit{De}^2$, and
+
+\begin{itemize}[nosep]
+  \item $\mathit{De}=0$ gives $4\mathit{Nu}^2+1+s_1=0$, impossible over $\N$;
+  \item $\mathit{De}<0$ gives
+        $\mathit{Nu}-(S{+}1)\mathit{De}\ge1+|\mathit{De}|$---using
+        $\mathit{Nu}\ge1$ and $S+1\ge1$---whence
+        $4(\cdot)^2\ge4(1+|\mathit{De}|)^2>\mathit{De}^2$, contradicting the
+        inequality.
+\end{itemize}
+
+Both hypotheses are among the eight bounds just proved. Note that $S+1\ge1$ is
+precisely what was lost at $k=0$: with $S+1=0$ the negative-denominator
+solutions reappear. The two gaps closed together.
+
+\subsection{The relation-combining theorem, and four published numbers}
+
+Theorem~3 of \cite{mr1975} fuses $q$ square conditions, one divisibility and one
+positivity into a single equation at the cost of one unknown. We implemented it
+as an iterated norm (not by expanding $2^q$ factors) and validated the
+implementation against four figures published in \cite{jsww1976}:
+
+\begin{center}
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{Quantity} & \textbf{Source} & \textbf{Value} \\
+\midrule
+$\deg M_6$, plain theorem & p.~461 & $148864$ \\
+$\deg M_6$, with Matijasevi\v{c}'s refinements & p.~462 & $13376$ \\
+$\deg M_5$, with condition (24) & p.~462 & $6848$ \\
+generator degree & p.~462 & $13697$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four are reproduced exactly. The refinements are described telegraphically
+on p.~462; the only reading not fixed by the text is the degree of the auxiliary
+bounds $V_i$, for which we take $\lceil \deg A_i/2\rceil$---natural, since the
+condition \emph{is} that $A_i$ be a square. Four exact agreements from a single
+reading is our evidence that the reading is the right one.
+
+Applying the refined theorem to subsets of the conditions gives a curve:
+$(16,369)$, $(15,801)$, $(14,1777)$, $(13,3905)$, $(12,13697)$, whose last point
+is the figure of \cite{jsww1976}. The first four appear to be the only known
+pairs with fewer than $17$ variables and degree below~$6000$. We emphasise two
+things: they are \emph{not} a record in the number of variables, since
+$(10,>6000)$ of \cite{matiyasevich1981} dominates everything here below $13$
+variables; and their degrees are \emph{upper} bounds, computed by traversing the
+expression tree, since expanding is infeasible. Cancellation, if any, would
+lower them.

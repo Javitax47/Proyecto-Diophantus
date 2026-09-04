@@ -1,0 +1,86 @@
+\section{Formal verification}
+\label{sec:lean}
+
+All constructions above are accompanied by machine-checked proofs in Lean~4
+\cite{lean4} (version 4.33.1). The development uses \emph{only} the Lean kernel
+and its core library: no Mathlib, no other dependency. This is a deliberate
+constraint. The facts we need---completeness of the Pell recursion, a
+congruence, monotonicity---are all in Mathlib, and importing them would have
+been faster; but the point of the exercise is that the figures should not rest
+on a citation, and a proof that is one \texttt{import} away from a large library
+does not make that visible.
+
+\subsection{What is proved}
+
+\begin{center}
+\begin{tabular}{@{}llr@{}}
+\toprule
+\textbf{File} & \textbf{Principal theorem} & \textbf{Lines} \\
+\midrule
+\texttt{Aplanado.lean} & flattened system $\Leftrightarrow$ system (1); the $(44,5)$ & 109 \\
+\texttt{Nombre20.lean} & $a+u^2(u^2-a)\ge1$ (Proposition~\ref{prop:mu20}) & 76 \\
+\texttt{CotaA.lean} & $a\ge2$ and $n\ge2$ over $\N$ & 134 \\
+\texttt{Pell.lean} & (P1)--(P3) and $a\ge e+1$ & 397 \\
+\texttt{Eliminacion.lean} & $25\,\exists \Leftrightarrow 22\,\exists$; the $(23,25)$ & 190 \\
+\texttt{Eliminacion21.lean} & $25\,\exists \Leftrightarrow 20\,\exists$; the $(21,25)$ & 234 \\
+\texttt{Cotas3.lean} & the eight bounds of \S\ref{sec:sec3} & 447 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The equisatisfiability theorems have the shape
+\[
+  \bigl(\exists a\,b\dots z\in\Z:\; \textstyle\bigwedge_i 0\le\cdot \;\wedge\;
+  \mathrm{complete}(k,a,\dots,z)\bigr)
+  \;\Longleftrightarrow\;
+  \bigl(\exists a\,b\dots x:\; \textstyle\bigwedge_i 0\le\cdot \;\wedge\;
+  \mathrm{reduced}(k,a,\dots,x)\bigr) .
+\]
+We work over $\Z$ with nonnegativity as separate hypotheses rather than over
+$\N$. The reason is that truncated subtraction on $\N$ ($3-5=0$) would silently
+change the meaning of every equation containing a minus sign; stating the same
+equations over $\Z$ and carrying $0\le x$ as hypotheses says what we mean.
+
+\subsection{Compiling is not the same as stating}
+
+A formalization guarantees the \emph{proof}; it says nothing about whether the
+\emph{statement} is the intended one. This is not a hypothetical concern. Our
+generator of \texttt{Aplanado.lean} produced, in succession, three defective
+statements, two of which compiled:
+
+\begin{itemize}[nosep]
+  \item eliminated unknowns \emph{quantified} instead of substituted, so the
+        theorem asserted something weaker;
+  \item the hypothesis named \texttt{h}, shadowing the unknown $h$ of
+        \cite{jsww1976};
+  \item a defining equation with a negative coefficient emitted over $\N$.
+\end{itemize}
+
+We therefore treat the statement as an artifact to be checked in its own right,
+by two mechanisms.
+
+\paragraph{Generation, not transcription.}
+\texttt{Aplanado.lean} is emitted by the same program that computes the figure,
+from the same in-memory object. A sign copied wrongly would give a file that
+compiles and means something else; generating it removes the copying step. The
+same discipline produces the \LaTeX{} of the system displayed in
+\S\ref{ssec:flat-system}.
+
+\paragraph{Statement tests.}
+For each Lean file there is a test that parses the \emph{text} of the file,
+translates its hypotheses back into polynomials, and checks with a computer
+algebra system that they are, one by one and positionally, the published
+equations; that the eliminated unknowns appear substituted rather than
+quantified; and that un-naming the flattened system---replacing each $\mu_i$ by
+its definition to a fixed point---returns the original system exactly, with
+nothing missing and nothing extra. These tests are what would catch a theorem
+that compiles and says the wrong thing.
+
+\subsection{Axioms}
+
+Every theorem in the development was audited with \verb|#print axioms|. All of
+them depend on at most \texttt{propext}, \texttt{Classical.choice} and
+\texttt{Quot.sound}---the three axioms of the Lean kernel---and none on
+\texttt{sorryAx}. There are no \texttt{axiom} declarations of our own and no
+\texttt{native\_decide}. The audit is part of the build script, so a regression
+would fail the build rather than pass silently.
