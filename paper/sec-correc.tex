@@ -7,7 +7,7 @@ each against the primary source without our code.
 
 \subsection{The announced \texorpdfstring{$(42,5)$}{(42,5)} does not follow from the method cited for it}
 
-On p.~450 of \cite{jsww1976} one reads:
+On p.~449 of \cite{jsww1976} one reads:
 
 \begin{quote}
 ``All that is necessary to reduce the degree to 5 is the Skolem substitution
@@ -39,9 +39,15 @@ applied to that system yields
 that is, $(51,5)$, not $(42,5)$. Reaching $42$ by that route would require $16$
 names, and no selection of $16$ monomials flattens the system.
 
-We are careful about what this does and does not show. It does not show that no
-$(42,5)$ generator exists; it shows that it does not follow from the procedure
-cited for it. Our $(44,5)$, which uses composite names, beats that procedure by
+We are careful about what this does and does not show. First, ``exact'' here
+means exact \emph{under our formalization of the method}: candidate names are
+the divisors of the monomials of the system as we transcribe it, and the
+partition rule is our reading of ``successive substitutions''. The minimum was
+certified by an SMT solver, whose lower bound is subject to the same caveat as
+the one in \S\ref{sec:limits}; we computed it on two syntactic forms of the
+system and obtained $25$ with a matching lower bound both times. Second, it does
+not show that no $(42,5)$ generator exists; it shows that it does not follow
+from the procedure cited for it. Our $(44,5)$, which uses composite names, beats that procedure by
 seven variables. This is a statement about an attribution, and it is the only
 one of our results that we would describe as surprising.
 
@@ -63,11 +69,14 @@ $1+2\cdot4=9$; it is dominated on both axes. We note in passing that no
 universal pair can have degree $\le2$, since quadratic Diophantine equations are
 decidable.
 
-\subsection{A consistency check that catches such conflations}
+\subsection{A heuristic that catches such conflations}
+\label{ssec:parity}
 
-By Proposition~\ref{prop:gen}, the degree of a generator is odd. A quoted figure
-that is even is a representation degree, not a generator degree; a figure that
-is odd and equals $1+2d$ for a plausible $d$ is a generator degree. Applied to
-$13697=1+2\cdot6848$ this confirms the reading of the $(12,13697)$
-of \cite{jsww1976}, and applied to $(58,4)$ it immediately flags the unit
-mismatch. We recommend it as a routine check when citing these figures.
+By Remark~\ref{rem:odd}, a generator obtained by the standard construction has
+odd degree. Every figure in this literature comes from that construction, so a
+quoted even number is very unlikely to be a generator degree and is most
+probably a representation degree; a number of the form $1+2d$ for a plausible
+$d$ reads as a generator degree. Applied to $13697=1+2\cdot6848$ this confirms
+the reading of the $(12,13697)$ of \cite{jsww1976}, and applied to $(58,4)$ it
+flags the unit mismatch at once. We offer it as a reading heuristic, not as a
+theorem about generators.

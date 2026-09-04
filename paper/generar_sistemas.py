@@ -73,9 +73,31 @@ def main():
     salida['original'] = {'variables': len(firma('Aplanado.lean', 'S')),
                           'ecuaciones': eqsS}
 
+    # Para IMPRIMIR el sistema (1) se usa `Eliminacion.lean::completo`, que es la
+    # misma transcripcion pero en forma FACTORIZADA --16(k+1)^3(k+2)(n+1)^2+1=f^2
+    # en vez de su desarrollo-- y por tanto legible. `Aplanado.lean::S` la lleva
+    # expandida porque el aplanado necesita los monomios sueltos. Las dos estan
+    # verificadas y el test de enunciado comprueba que coinciden.
+    salida['completo'] = {'variables': len(firma('Eliminacion.lean', 'completo')),
+                          'ecuaciones': ecuaciones_de('Eliminacion.lean', 'completo')}
+
     eqs23 = ecuaciones_de('Eliminacion.lean', 'reducido')
     salida['reducido23'] = {'variables': len(firma('Eliminacion.lean', 'reducido')),
                             'ecuaciones': eqs23}
+
+    if len(sys.argv) > 1 and sys.argv[1] == '--sistema1':
+        # El sistema (1) de JSWW con numeracion PROPIA (S1)-(S14), para que el
+        # articulo pueda citar sus ecuaciones sin chocar con la numeracion
+        # automatica de LaTeX. Sale de `Aplanado.lean::S`, que el nucleo verifica.
+        print('%% GENERADO por paper/generar_sistemas.py — no editar a mano')
+        print('\\begin{align}')
+        filas = []
+        for idx, e in enumerate(salida['completo']['ecuaciones'], 1):
+            izq, der = e.split('=', 1)
+            filas.append(f'  {a_latex(izq)} &= {a_latex(der)} \\tag{{S{idx}}}')
+        print(',\\\\\n'.join(filas) + '.')
+        print('\\end{align}')
+        return
 
     if len(sys.argv) > 1 and sys.argv[1] == '--tex':
         a = salida['aplanado']

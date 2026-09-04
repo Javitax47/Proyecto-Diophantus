@@ -63,6 +63,46 @@ figures are reproduced exactly by the same computation, which is our evidence
 that no cancellation occurs at those points; cancellation elsewhere would
 \emph{lower} the reported degrees.
 
+\subsection{The $(51,5)$ rests on the same kind of instrument}
+
+The exact minimum of $25$ names for the method of \cite{davis1973}, which
+supports our strongest claim about the literature (\S\ref{sec:correc}), comes
+from the same class of tool as the $20$: an SMT optimizer, over our
+formalization of the method, over our transcription of the system. What differs
+is that the method's admissible names are \emph{exactly} the degree-$2$
+monomials, so the candidate set is determined rather than chosen---which is why
+we call the minimum exact. But the lower bound is still a solver's, and this
+project has a documented case in which a certified lower bound from a related
+encoding sat above a flattening we later constructed by hand. We ran the
+computation on two syntactic forms of the system and obtained $25$ with a
+matching bound both times.
+
+\subsection{Only the variable count is formalized}
+
+For each pair $(\nu,\delta)$ we report, the formal development establishes the
+equisatisfiability, and hence $\nu$. The degree $\delta$ is computed by our
+tooling from the transformed system and checked against
+Proposition~\ref{prop:gen}, but it is not a Lean theorem. A reader who wants
+$\delta$ machine-checked does not have it here.
+
+\subsection{The four points of \texorpdfstring{\S\ref{sec:sec3}}{Section 6} are announced, not exhibited}
+
+We apply our own criterion to ourselves. The pairs $(16,369)$, $(15,801)$,
+$(14,1777)$ and $(13,3905)$ are computed, not written down: no polynomial is
+displayed, nothing is formalized, and the degrees are upper bounds. They belong
+in the same category as the announcements this paper audits, and should be cited
+that way.
+
+\subsection{A domination we do not claim}
+
+The generator of \cite{matiyasevich1981} is quoted as having degree
+\emph{greater than} $6000$. That is a lower bound, so it settles nothing about
+whether its degree is below or above the $13697$ of the $12$-variable
+polynomial. We therefore do not assert that it dominates any of our points on
+both axes---only that it has fewer variables. The exact degree is recoverable
+from the Mizar formalization \cite{pak2022ten}; extracting it would close the
+comparison, and we have not done so.
+
 \subsection{What is cited and not reproved}
 
 We do not reprove that the system of \cite{jsww1976} represents the primes. That

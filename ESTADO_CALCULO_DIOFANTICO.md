@@ -112,8 +112,9 @@ siendo del *encoding*, y hay precedente de que se queda corta.
 
 **Variables — irrelevancia.** El suelo de 12 está medido y explicado (ocho de las diez incógnitas
 supervivientes son testigos de divisibilidades y desigualdades; el teorema de combinación absorbe una
-de cada). Y el (10, ~6.001) de Matiyasevich, **exhibido y formalizado en Mizar**, domina en los dos
-ejes a todo lo que el método alcanza. Bajar de 10 exige ν ≤ 8, medio siglo abierto.
+de cada). Y el (10, **> 6.000**) de Matiyasevich, **exhibido y formalizado en Mizar**, tiene menos
+variables que todo lo que el método alcanza. Bajar de 10 exige ν ≤ 8, medio siglo abierto. (Sobre el
+**grado** no se puede afirmar nada: «> 6.000» es una cota inferior. Ver la corrección en §2.octies.)
 
 ### Lo que queda abierto, para quien retome
 
@@ -125,8 +126,9 @@ Poco, y acotado:
   (16,369), (15,801), (14,1777), (13,3905), y el extremo reproduce el (12,13.697) publicado. Los
   grados siguen siendo **cotas superiores** por recorrido de árbol — expandir es inabordable, y si
   hay cancelación los puntos mejoran;
-- **verificar que el grado del (10, ·) es realmente ~6.001** y no mayor que 13.697. Está en la MML y
-  no se ha hecho;
+- **recuperar el grado EXACTO del (10, ·)** de la MML. Sin él, la comparación con el (12, 13.697)
+  está abierta y no se puede hablar de dominancia en ninguna dirección. Es la tarea más barata que
+  queda y la que más afirmaciones desbloquea o retira;
 - el **puente entre las dos islas del repo** (§6.3), que nunca se construyó.
 
 Ninguna de esas cuatro bate un récord. La primera y la tercera son verificación; la segunda mejora
@@ -838,7 +840,7 @@ las `6−q` restantes siguen costando una raíz cada una. Eso da una curva, no u
 | 1 | **17** | **521** | **no** |
 | 2 | **16** | **1.137** | **no** |
 | 3 | **15** | **3.233** | **no** |
-| 4 | 14 | 8.385 | sí, por (10, ~6001) |
+| 4 | 14 | 8.385 | **no se puede afirmar** — ver §2.octies, «>6.000» es cota inferior |
 | 5 | 13 | 21.633 | sí |
 | 6 | 12 | 297.729 | sí, por su propio (12, 13697) |
 
@@ -1113,16 +1115,23 @@ presumiblemente, lo que hace el de nueve incógnitas.
 
 | | variables | grado | estado |
 |---|---|---|---|
-| Matiyasevich 1977/81 | **10** | **~6.001** | exhibido **y formalizado en Mizar** (`POLYNOM9:85`, Pąk 2022) |
+| Matiyasevich 1977/81 | **10** | **> 6.000** | exhibido **y formalizado en Mizar** (`POLYNOM9:85`, Pąk 2022) |
 | JSWW §3 | 12 | 13.697 | nunca escrito |
 
-El de 10 gana **en los dos ejes**. El (12, 13.697) no es un vértice de la frontera: es un punto
-interior. Construirlo —que era el plan— no añadiría nada al Pareto. Y lo mismo vale para nuestros
-(12, 297.729), (13, 21.633) y (14, 8.385).
+> ⚠️ **CORRECCIÓN (septiembre 2026).** Esta sección afirmó que el de 10 «gana en los dos ejes» y que
+> el (12, 13.697) está **dominado**. **No se puede afirmar**, y el error es de esta misma sección:
+> «> 6.000» es una **cota inferior**, así que no dice nada sobre si el grado es menor o mayor que
+> 13.697. La afirmación se apoyaba en un «~6.001» que aparecía en **una sola** celda de este
+> documento y que no tiene respaldo; el resto del documento dice «> 6.000» en seis sitios, incluida
+> la salvedad que esta misma sección ya escribía. La detectó un referee adversarial sobre el paper.
+>
+> Lo que **sí** se sostiene: el de 10 tiene **menos variables** que cualquier cosa que este método
+> alcance. Los grados **no son comparables** con la información disponible.
 
-Salvedad, porque la cifra importa: «> 6.000» es una **cota inferior** tal como la dan los
-formalizadores. Si el grado real superara 13.697, el (12) dejaría de estar dominado. Es comprobable
-en la MML y **no se ha comprobado**.
+El de 10 gana **en variables**. Si además su grado fuera menor que 13.697 —cosa que no sabemos— el
+(12, 13.697) sería un punto interior y construirlo no añadiría nada al Pareto; con la información
+que hay, esa comparación está **abierta**. El grado exacto es recuperable de la MML y **no se ha
+recuperado**.
 
 ### La confusión que hay que no volver a cometer
 
@@ -1139,7 +1148,8 @@ sobrevivió a estar ya corregido cincuenta páginas más arriba.
 
 - bajar de 10 exige **ν ≤ 8** — medio siglo abierto, y es el problema central del área;
 - el récord de 10 está **exhibido y formalizado por otros**;
-- nuestro suelo es 12, y 12 está dominado.
+- nuestro suelo es 12, y en variables el de 10 gana. Si el (12, 13.697) está o no dominado **queda
+  abierto**, porque de su grado sólo se conoce una cota inferior.
 
 **En número de variables este proyecto no aporta nada, y la esquina queda cerrada.** Lo único nuestro
 que sobrevive de esta línea son **(15, 3.233)**, **(16, 1.137)** y **(17, 521)** — y sobreviven por el
@@ -1212,9 +1222,11 @@ la vieja.
 
 ### Qué son y qué no son estos cuatro puntos
 
-**No son un récord de variables.** El (10, ~6.001) de Matiyasevich —exhibido y formalizado en Mizar—
-domina al (12, 13.697) y a todo lo que hay por debajo de 13 variables. La esquina de variables sigue
-cerrada (§2.octies).
+**No son un récord de variables.** El (10, **> 6.000**) de Matiyasevich —exhibido y formalizado en
+Mizar— tiene menos variables que cualquiera de ellos. Lo que **no** se puede decir, y este documento
+lo dijo mal, es que *domine* al (12, 13.697): «> 6.000» es una cota inferior y esa comparación está
+abierta (§2.octies). La esquina de variables sigue cerrada, pero por el argumento de las variables,
+no por el de dominancia.
 
 Valen **por el grado**: `(16, 369)`, `(15, 801)`, `(14, 1.777)` y `(13, 3.905)` son los únicos puntos
 conocidos con **menos de 17 variables y grado por debajo de ~6.000**. Esa franja seguía vacía porque

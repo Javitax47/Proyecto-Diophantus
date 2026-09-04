@@ -44,10 +44,14 @@ multiplying by the linear factor adds one.
 \end{proof}
 
 \begin{remark}
-Proposition~\ref{prop:gen} has a consequence we use as a consistency check
-throughout: \emph{the degree of a generator is always odd}. Several figures in
-the secondary literature are quoted without saying whether they refer to a
-representation or to a generator; parity settles it.
+\label{rem:odd}
+Every generator \emph{obtained by Proposition~\ref{prop:gen}} has odd degree.
+This is not a property of generators in general---$Q(y)=y^2$ generates
+$\{1,4,9,\dots\}$ in the sense of Definition~2.2 and has degree $2$---but every
+figure quoted in this literature comes from that construction, so parity is a
+useful heuristic for deciding whether a quoted number is a representation degree
+or a generator degree. We use it that way in \S\ref{ssec:parity}, and only that
+way.
 \end{remark}
 
 \subsection{The two transformations}
@@ -78,17 +82,25 @@ care is needed.
 \label{prop:elim}
 Let $\Sigma$ be a system over $\N$ containing $u=E$ with
 $u\notin\mathrm{vars}(E)$, and let $\Sigma'$ be the result of substituting $E$
-for $u$ and deleting that equation. Then $\Sigma$ and $\Sigma'$ are
-equisatisfiable \emph{if and only if} every solution of $\Sigma'$ satisfies
-$E\ge 0$.
+for $u$ and deleting that equation. If every solution of $\Sigma'$ satisfies
+$E\ge 0$, then the solutions of $\Sigma$ project bijectively onto those of
+$\Sigma'$; in particular the two systems are equisatisfiable.
 \end{proposition}
 
 \begin{proof}
-Forward: a solution of $\Sigma$ restricts to one of $\Sigma'$. Backward: given a
+A solution of $\Sigma$ restricts to one of $\Sigma'$. Conversely, given a
 solution of $\Sigma'$, setting $u:=E$ satisfies $\Sigma$ provided $E\in\N$,
-i.e.\ $E\ge 0$; if $E<0$ for some solution of $\Sigma'$, that solution is
-spurious.
+which is the hypothesis; the two maps are mutually inverse.
 \end{proof}
+
+\begin{remark}
+The converse fails, and it is worth saying so because the criterion below is
+applied mechanically. Equisatisfiability is a statement about the
+\emph{existence} of solutions: $\Sigma'$ may have spurious solutions with $E<0$
+and still be satisfiable exactly when $\Sigma$ is, because other solutions
+survive. What the hypothesis buys is the stronger bijection, which is what one
+needs in order to keep composing transformations.
+\end{remark}
 
 \begin{remark}[The criterion we use, and its limits]
 \label{rem:crit}

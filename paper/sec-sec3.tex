@@ -14,7 +14,13 @@ eight, and formalize them.
 
 \subsection{The eight bounds}
 
-Six follow from an elementary chain. Since all variables are in $\N$,
+The fourteen unknowns split into six that pass the structural criterion
+outright---$M$, $A$, $B$, $C$, $E$, $H$---and eight that do not: $D$, $F$, $G$,
+$I$, $K$, $L$, $R$, $S$. It is those eight we must bound. Write
+$U(X,Y)=(X+2)^3(X+4)(Y+1)^2+1$, so that conditions~(I) and~(II) of
+Theorem~3.9 read $U(2k,n)=\sq$ and $U(2n,x)=\sq$.
+
+Four of the eight---$D$, $F$, $G$, $I$---follow from an elementary chain. Since all variables are in $\N$,
 $M=16nx(w+2)+1\ge1$, hence $A=M(x+1)\ge1$ and $A^2-1\ge0$---which is exactly the
 subtraction blocking $D$ and $F$. Then $C=m+n+1\ge1$, $D\ge1$,
 $E=2(i+1)DC^2\ge2$, and with $E\ge2$,
@@ -22,10 +28,11 @@ $E=2(i+1)DC^2\ge2$, and with $E\ge2$,
   F=(A^2-1)E^2+1 \;\ge\; 4A^2-3 \;\ge\; A ,
 \]
 because $4A^2-A-3=(A-1)(4A+3)\ge0$; this is the subtraction blocking $G$, and
-$G=A+F(F-A)\ge A\ge1$ unblocks $I$. Two more follow from the observation that
+$G=A+F(F-A)\ge A\ge1$ unblocks $I$. Two more, for $L$ and $R$, need $Mx\ge1$ and
+$Mnx\ge1$, hence $n\ge1$ and $x\ge1$; these follow from the observation that
 $U(X,0)=t^4+2t^3+1$ with $t=X+2$ lies strictly between the consecutive squares
-$(t^2+t-1)^2$ and $(t^2+t)^2$ and is therefore not a square, so conditions~(I)
-and~(II) force $n\ge1$ and $x\ge1$.
+$(t^2+t-1)^2$ and $(t^2+t)^2$ and is therefore not a square, so (I) and~(II)
+force exactly that.
 
 The seventh, for $K$, requires $k\le n$. Condition~(I) reads
 $16(k+1)^3(k+2)(n+1)^2+1=c^2$, which at first sight is not of the Pell form
@@ -61,11 +68,20 @@ conclude $\tfrac12<\beta$. The two were the same fact seen from two places.
 
 \subsection{The inequality (XIV) carries no inherited hypothesis}
 
-Condition~(XIV) is the only inequality, and converting it to polynomial form
-requires clearing a denominator, which we had documented as inheriting the
-hypothesis $De>0$ (formula~(15) of \cite{jsww1976}, p.~458). It does not: the
-encoding forces it. Writing $\mathit{Nu}=RKC^2$ and $\mathit{De}$ for the
-denominator, the slack form
+Condition~(XIV) of Theorem~3.9 asserts that a certain rational quantity
+$\beta$ is within $\tfrac12$ of $S+1$, where
+\[
+  \beta \;=\; \frac{R}{\bigl(\tfrac{C}{KL}-(w+1)x\bigr)\bigl(1-\tfrac{R}{C}\bigr)^2 L}
+        \;=\; \frac{\mathit{Nu}}{\mathit{De}}, \qquad
+  \mathit{Nu}=RKC^2,\quad
+  \mathit{De}=\bigl(C-(w+1)xKL\bigr)(C-R)^2 ,
+\]
+the second equality after clearing denominators (the factor $L$ cancels). Here
+$K$, $L$, $R$, $C$ are among the fourteen unknowns and $w,x$ among the ten that
+survive. Converting $|\beta-(S{+}1)|<\tfrac12$ into a polynomial equation
+requires multiplying by $\mathit{De}^2$, which we had documented as inheriting
+the hypothesis $\mathit{De}>0$ (formula~(15) of \cite{jsww1976}, p.~458). It
+does not: the encoding forces it. The slack form
 $4(\mathit{Nu}-(S{+}1)\mathit{De})^2+1+s_1=\mathit{De}^2$ with $s_1\ge0$ is
 equivalent to $4(\mathit{Nu}-(S{+}1)\mathit{De})^2<\mathit{De}^2$, and
 
@@ -78,7 +94,8 @@ equivalent to $4(\mathit{Nu}-(S{+}1)\mathit{De})^2<\mathit{De}^2$, and
         inequality.
 \end{itemize}
 
-Both hypotheses are among the eight bounds just proved. Note that $S+1\ge1$ is
+Both hypotheses are among the eight bounds just proved: $\mathit{Nu}=RKC^2\ge1$
+because $R,K,C\ge1$, and $S+1\ge1$ because $S\ge0$. Note that $S+1\ge1$ is
 precisely what was lost at $k=0$: with $S+1=0$ the negative-denominator
 solutions reappear. The two gaps closed together.
 
@@ -102,7 +119,9 @@ generator degree & p.~462 & $13697$ \\
 \end{tabular}
 \end{center}
 
-All four are reproduced exactly. The refinements are described telegraphically
+Three of these are independent computations; the fourth, $13697=1+2\cdot6848$,
+follows from the third by Proposition~\ref{prop:gen}. All are reproduced
+exactly. The refinements are described telegraphically
 on p.~462; the only reading not fixed by the text is the degree of the auxiliary
 bounds $V_i$, for which we take $\lceil \deg A_i/2\rceil$---natural, since the
 condition \emph{is} that $A_i$ be a square. Four exact agreements from a single
@@ -110,10 +129,18 @@ reading is our evidence that the reading is the right one.
 
 Applying the refined theorem to subsets of the conditions gives a curve:
 $(16,369)$, $(15,801)$, $(14,1777)$, $(13,3905)$, $(12,13697)$, whose last point
-is the figure of \cite{jsww1976}. The first four appear to be the only known
-pairs with fewer than $17$ variables and degree below~$6000$. We emphasise two
-things: they are \emph{not} a record in the number of variables, since
-$(10,>6000)$ of \cite{matiyasevich1981} dominates everything here below $13$
-variables; and their degrees are \emph{upper} bounds, computed by traversing the
-expression tree, since expanding is infeasible. Cancellation, if any, would
-lower them.
+is the figure of \cite{jsww1976}. We are not aware of other pairs with fewer than $17$ variables and degree
+below~$6000$, but we state this with two explicit reservations. First,
+\cite{jsww1976} announce on p.~449 that ``the method of proof of Theorem~1
+yields a polynomial in 16 variables'' without giving its degree; if that degree
+is below $6000$, the claim fails, and we have not been able to determine it.
+Second, these four points are \emph{announced by us}, not exhibited: we do not
+write the polynomials down, they are not formalized, and their degrees are
+\emph{upper} bounds computed by traversing the expression tree, since expanding
+is infeasible. By our own criterion they are therefore in the same category as
+the figures we criticise elsewhere in this paper, and we label them so.
+
+They are also \emph{not} a record in the number of variables: the
+$(10,>6000)$ of \cite{matiyasevich1981} has fewer variables than any of them.
+We do not assert that it dominates the $(12,13697)$, because $>6000$ is a lower
+bound and the comparison with $13697$ is therefore open.

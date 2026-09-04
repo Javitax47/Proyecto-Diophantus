@@ -45,8 +45,18 @@ def revisar(ruta):
 
 def main():
     main_tex = os.path.join(AQUI, 'main.tex')
-    fuente = open(main_tex, encoding='utf-8').read()
-    inputs = re.findall(r'\\input\{([^}]+)\}', fuente)
+    # los \input se siguen en CASCADA: sec-deg5 incluye a su vez los sistemas
+    # generados, y si no se recorren, un fichero que falta pasa desapercibido.
+    inputs, pendientes = [], ['main.tex']
+    while pendientes:
+        act = pendientes.pop(0)
+        ruta = os.path.join(AQUI, act)
+        if not os.path.exists(ruta):
+            continue
+        for i in re.findall(r'\\input\{([^}]+)\}', open(ruta, encoding='utf-8').read()):
+            if i not in inputs:
+                inputs.append(i)
+                pendientes.append(f'{i}.tex')
 
     claves = set(re.findall(r'@\w+\{([^,]+),',
                             open(os.path.join(AQUI, 'refs.bib'), encoding='utf-8').read()))

@@ -17,7 +17,8 @@ does not make that visible.
 \toprule
 \textbf{File} & \textbf{Principal theorem} & \textbf{Lines} \\
 \midrule
-\texttt{Aplanado.lean} & flattened system $\Leftrightarrow$ system (1); the $(44,5)$ & 109 \\
+\texttt{Aplanado.lean} & the two implications, over $\Z$ & 109 \\
+\texttt{Aplanado44N.lean} & $25\,\exists \Leftrightarrow 42\,\exists$ over $\N$; the $(44,5)$ & 143 \\
 \texttt{Nombre20.lean} & $a+u^2(u^2-a)\ge1$ (Proposition~\ref{prop:mu20}) & 76 \\
 \texttt{CotaA.lean} & $a\ge2$ and $n\ge2$ over $\N$ & 134 \\
 \texttt{Pell.lean} & (P1)--(P3) and $a\ge e+1$ & 397 \\
@@ -36,8 +37,9 @@ The equisatisfiability theorems have the shape
   \bigl(\exists a\,b\dots x:\; \textstyle\bigwedge_i 0\le\cdot \;\wedge\;
   \mathrm{reduced}(k,a,\dots,x)\bigr) .
 \]
-We work over $\Z$ with nonnegativity as separate hypotheses rather than over
-$\N$. The reason is that truncated subtraction on $\N$ ($3-5=0$) would silently
+All three equisatisfiability theorems---\texttt{Aplanado44N},
+\texttt{Eliminacion} and \texttt{Eliminacion21}---have this shape. We work over
+$\Z$ with nonnegativity as separate hypotheses rather than over $\N$. The reason is that truncated subtraction on $\N$ ($3-5=0$) would silently
 change the meaning of every equation containing a minus sign; stating the same
 equations over $\Z$ and carrying $0\le x$ as hypotheses says what we mean.
 
@@ -67,14 +69,31 @@ same discipline produces the \LaTeX{} of the system displayed in
 \S\ref{ssec:flat-system}.
 
 \paragraph{Statement tests.}
-For each Lean file there is a test that parses the \emph{text} of the file,
+For six of the eight files there is a test that parses the \emph{text} of the file,
 translates its hypotheses back into polynomials, and checks with a computer
 algebra system that they are, one by one and positionally, the published
 equations; that the eliminated unknowns appear substituted rather than
 quantified; and that un-naming the flattened system---replacing each $\mu_i$ by
 its definition to a fixed point---returns the original system exactly, with
 nothing missing and nothing extra. These tests are what would catch a theorem
-that compiles and says the wrong thing.
+that compiles and says the wrong thing. Two files are not covered by one:
+\texttt{Nombre20.lean}, whose statement is a single inequality checked instead
+by a set of textual assertions inside another test, and \texttt{Aplanado44N.lean},
+which composes three already-tested files and introduces no new equations. We
+note the gap rather than paper over it.
+
+\subsection{The step to \texorpdfstring{$\N$}{N}}
+
+For the $(44,5)$ the two implications and the passage to $\N$ were, until
+recently, three separate artifacts joined in prose: \texttt{Aplanado.lean}
+proves the implications over $\Z$ with no sign hypotheses at all, and the
+nonnegativity of the twenty witnesses was argued informally. Since exactly that
+step is where a failure would be silent (\S3.4), we have composed it:
+\texttt{Aplanado44N.lean} states the single $\exists\Leftrightarrow\exists$ with
+nonnegativity inside, deriving eighteen witness bounds structurally, the
+nineteenth as a square, and the twentieth from
+Proposition~\ref{prop:mu20}---whose own hypothesis $a\ge2$ it obtains from the
+Pell bound of \S\ref{ssec:pell}. It is Theorem~\ref{thm:deg5}.
 
 \subsection{Axioms}
 

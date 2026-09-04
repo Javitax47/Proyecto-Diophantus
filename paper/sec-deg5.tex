@@ -3,11 +3,15 @@
 
 \subsection{Starting point}
 
-We start from the system of \cite{jsww1976}, which we reproduce in the form our
-tooling uses. It has $14$ equations in the parameter $k$ and $25$ unknowns
-$a,b,\dots,z$; the primes are the values $k+2$ for which it is solvable, and by
-Proposition~\ref{prop:gen} it yields a generator with
-$\nu=26$ and $\delta=1+2\cdot 12=25$.
+We start from the system of \cite{jsww1976}. It has $14$ equations in the
+parameter $k$ and $25$ unknowns $a,b,\dots,z$; the primes are the values $k+2$
+for which it is solvable, and by Proposition~\ref{prop:gen} it yields a
+generator with $\nu=26$ and $\delta=1+2\cdot 12=25$. We display it once, with
+its own numbering \textup{(S1)--(S14)}, and refer to those tags throughout;
+this transcription is the one our formal development uses, and the displayed
+\LaTeX{} is generated from it.
+\label{ssec:sistema1}
+\input{sys-original}
 
 \subsection{The construction}
 
@@ -43,9 +47,10 @@ degree above~$2$. We measured all six orders.
 
 \begin{theorem}
 \label{thm:deg5}
-The system displayed in \S\ref{ssec:flat-system}, in $44$ variables
-and with every equation of degree at most $2$, is equisatisfiable over $\N$ with
-the system of \textup{\cite{jsww1976}}. Consequently
+For every $k\ge0$, the system \textup{(S1)--(S14)} has a solution in
+nonnegative integers if and only if the system displayed in
+\S\ref{ssec:flat-system}---in $44$ variables, with every equation of degree at
+most $2$---does. Consequently
 \[
   Q_{44} \;=\; (k+2)\Bigl(1-\textstyle\sum_i P_i^2\Bigr)
 \]
@@ -85,8 +90,8 @@ be produced.
 
 \begin{proposition}
 \label{prop:mu20}
-Let $a,r,y,u\in\Z$ with $a\ge 2$, $r,y\ge 0$ satisfy equation~\textup{(7)} of
-the system, namely $16r^2y^4(a^2-1)+1=u^2$. Then $a+u^2(u^2-a)\ge 1$.
+Let $a,r,y,u\in\Z$ with $a\ge 2$ and $r,y\ge 0$ satisfy \textup{(S7)}, namely
+$16r^2y^4(a^2-1)+1=u^2$. Then $a+u^2(u^2-a)\ge 1$.
 \end{proposition}
 
 \begin{proof}
@@ -104,9 +109,10 @@ the last step because $16a^2-a-15\ge 0$ for $a\ge 1$; hence $t\ge a$ and both
 factors are nonnegative.
 \end{proof}
 
-The hypothesis $a\ge 2$ is not an assumption: it is proved from five of the
-fourteen equations, independently of what the system represents
-(Section~\ref{sec:lean}). Proposition~\ref{prop:mu20} is formalized in Lean;
+The hypothesis $a\ge 2$ is not an assumption: it follows from
+\textup{(S3)}, \textup{(S4)} and \textup{(S5)} alone, independently of what the
+system represents (Section~\ref{sec:lean}). Proposition~\ref{prop:mu20} is
+formalized in Lean;
 before it was proved, this bound had only been checked by exhaustive search over
 the $2569$ triples $(a,r,y)$ with $a<45$, $r,y<30$ satisfying~(7), which is not
 a proof.
