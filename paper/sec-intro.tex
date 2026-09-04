@@ -1,0 +1,99 @@
+\section{Introduction}
+\label{sec:intro}
+
+By the Davis--Putnam--Robinson--Matiyasevich theorem \cite{matiyasevich1970},
+every recursively enumerable set is Diophantine. The set of primes is therefore
+Diophantine, and in 1976 Jones, Sato, Wada and Wiens made this concrete: they
+wrote down a system of $14$ polynomial equations in $25$ unknowns and a
+parameter whose solvability characterizes the primes, and packaged it into a
+single polynomial whose positive values are exactly the primes
+\cite{jsww1976}.
+
+\subsection{The object of study is a frontier, not a number}
+
+A polynomial $Q$ whose positive values over nonnegative integer arguments are
+exactly $S$ is a \emph{generator} of $S$. Every generator carries two numbers:
+its number of variables $\nu$ and its degree $\delta$. These two are in
+tension. Given a representation
+\[
+  n\in S \iff \exists x_1,\dots,x_\nu\in\N:\; P_1=\dots=P_m=0 ,
+\]
+one obtains a generator by the classical device
+$Q=W\cdot\bigl(1-\sum_i P_i^2\bigr)$, so that
+$\deg Q = 1 + 2\max_i \deg P_i$; and the two operations available on such a
+system move $(\nu,\delta)$ in opposite directions:
+
+\begin{itemize}[nosep]
+  \item \emph{flattening}---introducing a new unknown for a subexpression, with
+        its defining equation---lowers $\max_i\deg P_i$ but \emph{adds}
+        variables;
+  \item \emph{elimination}---substituting away an unknown that some equation
+        determines linearly---removes a variable but \emph{raises} the degree
+        wherever that unknown occurred.
+\end{itemize}
+
+Consequently there is no single ``record''. What the literature describes is a
+Pareto frontier of incomparable pairs, and a new pair is a contribution exactly
+when it is not dominated by a known one.
+
+\subsection{Announced versus exhibited}
+
+The pairs cited for the primes below $26$ variables or below degree $25$ are,
+with one exception, \emph{announced}: they are asserted to exist, sometimes with
+a sketch of the construction, but the system itself was never written down.
+Jones, Sato, Wada and Wiens themselves state $(42,5)$ and $(19,29)$ in a single
+sentence on p.~450 of \cite{jsww1976}, and $(12,13697)$ follows from their
+Theorem~2 without being exhibited; they write plainly that ``no literature is
+available'' for the latter. The one exception at the low-variable end is
+Matiyasevich's generator in $10$ variables \cite{matiyasevich1981}, which is
+genuine and has since been formalized in Mizar \cite{pak2022ten}.
+
+This distinction is not pedantry. An announced pair cannot be checked, cannot be
+formalized, and cannot be used as the starting point for further work. The
+present paper is an attempt to convert two announced regions of the frontier
+into exhibited, machine-checked ones, and---in the course of doing so---to
+correct what the announcements say.
+
+\subsection{Contributions}
+
+\begin{enumerate}[label=(C\arabic*),leftmargin=*]
+  \item \textbf{A generator of the primes in $44$ variables of degree $5$}
+        (Section~\ref{sec:deg5}), exhibited in full as a system of $32$
+        equations of degree at most $2$ in $44$ variables. We are not aware of
+        any previously exhibited prime generator of degree~$5$.
+
+  \item \textbf{A generator in $21$ variables of degree $25$}
+        (Section~\ref{sec:var21}), five fewer variables than the $(26,25)$ of
+        \cite{jsww1976}, which is the only exhibited generator of the primes at
+        that degree. An intermediate point $(23,25)$ is obtained with no
+        auxiliary number theory at all, and is therefore the more robust of the
+        two.
+
+  \item \textbf{Formal verification in Lean~4} (Section~\ref{sec:lean}) of both
+        constructions: for each, the equisatisfiability of the transformed
+        system with the published one is a machine-checked theorem, using only
+        the Lean kernel---no Mathlib, no \texttt{sorry}, and no axioms beyond
+        the three the kernel itself uses. The Pell bound that licenses two of
+        the five eliminations is proved from scratch rather than cited.
+
+  \item \textbf{Soundness of the fourteen substitutions in the quotient-method
+        system} (Section~\ref{sec:sec3}). Jones, Sato, Wada and Wiens dispose of
+        these with the sentence ``the unknowns \dots\ eliminate from
+        (I)--(XXI) by substitution''; over $\N$ each substitution requires the
+        substituted value to be nonnegative, and eight of the fourteen do not
+        follow from the shape of the equation. We prove and formalize all eight.
+
+  \item \textbf{Three corrections to the literature}
+        (Section~\ref{sec:correc}), each checkable against primary sources: the
+        announced $(42,5)$ does not follow from the substitution method cited
+        for it; and two circulating figures conflate a prime-representing
+        polynomial with a universal Diophantine pair.
+\end{enumerate}
+
+\subsection{What we do not claim}
+
+None of the pairs reported here is a proved minimum. Each is a constructed upper
+bound, obtained by a search whose optimality statements are relative to the
+search's own encoding. Section~\ref{sec:limits} is devoted to this and to the
+history of figures we had to withdraw; we recommend reading it before the
+constructions.

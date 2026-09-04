@@ -36,6 +36,8 @@ echo ">> compilando Pell.lean"
 lean -o "$AQUI/Pell.olean" "$AQUI/Pell.lean"
 echo ">> compilando Eliminacion21.lean"
 LEAN_PATH="$AQUI" lean -o "$AQUI/Eliminacion21.olean" "$AQUI/Eliminacion21.lean"
+echo ">> compilando Nombre20.lean"
+LEAN_PATH="$AQUI" lean -o "$AQUI/Nombre20.olean" "$AQUI/Nombre20.lean"
 echo ">> compilando Cotas3.lean"
 LEAN_PATH="$AQUI" lean -o "$AQUI/Cotas3.olean" "$AQUI/Cotas3.lean"
 
@@ -85,6 +87,12 @@ open Diophantus
 #print axioms equisatisfacible21
 #check @equisatisfacible21
 LEAN
+cat > "$AQUI/.auditoria6.lean" <<'LEAN'
+import Nombre20
+open Diophantus
+#print axioms nombre20_ge_one
+#check @nombre20_ge_one
+LEAN
 cat > "$AQUI/.auditoria5.lean" <<'LEAN'
 import Cotas3
 open Diophantus
@@ -124,6 +132,7 @@ LEAN_PATH="$AQUI" lean "$AQUI/.auditoria2.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria3.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria4.lean"
 LEAN_PATH="$AQUI" lean "$AQUI/.auditoria5.lean"
+LEAN_PATH="$AQUI" lean "$AQUI/.auditoria6.lean"
 rm -f "$AQUI"/.auditoria*.lean "$AQUI"/*.olean
 
 echo ">> comprobando que el ENUNCIADO es el teorema que se cree demostrar"

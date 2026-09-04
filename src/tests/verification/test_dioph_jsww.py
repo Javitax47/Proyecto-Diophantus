@@ -23,6 +23,7 @@ representation of the set of prime numbers", Amer. Math. Monthly 83:6 (1976)
 
 import sys
 import os
+import re
 
 import sympy
 
@@ -416,6 +417,7 @@ def test_no_negatividad_de_los_nombres(stats):
     # La demostracion de `a + u^2(u^2-a) >= 1`, comprobada por barrido sobre la
     # ecuacion (7), que es la unica que hace falta.
     casos = fallos = 0
+    problemas_extra = []
     for av in range(0, 45):
         for rv in range(0, 30):
             for yv in range(0, 30):
@@ -431,6 +433,28 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.OKGREEN if not fallos else Colors.FAIL}a+u^2(u^2-a) >= 1 "
           f"en las {casos} ternas (a,r,y) que satisfacen la ec.(7); "
           f"{fallos} fallos{Colors.ENDC}")
+
+    # Y YA NO ES SOLO UN BARRIDO. Un barrido no es una demostracion, y este era el
+    # unico de los veinte nombres del aplanado cuya no-negatividad no estaba
+    # demostrada -- si pudiera ser negativo, el sistema aplanado no tendria
+    # solucion para ese primo y el generador dejaria de emitirlo: un fallo de
+    # COMPLETITUD, silencioso. Ahora esta demostrado en `Nombre20.lean` con la
+    # identidad  a + t(t-a) - 1 = (t-1)(t-a+1).
+    lean20 = os.path.join(RAIZ, 'formalizacion', 'lean', 'Nombre20.lean')
+    if not os.path.exists(lean20):
+        problemas_extra.append("falta Nombre20.lean: la cota vuelve a ser un barrido")
+    else:
+        fuente20 = open(lean20, encoding='utf-8').read()
+        if 'theorem nombre20_ge_one' not in fuente20:
+            problemas_extra.append("Nombre20.lean ya no demuestra `nombre20_ge_one`")
+        if re.search(r"\bsorry\b", fuente20):
+            problemas_extra.append("Nombre20.lean contiene `sorry`")
+        ident = "(u * u - 1) * (u * u - a + 1)"
+        if ident not in fuente20:
+            problemas_extra.append("Nombre20.lean ya no usa la identidad que lo cierra")
+        else:
+            print(f"  {Colors.OKGREEN}DEMOSTRADO{Colors.ENDC} en `Nombre20.lean`: "
+                  f"a + t(t-a) - 1 = (t-1)(t-a+1), con t = u^2 y la ec.(7)")
 
     # LAS TRES MEDIDAS. La tercera es la que vale, y es la que usa [4].
     medidas = {}
@@ -457,7 +481,7 @@ def test_no_negatividad_de_los_nombres(stats):
     print(f"  {Colors.WARN}Estas tres van SIN reescritura, para ser homogeneas entre "
           f"si. La cifra PUBLICADA la mide [4].{Colors.ENDC}")
 
-    problemas = []
+    problemas = list(problemas_extra)
     if fallos:
         problemas.append("la demostracion de a+u^2(u^2-a) >= 1 tiene contraejemplos")
     for et, (rr, gg) in medidas.items():

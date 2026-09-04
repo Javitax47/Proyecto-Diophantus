@@ -1,0 +1,47 @@
+\title{Two Exhibited and Formally Verified Points on the\\
+       Pareto Frontier of Diophantine Representations of the Primes}
+
+%% TODO(autor): sustituir por el nombre y la afiliacion reales.
+\author{[Author]\\\small [Affiliation]}
+\date{}
+
+\maketitle
+
+\begin{abstract}
+A Diophantine representation of the set of primes has been available since
+Jones, Sato, Wada and Wiens exhibited one in 1976. What is at stake since then
+is not a single record but a Pareto frontier: a prime-representing polynomial is
+described by the pair $(\nu,\delta)$ of its number of variables and its degree,
+and the two standard transformations of such a system---\emph{flattening},
+which lowers the degree by naming subexpressions, and \emph{elimination}, which
+removes a variable at the cost of raising the degree---move a system along that
+frontier in opposite directions. Several pairs below $(26,25)$ are cited in the
+literature, but almost all of them were \emph{announced} rather than
+\emph{exhibited}, and are therefore not checkable.
+
+We exhibit and machine-verify two of them. The first is a generator of the
+primes in $44$ variables of degree $5$, obtained by flattening the
+Jones--Sato--Wada--Wiens system to degree~$2$ and eliminating two unknowns; to
+our knowledge no prime generator of degree~$5$ had previously been written down.
+The second is a generator in $21$ variables of degree~$25$, five fewer variables
+than the only previously exhibited generator, obtained by five linear
+eliminations whose soundness over~$\N$ rests on a lower bound for the Pell
+equation that we prove from first principles. Both systems, and the
+equisatisfiability of each with the published one, are formalized in Lean~4
+using only the kernel and no external library.
+
+We also report three negative results about the literature, all of which are
+checkable from primary sources: the pair $(42,5)$ announced in 1976 does not
+follow from the substitution method cited for it---the exact minimum of that
+method on that system is $(51,5)$---and two widely repeated figures conflate a
+prime-representing polynomial with a universal Diophantine pair. None of our
+figures is a proved minimum; all are constructed upper bounds, and we say
+precisely what each does and does not establish.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Hilbert's tenth problem; Diophantine representation;
+prime-representing polynomial; Pareto frontier; formal verification; Lean~4.
+
+\smallskip
+\noindent\textbf{MSC 2020:} 11D99 (primary); 11U05, 03D25, 68V20, 11A41
+(secondary).
