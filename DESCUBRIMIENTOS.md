@@ -96,11 +96,34 @@ Conclusión medida: **entre los 100 cúbicos más pequeños, Perrin es el campe�
 segundo falla seis veces antes. Todos los primos cumplen todos los criterios, como dice el teorema,
 lo que comprueba que el cálculo es correcto.
 
-> Barrido ampliado a los 648 cúbicos con coeficientes entre −4 y 4: **en curso**; el resultado se
-> añadirá aquí.
+**Barrido ampliado a los 648 cúbicos con coeficientes entre −4 y 4** (848 s), hasta 300.000:
 
-No he comprobado si esta tabla está publicada en esta forma. Adams y Shanks estudiaron en 1982
-Perrin y sus generalizaciones, así que es probable que buena parte se conozca.
+| Polinomio | Primer falso positivo | Falsos positivos ≤ 300.000 |
+|---|---:|---:|
+| x³ − x − 1 (**Perrin**) y su espejo | **271.441** = 521² | 1 |
+| **x³ − x² + 3x − 4** | **269.011** = 367 × 733 | 1 |
+| x³ + x² + 2x − 2 | 43.707 | 3 |
+| x³ + 2x² + 2x − 3 | 42.559 | 2 |
+| x³ + x² − 2x − 3 | 9.996 | 3 |
+
+Perrin sigue siendo el campeón, pero **aparece un segundo polinomio prácticamente empatado**,
+x³ − x² + 3x − 4 (irreducible, discriminante −331; el de Perrin es −23), muy por delante del resto.
+Y si se mira más lejos, **falla menos que Perrin**: hasta 2.000.000, Perrin tiene dos falsos
+positivos (271.441 y 904.631, que es el segundo pseudoprimo de Perrin conocido, así que el cálculo
+cuadra) y este polinomio **sólo uno** (269.011).
+
+Curiosidad sin relación aparente: 269.011 también es un pseudoprimo fuerte en base 61 (está en la
+OEIS, A020287).
+
+**Lo que esto es y lo que no.** Es un dato curioso y medido. **No puedo afirmar que sea nuevo**: no
+encontré ninguna fuente sobre este polinomio concreto, pero el marco está muy estudiado (Adams y
+Shanks, 1982; Adams, 1987; Gurak, 1990) y hay un trabajo reciente dedicado justo a fabricar tests
+tipo Perrin (Dougherty-Bliss y Zeilberger, 2023). Antes de publicarlo como hallazgo hay que cotejarlo
+con ese trabajo. Si no estuviera, la secuencia de falsos positivos de este polinomio sería una
+entrada candidata para la OEIS.
+
+La tabla, en esta forma exacta, no la he encontrado publicada; pero el problema está estudiado (ver
+arriba), así que es probable que buena parte se conozca.
 
 ### 1.5 Qué haría falta para que fuera un descubrimiento
 
@@ -115,7 +138,8 @@ Lo que podría salir, de más a menos probable:
 
 - **Secuencias nuevas para OEIS**: los falsos positivos de cada criterio forman una secuencia. Si no
   está, es una contribución pequeña pero real y citable.
-- **Un criterio que aguante más que Perrin**: un dato curioso y posiblemente nuevo.
+- **Un criterio que aguante más que Perrin**: un dato curioso y posiblemente nuevo. Ya hay un
+  candidato que falla *menos* que Perrin hasta dos millones (arriba), aunque falla un poco antes.
 - **Una conjetura nueva** tipo Giuga: un criterio sin contraejemplos hasta números enormes.
 - **Demostrarla**: sería un Wilson propio. Muy improbable si no es equivalente a algo conocido.
 
@@ -202,3 +226,7 @@ conviertes números y programas en ecuaciones.
 - Fibonacci: [Jones, *Diophantine representation of the Fibonacci numbers*, Fibonacci Quarterly 13 (1975)](https://www.mathstat.dal.ca/FQ/Scanned/13-1/jones.pdf).
 - Mersenne y Fermat: [Jones, Acta Arithmetica 35 (1979) 209–221](https://impan.pl/en/publishing-house/journals-and-series/acta-arithmetica/all/35/3/102229/diophantine-representation-of-mersenne-and-fermat-primes).
 - Fórmulas cerradas: [Prunescu, *Arithmetic closed forms count the Mersenne primes, the Fermat primes and the twin-prime pairs*](https://arxiv.org/pdf/2512.01680).
+- Tests tipo Perrin: [Adams, *Characterizing pseudoprimes for third-order linear recurrences*, Math. Comp. 48 (1987)](https://www.ams.org/journals/mcom/1987-48-177/S0025-5718-1987-0866094-6);
+  [Dougherty-Bliss y Zeilberger (2023)](https://arxiv.org/pdf/2307.16069);
+  [Lucas and Perrin pseudoprimes, MathPages](https://mathpages.com/home/kmath127/kmath127.htm).
+- 269.011 como pseudoprimo fuerte en base 61: [OEIS A020287](https://oeis.org/A020287).
